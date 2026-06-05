@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>アンケート作成 - みんQ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <div class="logo" onclick="location.href='index.html'" role="button" tabindex="0">
+      みんQ
+    </div>
+  </header>
+
+  <main class="createContainer">
+    <form class="createCard" onsubmit="return false;">
+      <h1 class="createTitle">アンケートを作成する</h1>
+
+      <input id="title" placeholder="タイトル（必須）">
+      <textarea id="description" placeholder="説明（任意）"></textarea>
+      <select id="tags"></select>
+
+      <div id="options"></div>
+
+      <button type="button" class="subBtn" onclick="addOption()">
+        選択肢を追加
+      </button>
+      <button type="button" class="submitBtn" onclick="postQuestion()">
+        投稿する
+      </button>
+    </form>
+  </main>
+
+  <script src="app.js"></script>
+
+</body>
+</html>

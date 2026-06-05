@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>みんQ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <div class="logo" onclick="location.href='index.html'" role="button" tabindex="0">
+      みんQ
+    </div>
+    <div class="nav">
+      <input id="searchInput" placeholder="検索">
+      <button onclick="searchQuestions()" type="button">検索</button>
+      <button class="fab-btn" onclick="location.href='create.html'" aria-label="アンケート作成" type="button">
+        <span class="fab-icon">+</span>
+        <span class="fab-text">アンケート作成</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="categoryBox">
+    <div class="categoryHeader">
+      <span class="categoryTitle">カテゴリ</span>
+      <div id="tagArea"></div>
+    </div>
+  </div>
+
+  <main class="layout">
+    <div class="sortMenu">
+      <span id="sort-new" class="active" onclick="changeSort('new')">新着順</span>
+      /
+      <span id="sort-view" onclick="changeSort('view')">閲覧順</span>
+      /
+      <span id="sort-vote" onclick="changeSort('vote')">回答順</span>
+    </div>
+
+    <div id="questions"></div>
+  </main>
+
+  <nav class="pager" aria-label="ページ移動">
+    <button id="prevBtn" onclick="prevPage()" type="button">前へ</button>
+    <span id="pageText"></span>
+    <button id="nextBtn" onclick="nextPage()" type="button">次へ</button>
+  </nav>
+
+  <script src="app.js"></script>
+
+</body>
+</html>

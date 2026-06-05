@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理画面 - みんQ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <div class="logo">管理画面</div>
+  </header>
+
+  <main class="createContainer">
+    <input
+      type="password"
+      id="password"
+      placeholder="管理パスワード"
+      onkeydown="if(event.key==='Enter') loadAdmin()"
+    >
+    <button type="button" class="submitBtn" onclick="loadAdmin()">表示</button>
+
+    <div id="adminQuestions"></div>
+  </main>
+
+  <script src="app.js"></script>
+
+</body>
+</html>
