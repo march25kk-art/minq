@@ -1,21 +1,19 @@
 {
   "name": "survey-app",
   "version": "1.0.0",
-
   "engines": {
     "node": "20.x"
   },
-
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "better-sqlite3": "^9.4.3",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "sitemap": "^9.0.1"
   },
   "description": "",
-  "devDependencies": {},
   "keywords": [],
   "author": "",
   "license": "ISC",
