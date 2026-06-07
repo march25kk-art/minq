@@ -5,6 +5,7 @@ const NG_WORDS = [
 const express = require("express");
 const Database = require("better-sqlite3");
 
+const { updateSitemap } = require('./generateSitemap');
 const app = express();
 const db = new Database("survey.db");
 const questionCooldown = {};
@@ -147,8 +148,7 @@ app.get("/questions", (req, res) => {
   });
 });
 
-app.post("/questions", (req, res) => {
-
+app.post("/questions", async (req, res) => {
   let { title, description, tags, options } = req.body;
 
   title = String(title || "").trim();
@@ -194,6 +194,7 @@ app.post("/questions", (req, res) => {
   }
 
   const cleanTags = Array.isArray(tags) ? tags.map(t => String(t || "").trim()).filter(Boolean) : [];
+
   const result = db.prepare("INSERT INTO questions (title, description, tags, createdAt) VALUES (?, ?, ?, ?)").run(
     escapeHTML(title),
     escapeHTML(description),
@@ -204,6 +205,9 @@ app.post("/questions", (req, res) => {
   const questionId = result.lastInsertRowid;
   const insertOption = db.prepare("INSERT INTO options (questionId, text) VALUES (?, ?)");
   uniqueOptions.forEach(o => insertOption.run(questionId, escapeHTML(o)));
+
+  // ★サイトマップを更新
+  await updateSitemap();
 
   res.json({ success: true, id: questionId });
 });
