@@ -336,7 +336,7 @@ app.get("/stats/:id", (req, res) => {
   res.json({ ageStats, genderStats });
 });
 
-app.post("/comment", (req, res) => {
+app.post("/comment", async (req, res) => {
   let { id, text } = req.body;
   text = String(text || "").trim();
 
@@ -367,6 +367,12 @@ app.post("/comment", (req, res) => {
     escapeHTML(text),
     nowJSTString()
   );
+
+  await firestore.collection("comments").add({
+    questionId: Number(id),
+    text: escapeHTML(text),
+    createdAt: nowJSTString()
+  });
 
   res.json({ success: true });
 });
