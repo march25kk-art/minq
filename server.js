@@ -4,6 +4,7 @@ const NG_WORDS = [
 
 const express = require("express");
 const Database = require("better-sqlite3");
+const firestore = require("./firebase");
 
 const { updateSitemap } = require('./generateSitemap');
 const app = express();
@@ -102,7 +103,18 @@ function attachQuestionData(q) {
   return q;
 }
 
-app.get("/questions", (req, res) => {
+app.get("/questions", async (req, res) => {
+
+  const snapshot = await firestore
+    .collection("questions")
+    .get();
+
+  console.log(
+    "Firestore件数:",
+    snapshot.docs.length
+  );
+
+  // 以下は今までのSQLiteコード
   const page = Math.max(Number(req.query.page || 1), 1);
   const limit = 30;
   const offset = (page - 1) * limit;
@@ -202,6 +214,17 @@ app.post("/questions", async (req, res) => {
     nowJSTString()
   );
 
+  await firestore.collection("questions").add({
+    title: escapeHTML(title),
+    description: escapeHTML(description),
+    tags: cleanTags,
+    options: uniqueOptions,
+    comments: [],
+    createdAt: nowJSTString(),
+    views: 0,
+    reports: 0
+  });
+
   const questionId = result.lastInsertRowid;
   const insertOption = db.prepare("INSERT INTO options (questionId, text) VALUES (?, ?)");
   uniqueOptions.forEach(o => insertOption.run(questionId, escapeHTML(o)));
@@ -260,7 +283,7 @@ app.get("/check-vote/:id", (req, res) => {
   res.json({ voted: !!voted });
 });
 
-app.post("/vote", (req, res) => {
+app.post("/vote", async (req, res) => {
   const id = Number(req.body.id);
   const index = Number(req.body.index);
   const ip = getIp(req);
@@ -292,7 +315,18 @@ app.post("/vote", (req, res) => {
   });
 
   voteTransaction();
+
+  await firestore.collection("votes").add({
+    questionId: id,
+    optionIndex: index,
+    age: String(req.body.age || UNANSWERED),
+    gender: String(req.body.gender || UNANSWERED),
+    ip: ip,
+    createdAt: nowJSTString()
+  });
+
   res.json({ success: true });
+
 });
 
 app.get("/stats/:id", (req, res) => {
