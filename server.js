@@ -4,7 +4,7 @@ const NG_WORDS = [
 
 const express = require("express");
 const Database = require("better-sqlite3");
-// const firestore = require("./firebase");
+const firestore = require("./firebase");
 
 const { updateSitemap } = require('./generateSitemap');
 const app = express();
