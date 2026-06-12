@@ -541,18 +541,46 @@ function renderGenderStats(q) {
   if (!genderDiv || !q.genderStats) return;
 
   let genderHTML = `<div class="axis-flipped-container">`;
+
   q.options.forEach((option, index) => {
-    const data = q.genderStats[index] || { male: 0, female: 0 };
+    const data = q.genderStats[index] || {
+      male: 0,
+      female: 0
+    };
+
     genderHTML += `
       <div class="flipped-option-group">
         <div class="flipped-axis-label">${option.text}</div>
+
         <div class="flipped-bars-stack">
-          <div class="flipped-bar-row"><div class="bar-single-wrap"><div class="bar-single-fill gender-navy" style="width:${data.male}%;"></div><span class="bar-percent-text">男性 / ${data.male}%</span></div></div>
-          <div class="flipped-bar-row"><div class="bar-single-wrap"><div class="bar-single-fill gender-coral" style="width:${data.female}%;"></div><span class="bar-percent-text">女性 / ${data.female}%</span></div></div>
+
+          <div class="flipped-bar-row">
+            <div class="bar-single-wrap">
+              <div class="bar-single-fill gender-navy"
+                   style="width:${data.male}%;">
+              </div>
+              <span class="bar-percent-text">
+                男性 / ${data.male}%
+              </span>
+            </div>
+          </div>
+
+          <div class="flipped-bar-row">
+            <div class="bar-single-wrap">
+              <div class="bar-single-fill gender-coral"
+                   style="width:${data.female}%;">
+              </div>
+              <span class="bar-percent-text">
+                女性 / ${data.female}%
+              </span>
+            </div>
+          </div>
+
         </div>
       </div>
     `;
   });
+
   genderDiv.innerHTML = `${genderHTML}</div>`;
 }
 
@@ -680,3 +708,11 @@ async function deleteComment(id){
   loadAdmin();
 
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll("#topBtn, .topBtn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      location.href = "index.html";
+    });
+  });
+});

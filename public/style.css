@@ -763,6 +763,46 @@ header {
   border-color: #cbd5e1;
 }
 
+/* ==========================================================================
+   TOPボタンデザイン
+   ========================================================================== */
+/* ヘッダーの中身を整える */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* ヘッダー内の全要素を縦中央に */
+  height: 40px;
+}
+
+/* ロゴコンテナの設定 */
+.logo-container {
+  display: flex;
+  align-items: center; /* 縦中央揃え */
+  gap: 10px;           /* ロゴとボタンの間隔 */
+}
+
+/* ロゴの余計な高さを打ち消す */
+.logo {
+  line-height: 40px;   /* ヘッダーの高さに合わせる */
+  height: 40px;
+  display: flex;
+  align-items: center; /* ロゴ内の文字も中央に */
+}
+
+/* ボタンのデザイン（四角形固定） */
+#topBtn,
+.topBtn {
+  background: #ddd;
+  color: #222;
+  border: 1px solid #999;
+  padding: 4px 8px;
+  border-radius: 0;
+  font-size: 12px;
+  cursor: pointer;
+  height: 24px;
+  margin: 0;
+}
+
 /* style.css に追加 */
 .fill.blue { background-color: #3b82f6; }
 .fill.red { background-color: #ef4444; }

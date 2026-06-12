@@ -22,17 +22,24 @@
 <body>
 
   <header>
-    <div class="logo" onclick="location.href='index.html'" role="button" tabindex="0">
-      みんQ
+    <div class="logo-container">
+      <div class="logo" onclick="location.href='index.html'" role="button" tabindex="0">
+        みんQ
+      </div>
+      <button class="topBtn" type="button">TOP</button>
     </div>
+
     <div class="nav">
-      <input id="searchInput" placeholder="検索">
-      <button onclick="searchQuestions()" type="button">検索</button>
-      <button class="fab-btn" onclick="location.href='create.html'" aria-label="アンケート作成" type="button">
-        <span class="fab-icon">+</span>
-        <span class="fab-text">アンケート作成</span>
-      </button>
-    </div>
+     <input id="searchInput" placeholder="検索">
+
+     <button onclick="searchQuestions()" type="button">
+       検索
+     </button>
+
+     <button onclick="location.href='create.html'" type="button">
+       作成
+     </button>
+   </div>
   </header>
 
   <div class="categoryBox">
