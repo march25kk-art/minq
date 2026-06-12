@@ -1,3 +1,4 @@
 node_modules
 survey.db
 firebase-key.json
+echo "survey.db" >> .gitignore
