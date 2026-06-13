@@ -10,10 +10,12 @@
 
   <header>
     <div class="logo-container">
-      <div class="logo" onclick="location.href='index.html'" role="button" tabindex="0">
+      <!-- 💡 style="text-decoration: none;" を直接追加して、CSSの下線指定を完全に無効化（リセット）しました -->
+      <div class="logo" onclick="location.href='index.html'" role="button" tabindex="0" style="text-decoration: none !important; cursor: pointer;">
         みんQ
       </div>
-      <button class="topBtn" type="button">TOP</button>
+      <!-- 💡 TOPボタンを押したときにも index.html に戻るように onclick を追加しました -->
+      <button class="topBtn" type="button" onclick="location.href='index.html'">TOP</button>
     </div>
   </header>
 
