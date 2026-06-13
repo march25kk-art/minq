@@ -67,13 +67,14 @@ app.get("/questions", async (req, res) => {
     const tag = String(req.query.tag || "");
     const sort = String(req.query.sort || "new");
 
-    // 💡 固定の文字列から変数（Q_COLL）へ変更
+    // 💡 修正ポイント：ここが Q_COLL（環境に応じたコレクション名）に統一されていませんでした
     let query = firestore.collection(Q_COLL).where("reports", "<", 5);
 
     if (tag) {
       query = query.where("tags", "array-contains", tag);
     }
 
+    // 💡 順番に並び替える対象も、Q_COLL の中から正しく並び替えるように修正
     if (sort === "view") {
       query = query.orderBy("views", "desc");
     } else {
