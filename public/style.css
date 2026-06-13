@@ -814,3 +814,40 @@ header {
 .fill.lime { background-color: #84cc16; }
 .fill.pink { background-color: #ec4899; }
 .fill.teal { background-color: #14b8a6; }
+
+/* ==========================================================================
+   10. 拡張・カラーパレット & グラフ調整
+   ========================================================================== */
+/* app.jsの動的カラーに合わせ、円グラフのデフォルト背景をグレー（データ読み込み前）に */
+.pieChart {
+  background: #e2e8f0; 
+}
+
+/* 棒グラフの「fill」要素が、インラインスタイルの背景色を100%綺麗に反映するための土台設定 */
+.bar .fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.6s ease-out; /* グラフが伸びるアニメーションを追加 */
+}
+
+/* 男女別統計・年代別統計のテキストが、棒グラフのプレースホルダーと被らないよう最小幅を確保 */
+.bar-single-wrap {
+  background: #f1f5f9; /* 軸反転グラフの1行ごとの背景を薄いグレーに */
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* スマホ表示（横幅が狭い画面）で軸反転グラフのラベルとグラフが潰れるのを防止 */
+@media (max-width: 480px) {
+  .flipped-option-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .flipped-axis-label {
+    width: 100%;
+    padding-right: 0;
+    margin-bottom: 8px;
+    border-bottom: 1px dashed #cbd5e1;
+    padding-bottom: 4px;
+  }
+}

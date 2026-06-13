@@ -1,18 +1,19 @@
 // generateSitemap.js
-const sqlite3 = require('better-sqlite3');
+const { firestore } = require("./firebase"); // 💡 Firestoreを読み込む
 const { SitemapStream, streamToPromise } = require('sitemap');
 const { createWriteStream } = require('fs');
 const path = require('path');
 
 async function updateSitemap() {
   try {
-    const db = new sqlite3('survey.db');
-    const rows = db.prepare('SELECT id FROM questions').all(); // テーブル名は questions でしたね
+    // 💡 Firestoreのquestionsコレクションからすべてのドキュメントを取得
+    const snapshot = await firestore.collection("questions").get();
     
     const sitemap = new SitemapStream({ hostname: 'http://minnano-question.com' });
 
-    rows.forEach(row => {
-      sitemap.write({ url: `/detail.html?id=${row.id}`, changefreq: 'daily', priority: 0.7 });
+    snapshot.forEach(doc => {
+      // doc.id（Firestoreの文字列ID）を使ってURLを生成
+      sitemap.write({ url: `/detail.html?id=${doc.id}`, changefreq: 'daily', priority: 0.7 });
     });
     sitemap.end();
 

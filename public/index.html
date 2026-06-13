@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>みんQ</title>
+  <title>みんQ - みんなのアンケートコミュニティ</title>
 
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-FWPQD3EYNB"></script>
   <script>
@@ -23,23 +23,23 @@
 
   <header>
     <div class="logo-container">
-      <div class="logo" onclick="location.href='index.html'" role="button" tabindex="0">
+      <a class="logo" href="index.html">
         みんQ
-      </div>
-      <button class="topBtn" type="button">TOP</button>
+      </a>
+      <button class="topBtn" type="button" onclick="location.href='index.html'">TOP</button>
     </div>
 
     <div class="nav">
-     <input id="searchInput" placeholder="検索">
+      <input id="searchInput" placeholder="検索" onkeydown="if(event.key==='Enter') searchQuestions()">
 
-     <button onclick="searchQuestions()" type="button">
-       検索
-     </button>
+      <button onclick="searchQuestions()" type="button">
+        検索
+      </button>
 
-     <button onclick="location.href='create.html'" type="button">
-       作成
-     </button>
-   </div>
+      <button onclick="location.href='create.html'" type="button">
+        作成
+      </button>
+    </div>
   </header>
 
   <div class="categoryBox">
@@ -58,13 +58,18 @@
       <span id="sort-vote" onclick="changeSort('vote')">回答順</span>
     </div>
 
-    <div id="questions"></div>
+    <!-- 💡 最初は読み込み中メッセージを出しておきます -->
+    <div id="questions">
+      <div style="text-align: center; padding: 40px; color: #666; font-size: 14px;">
+        アンケートを読み込み中...
+      </div>
+    </div>
   </main>
 
   <nav class="pager" aria-label="ページ移動">
-    <button id="prevBtn" onclick="prevPage()" type="button">前へ</button>
-    <span id="pageText"></span>
-    <button id="nextBtn" onclick="nextPage()" type="button">次へ</button>
+    <button id="prevBtn" onclick="prevPage()" type="button" disabled>前へ</button>
+    <span id="pageText">1 / 1 ページ</span>
+    <button id="nextBtn" onclick="nextPage()" type="button" disabled>次へ</button>
   </nav>
 
   <script src="app.js"></script>

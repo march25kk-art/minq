@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "better-sqlite3": "^9.4.3",
-    "express": "^4.19.2",
+    "express": "^4.22.2",
     "firebase-admin": "^13.10.0",
     "sitemap": "^9.0.1"
   },

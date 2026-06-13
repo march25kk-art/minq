@@ -1,0 +1,38 @@
+<!-- public/question.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>みんQ - アンケート詳細</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <div class="logo-container">
+      <a class="logo" href="index.html">みんQ</a>
+      <button class="topBtn" type="button" onclick="location.href='index.html'">TOP</button>
+    </div>
+    <div class="nav">
+      <button onclick="location.href='create.html'" type="button">作成</button>
+    </div>
+  </header>
+
+  <!-- 💡 投票前も投票後も、すべてこの1つのエリアの中身をJavaScriptで書き換えます -->
+  <main class="layout" id="questionArea">
+    <div style="text-align: center; padding: 40px; color: #666;">
+      データを読み込み中...
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    // 💡 ページが開かれたら、自動的に新しい統合読み込み関数を実行する
+    window.addEventListener("DOMContentLoaded", () => {
+      loadCombinedQuestion();
+    });
+  </script>
+
+</body>
+</html>
