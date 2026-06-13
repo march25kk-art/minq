@@ -21,6 +21,15 @@ const NG_WORDS = [
   "死", "殺す", "殺せ", "殺され", "バカ", "アホ", "マンコ", "チンコ", "まんこ", "ちんこ", "セックス"
 ];
 
+// 💡 【プランB】Render（本番）環境かローカル（開発）環境かを自動判別
+const IS_PRODUCTION = process.env.NODE_ENV === 'production' || process.env.FIREBASE_SERVICE_ACCOUNT;
+
+// 💡 環境に応じてコレクション名（保存先フォルダ名）を自動で切り替える
+const Q_COLL = IS_PRODUCTION ? 'questions' : 'questions_dev';
+const V_COLL = IS_PRODUCTION ? 'votes' : 'votes_dev';
+const C_COLL = IS_PRODUCTION ? 'comments' : 'comments_dev';
+const R_COLL = IS_PRODUCTION ? 'reportsLog' : 'reportsLog_dev';
+
 app.use(express.json());
 app.use(express.static("public"));
 
@@ -58,7 +67,8 @@ app.get("/questions", async (req, res) => {
     const tag = String(req.query.tag || "");
     const sort = String(req.query.sort || "new");
 
-    let query = firestore.collection("questions").where("reports", "<", 5);
+    // 💡 固定の文字列から変数（Q_COLL）へ変更
+    let query = firestore.collection(Q_COLL).where("reports", "<", 5);
 
     if (tag) {
       query = query.where("tags", "array-contains", tag);
@@ -129,7 +139,8 @@ app.post("/questions", async (req, res) => {
 
     const cleanTags = Array.isArray(tags) ? tags.map(t => String(t || "").trim()).filter(Boolean) : [];
 
-    const docRef = await firestore.collection("questions").add({
+    // 💡 固定の文字列から変数（Q_COLL）へ変更
+    const docRef = await firestore.collection(Q_COLL).add({
       title: escapeHTML(title),
       description: escapeHTML(description),
       tags: cleanTags,
@@ -137,7 +148,7 @@ app.post("/questions", async (req, res) => {
       createdAt: nowJSTString(),
       views: 0,
       reports: 0,
-      totalVotes: 0 // 💡 初期値として明示
+      totalVotes: 0
     });
 
     await updateSitemap();
@@ -156,48 +167,43 @@ app.get("/questions/:id", async (req, res) => {
   try {
     const id = req.params.id;
 
-    const doc = await firestore.collection("questions").doc(id).get();
+    // 💡 固定の文字列から変数（Q_COLL）へ変更
+    const doc = await firestore.collection(Q_COLL).doc(id).get();
     if (!doc.exists) {
       return res.json({ error: true, message: "アンケートが見つかりません" });
     }
 
     const q = { id: doc.id, ...doc.data() };
 
-    // 関連するコメントの取得
+    // 💡 関連するコメントの取得（C_COLLへ変更）
     const commentsSnapshot = await firestore
-      .collection("comments")
+      .collection(C_COLL)
       .where("questionId", "==", id)
       .orderBy("createdAt", "asc")
       .get();
     q.comments = commentsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    // 投票データの取得
+    // 💡 投票データの取得（V_COLLへ変更）
     const votesSnapshot = await firestore
-      .collection("votes")
+      .collection(V_COLL)
       .where("questionId", "==", id)
       .get();
     const votes = votesSnapshot.docs.map(d => d.data());
 
-    // 💡 修正ポイント①：すべての投票ログの数を、全体の分母（総投票数）として正確に取得
     const allVotesCount = votes.length;
 
     // 性別統計 ＆ 選択肢全体の獲得パーセント（rawPercent）を算出
     q.genderStats = q.options.map((option, index) => {
-      // この選択肢に投票されたすべてのログ（属性なし含む）
       const optionVotes = votes.filter(v => v.optionIndex === index);
       
-      // 性別が入力されているものだけの票数をカウント
       const maleVotes = optionVotes.filter(v => GENDER_ALIASES.male.includes(v.gender)).length;
       const femaleVotes = optionVotes.filter(v => GENDER_ALIASES.female.includes(v.gender)).length;
       const genderTotal = maleVotes + femaleVotes;
 
       return {
         option: option,
-        // その選択肢を選んだ人の中での男女比（%）
         male: genderTotal > 0 ? Math.round((maleVotes * 100) / genderTotal) : 0,
         female: genderTotal > 0 ? Math.round((femaleVotes * 100) / genderTotal) : 0,
-        
-        // 💡 修正ポイント②：性別に関係なく、この選択肢のピュアな「全体に対する得票率（%）」を計算して追加！
         rawPercent: allVotesCount > 0 ? Math.round((optionVotes.length * 100) / allVotesCount) : 0
       };
     });
@@ -230,7 +236,8 @@ app.post("/view", async (req, res) => {
     const { id } = req.body;
     if (!id) return res.status(400).json({ error: true });
     
-    await firestore.collection("questions").doc(String(id)).update({
+    // 💡 固定の文字列から変数（Q_COLL）へ変更
+    await firestore.collection(Q_COLL).doc(String(id)).update({
       views: FieldValue.increment(1)
     });
     res.json({ success: true });
@@ -246,7 +253,8 @@ app.get("/check-vote/:id", async (req, res) => {
     const questionId = req.params.id;
     const ip = typeof getIp === "function" ? getIp(req) : (req.ip || "unknown-ip");
 
-    const snapshot = await firestore.collection("votes")
+    // 💡 固定の文字列から変数（V_COLL）へ変更
+    const snapshot = await firestore.collection(V_COLL)
       .where("questionId", "==", questionId)
       .where("ip", "==", ip)
       .limit(1)
@@ -261,9 +269,8 @@ app.get("/check-vote/:id", async (req, res) => {
   }
 });
 
-// 6. 投票処理 (バグ修正版：ログへすべてのデータを保存)
+// 6. 投票処理
 app.post("/vote", async (req, res) => {
-  // 💡 フロントから送られてくる index, age, gender を確実にキャッチ
   const { id, index, age, gender } = req.body;
   const ip = typeof getIp === "function" ? getIp(req) : (req.ip || "unknown-ip");
 
@@ -272,7 +279,8 @@ app.post("/vote", async (req, res) => {
   }
 
   try {
-    const questionRef = firestore.collection("questions").doc(id);
+    // 💡 固定の文字列から変数（Q_COLL）へ変更
+    const questionRef = firestore.collection(Q_COLL).doc(id);
 
     await firestore.runTransaction(async (transaction) => {
       const sfDoc = await transaction.get(questionRef);
@@ -283,19 +291,17 @@ app.post("/vote", async (req, res) => {
       const data = sfDoc.data();
       const currentTotalVotes = (data.totalVotes || 0) + 1;
 
-      // 💡 アンケート本体の総投票数のみインクリメント
-      // (詳細取得API側で常にvotesから正しい%をリアルタイム計算するため、個別Statsの管理はログに一任します)
       transaction.update(questionRef, {
         totalVotes: currentTotalVotes
       });
 
-      // 💡 投票ログの保存（ここに必要な情報がすべて入っていないと統計が壊れます）
-      const voteLogRef = firestore.collection("votes").doc();
+      // 💡 固定の文字列から変数（V_COLL）へ変更
+      const voteLogRef = firestore.collection(V_COLL).doc();
       transaction.set(voteLogRef, {
         questionId: id,
-        optionIndex: Number(index), // 💡 どの選択肢か
-        age: age || UNANSWERED,     // 💡 年代
-        gender: gender || UNANSWERED, // 💡 性別
+        optionIndex: Number(index),
+        age: age || UNANSWERED,
+        gender: gender || UNANSWERED,
         ip: ip,
         createdAt: new Date().toISOString()
       });
@@ -312,7 +318,8 @@ app.post("/vote", async (req, res) => {
 app.get("/stats/:id", async (req, res) => {
   try {
     const id = req.params.id;
-    const votesSnapshot = await firestore.collection("votes").where("questionId", "==", id).get();
+    // 💡 固定の文字列から変数（V_COLL）へ変更
+    const votesSnapshot = await firestore.collection(V_COLL).where("questionId", "==", id).get();
     
     const ageStats = {};
     const genderStats = {};
@@ -347,9 +354,8 @@ app.get("/stats/:id", async (req, res) => {
   }
 });
 
-// 8. コメント投稿 (バグ修正版：属性データの保存)
+// 8. コメント投稿
 app.post("/comment", async (req, res) => {
-  // 💡 age と gender もリクエストボディから取得
   let { id, text, age, gender } = req.body;
   text = String(text || "").trim();
 
@@ -368,11 +374,12 @@ app.post("/comment", async (req, res) => {
   commentCooldown[ip] = now;
 
   try {
-    await firestore.collection("comments").add({
+    // 💡 固定の文字列から変数（C_COLL）へ変更
+    await firestore.collection(C_COLL).add({
       questionId: String(id),
       text: escapeHTML(text),
-      age: age || UNANSWERED,       // 💡 年代を保存
-      gender: gender || UNANSWERED, // 💡 性別を保存
+      age: age || UNANSWERED,
+      gender: gender || UNANSWERED,
       createdAt: nowJSTString(),
       ip: ip
     });
@@ -391,8 +398,9 @@ app.post("/report", async (req, res) => {
   if (!id) return res.status(400).json({ error: true, message: "不正なリクエストです" });
 
   try {
-    const reportLogRef = firestore.collection("reportsLog");
-    const questionRef = firestore.collection("questions").doc(String(id));
+    // 💡 固定の文字列から変数（R_COLL、Q_COLL）へ変更
+    const reportLogRef = firestore.collection(R_COLL);
+    const questionRef = firestore.collection(Q_COLL).doc(String(id));
 
     await firestore.runTransaction(async (transaction) => {
       const alreadySnapshot = await reportLogRef
@@ -433,7 +441,8 @@ app.post("/admin/delete-comment", async (req, res) => {
   }
 
   try {
-    await firestore.collection("comments").doc(String(id)).delete();
+    // 💡 固定の文字列から変数（C_COLL）へ変更
+    await firestore.collection(C_COLL).doc(String(id)).delete();
     res.json({ success: true });
   } catch (error) {
     console.error("Admin Delete Comment Error:", error);
@@ -451,9 +460,11 @@ app.post("/admin/delete", async (req, res) => {
   try {
     const questionId = String(id);
 
-    await firestore.collection("questions").doc(questionId).delete();
+    // 💡 固定の文字列から変数（Q_COLL）へ変更
+    await firestore.collection(Q_COLL).doc(questionId).delete();
 
-    const collectionsToClean = ["comments", "votes", "reportsLog"];
+    // 💡 環境に応じた各コレクションから紐づくデータを削除
+    const collectionsToClean = [C_COLL, V_COLL, R_COLL];
     for (const col of collectionsToClean) {
       const snapshot = await firestore.collection(col).where("questionId", "==", questionId).get();
       const batch = firestore.batch();
@@ -468,6 +479,7 @@ app.post("/admin/delete", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`http://localhost:${PORT}`);
+// 💡 本番（Render）が割り振る環境変数PORTを最優先に起動
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
 });
