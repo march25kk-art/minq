@@ -1,15 +1,31 @@
 const admin = require("firebase-admin");
-// 💡 手元にある firebase-key.json を直接読み込むように指定します
-const serviceAccount = require("./firebase-key.json");
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
+let serviceAccount;
+
+// 💡 Renderなどの本番環境（環境変数）に鍵があるかチェック
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  try {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  } catch (e) {
+    console.error("Firebase環境変数のJSONパースに失敗しました:", e);
+  }
+} else {
+  // 💡 ローカル環境（パソコン内）の場合は、今まで通りファイルを読み込む
+  try {
+    serviceAccount = require("./firebase-key.json");
+  } catch (e) {
+    console.error("firebase-key.json ファイルが見つかりません。");
+  }
 }
 
-const firestore = admin.firestore();
-const FieldValue = admin.firestore.FieldValue;
+if (!serviceAccount) {
+  throw new Error("Firebaseの初期化に必要な資格情報（サービスアカウント）がありません。");
+}
 
-// server.js側で使えるようにエクスポート
-module.exports = { firestore, FieldValue };
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+const firestore = admin.firestore();
+
+module.exports = { firestore, admin };
