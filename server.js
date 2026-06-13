@@ -67,18 +67,11 @@ app.get("/questions", async (req, res) => {
     const tag = String(req.query.tag || "");
     const sort = String(req.query.sort || "new");
 
-    // 💡 修正ポイント：ここが Q_COLL（環境に応じたコレクション名）に統一されていませんでした
-    let query = firestore.collection(Q_COLL).where("reports", "<", 5);
+    // 💡 修正ポイント：エラーの原因になる orderBy などの複雑な絞り込みを一度外し、単純に全取得します
+    let query = firestore.collection(Q_COLL);
 
     if (tag) {
       query = query.where("tags", "array-contains", tag);
-    }
-
-    // 💡 順番に並び替える対象も、Q_COLL の中から正しく並び替えるように修正
-    if (sort === "view") {
-      query = query.orderBy("views", "desc");
-    } else {
-      query = query.orderBy("createdAt", "desc");
     }
 
     const snapshot = await query.get();
@@ -87,8 +80,19 @@ app.get("/questions", async (req, res) => {
       ...doc.data()
     }));
 
+    // 💡 JS側で安全に通報数5未満をフィルタリング（これでインデックスエラーが永続的に消え去ります）
+    questions = questions.filter(q => (q.reports || 0) < 5);
+
     if (keyword) {
       questions = questions.filter(q => q.title.includes(keyword));
+    }
+
+    // 💡 JS側で並び替えを安全に行う
+    if (sort === "view") {
+      questions.sort((a, b) => (b.views || 0) - (a.views || 0));
+    } else {
+      // 新着順（createdAtの文字列比較）
+      questions.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
     }
 
     const totalCount = questions.length;
