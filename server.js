@@ -184,9 +184,12 @@ app.get("/questions/:id", async (req, res) => {
     const commentsSnapshot = await firestore
       .collection(C_COLL)
       .where("questionId", "==", id)
-      .orderBy("createdAt", "asc")
       .get();
+    
     q.comments = commentsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    
+    // 💡 作成日時（createdAt）の古い順にJavaScript側でソート（インデックスエラーを永久回避）
+    q.comments.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
 
     // 💡 投票データの取得（V_COLLへ変更）
     const votesSnapshot = await firestore
