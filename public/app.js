@@ -47,7 +47,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
  
-  if (document.getElementById("questionArea")) loadCombinedQuestion();
+//if (document.getElementById("questionArea")) loadCombinedQuestion();
   if (document.getElementById("adminQuestions")) loadAdmin();
  
   document.querySelectorAll("#topBtn, .topBtn").forEach(btn => {
