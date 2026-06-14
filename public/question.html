@@ -1,17 +1,17 @@
-<!-- public/question.html -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-　<meta name="description" content="みんなのアンケート詳細・結果画面です。投票してリアルな投票割合（性別・年代別）や、ユーザーからの生の声（コメント一覧）をチェックしよう！">
-
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>みんQ - アンケート詳細</title>
+
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="icon" href="/apple-touch-icon.png">
+  <meta name="description" content="みんなのアンケート詳細・結果画面です。投票してリアルな投票割合（性別・年代別）や、ユーザーからの生の声（コメント一覧）をチェックしよう！">
+
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
-
-  <header>
+<body style="margin: 0; padding: 0;"> <header style="margin-top: 0 !important;">
     <div class="logo-container">
       <a class="logo" href="index.html" style="text-decoration: none !important; color: inherit;">みんQ</a>
       <button class="topBtn" type="button" onclick="location.href='index.html'">TOP</button>
@@ -21,7 +21,6 @@
     </div>
   </header>
 
-  <!-- 💡 投票前も投票後も、すべてこの1つのエリアの中身をJavaScriptで書き換えます -->
   <main class="layout" id="questionArea">
     <div style="text-align: center; padding: 40px; color: #666;">
       データを読み込み中...
