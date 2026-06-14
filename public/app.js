@@ -224,7 +224,7 @@ async function loadCombinedQuestion() {
     const checkRes = await fetch(`/check-vote/${id}`);
     const checkData = await checkRes.json();
  
-    checkData.voted = false; // ✨ 一時的に常に未投票扱いに強制変更！
+    //checkData.voted = false; // ✨ 一時的に常に未投票扱いに強制変更！
 
     const res = await fetch(`/questions/${id}`);
     const q = await res.json();
