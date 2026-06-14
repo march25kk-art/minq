@@ -444,11 +444,11 @@ function renderGenderStats(q) {
         <div class="flipped-axis-label" style="font-weight: bold; font-size: 16px; margin-bottom: 6px; color: #333;">${sanitize(optionText)}</div>
         <div class="flipped-bars-stack" style="display: flex; flex-direction: column; gap: 4px; width: 100%;">
           <div class="flipped-bar-row" style="display: flex; align-items: center; gap: 12px; min-height: 20px; width: 100%;">
-            <div style="font-size: 14px; width: 90px;">男性 / ${data.male}%</div>
+            <div style="font-size: 14px; width: 120px;">男性 / ${data.male}%</div>
             ${data.male > 0 ? `<div style="width: ${data.male}%; height: 16px; border-radius: 999px; background-color: #1e3a8a;"></div>` : ''}
           </div>
           <div class="flipped-bar-row" style="display: flex; align-items: center; gap: 12px; min-height: 20px; width: 100%;">
-            <div style="font-size: 14px; width: 90px;">女性 / ${data.female}%</div>
+            <div style="font-size: 14px; width: 120px;">女性 / ${data.female}%</div>
             ${data.female > 0 ? `<div style="width: ${data.female}%; height: 16px; border-radius: 999px; background-color: #f43f5e;"></div>` : ''}
           </div>
         </div>
