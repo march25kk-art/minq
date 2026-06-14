@@ -425,27 +425,29 @@ async function reportQuestion(id) {
 function renderGenderStats(q) {
   const genderDiv = document.getElementById("genderStats");
   if (!genderDiv || !q.genderStats) return;
-  let genderHTML = `<div class="axis-flipped-container" style="display: flex; flex-direction: column; gap: 16px;">`;
+  let genderHTML = `<div class="axis-flipped-container" style="display: flex; flex-direction: column; gap: 20px;">`;
   q.options.forEach((option, index) => {
     const data = q.genderStats[index] || { male: 0, female: 0 };
     const optionText = typeof option === "string" ? option : (option.text || "");
     genderHTML += `
-      <div class="flipped-option-group">
-        <div class="flipped-axis-label" style="font-weight: bold; font-size: 16px; margin-bottom: 6px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">
+      <div class="flipped-option-group" style="display: flex; flex-direction: column; align-items: flex-start; width: 100%;">
+        
+        <div class="flipped-axis-label" style="font-weight: bold; font-size: 14px; margin-bottom: 6px; color: #333; width: 100%; text-align: left;">
           ${sanitize(optionText)}
         </div>
-        <div class="flipped-bars-stack" style="display: flex; flex-direction: column; gap: 4px; width: 100%;">
+        
+        <div class="flipped-bars-stack" style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
           
           <div class="flipped-bar-row" style="display: flex; align-items: center; gap: 12px; min-height: 20px; width: 100%;">
-            <div style="font-size: 14px; width: 120px; flex-shrink: 0; white-space: nowrap;">男性 / ${data.male}%</div>
-            <div style="width: 300px; height: 16px; background-color: #f1f5f9; border-radius: 999px; overflow: hidden; flex-shrink: 0;">
+            <div style="font-size: 13px; width: 90px; flex-shrink: 0; white-space: nowrap; color: #555;">男性 / ${data.male}%</div>
+            <div style="width: 100%; max-width: 500px; height: 16px; background-color: #f1f5f9; border-radius: 999px; overflow: hidden; flex-shrink: 1;">
               <div style="width: ${data.male}%; height: 100%; background-color: #1e3a8a; border-radius: 999px;"></div>
             </div>
           </div>
           
           <div class="flipped-bar-row" style="display: flex; align-items: center; gap: 12px; min-height: 20px; width: 100%;">
-            <div style="font-size: 14px; width: 120px; flex-shrink: 0; white-space: nowrap;">女性 / ${data.female}%</div>
-            <div style="width: 300px; height: 16px; background-color: #f1f5f9; border-radius: 999px; overflow: hidden; flex-shrink: 0;">
+            <div style="font-size: 13px; width: 90px; flex-shrink: 0; white-space: nowrap; color: #555;">女性 / ${data.female}%</div>
+            <div style="width: 100%; max-width: 500px; height: 16px; background-color: #f1f5f9; border-radius: 999px; overflow: hidden; flex-shrink: 1;">
               <div style="width: ${data.female}%; height: 100%; background-color: #f43f5e; border-radius: 999px;"></div>
             </div>
           </div>
