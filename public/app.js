@@ -293,7 +293,7 @@ function updatePagerButtons() {
 }
  
 // ==========================================
-// 5. 詳細・結果 統合画面の制御
+// 5. 詳細・結果 統合画面の制御（APIエンドポイント修正版）
 // ==========================================
 async function loadCombinedQuestion() {
   const div = document.getElementById("questionArea");
@@ -306,6 +306,9 @@ async function loadCombinedQuestion() {
   }
  
   try {
+    // 💡 修正点①：閲覧数を増やす正しいAPI（/questions/:id/view）を叩く
+    await fetch(`/questions/${id}/view`, { method: "POST" }).catch(e => console.error(e));
+
     const checkRes = await fetch(`/check-vote/${id}`);
     const checkData = await checkRes.json();
  
@@ -319,12 +322,6 @@ async function loadCombinedQuestion() {
  
     // 🗳️ 【分岐】未投票の場合 ➡️ 投票画面を表示
     if (!checkData.voted) {
-      await fetch("/view", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id })
-      });
- 
       let optionsHtml = "";
       q.options.forEach((option, index) => {
         const optionText = typeof option === "string" ? option : (option.text || "");
@@ -387,7 +384,6 @@ async function loadCombinedQuestion() {
       }
  
       div.innerHTML = html;
- 
     }
  
     // 📊 【分岐】投票済みの場合 ➡️ 結果画面を表示
@@ -396,11 +392,8 @@ async function loadCombinedQuestion() {
       let conicParts = [];
       let cumulativePercent = 0;
  
-      // 💡 ①円グラフのデータ集計
       q.options.forEach((option, index) => {
         const stat = q.genderStats[index] || {};
-        
-        // サーバーが算出した全体のパーセント（rawPercent）があれば優先、なければ男女の合計から補完
         let percent = stat.rawPercent !== undefined ? stat.rawPercent : ((stat.male + stat.female) || 0);
         if (percent > 100) percent = 100;
         
@@ -430,7 +423,6 @@ async function loadCombinedQuestion() {
                 <div class="overallStats" style="width:100%;">
       `;
  
-      // 💡 ②全体の棒グラフのレンダリング
       q.options.forEach((option, index) => {
         const stat = q.genderStats[index] || {};
         const percent = stat.rawPercent !== undefined ? stat.rawPercent : ((stat.male + stat.female) || 0);
@@ -438,7 +430,6 @@ async function loadCombinedQuestion() {
         const color = colors[index % colors.length];
         const optionText = typeof option === "string" ? option : (option.text || "");
  
-        // 💡 修正ポイント：外側のコンテナ（.bar）に高さと背景を与え、中身（.fill）に高さを100%指定して確実に描画させます
         html += `
           <div class="statRow" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 14px;">
             <span style="color: #333; font-weight: 500;">${sanitize(optionText)}</span>
@@ -496,6 +487,66 @@ async function loadCombinedQuestion() {
     console.error("Error loading question:", err);
     div.innerHTML = `<div class="detailCard"><p>データの読み込みに失敗しました</p></div>`;
   }
+}
+ 
+async function voteAndReload(id) {
+  const selected = document.querySelector('input[name="voteOption"]:checked');
+  if (!selected) {
+    alert("選択肢を選んでください");
+    return;
+  }
+ 
+  const ageEl = document.getElementById("age");
+  const genderEl = document.getElementById("gender");
+ 
+  // 💡 修正点②：投票を増やす正しいAPI（/questions/:id/vote）に修正
+  const res = await fetch(`/questions/${id}/vote`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      index: Number(selected.value),
+      age: ageEl ? ageEl.value : "回答しない",
+      gender: genderEl ? genderEl.value : "回答しない"
+    })
+  });
+ 
+  const data = await res.json();
+  if (data.error) {
+    alert(data.message);
+    location.reload();
+    return;
+  }
+ 
+  location.reload();
+}
+ 
+async function addCommentAndReload(id) {
+  const commentTextEl = document.getElementById("commentText");
+  const text = commentTextEl ? commentTextEl.value.trim() : "";
+ 
+  if (!text) {
+    alert("コメントを入力してください");
+    return;
+  }
+ 
+  // 💡 修正点③：コメントを増やす正しいAPI（/questions/:id/comment）に修正
+  const res = await fetch(`/questions/${id}/comment`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ 
+      text,
+      age: "回答しない",
+      gender: "回答しない" 
+    })
+  });
+ 
+  const data = await res.json();
+  if (data.error) {
+    alert(data.message);
+    return;
+  }
+ 
+  location.reload();
 }
  
 async function voteAndReload(id) {
