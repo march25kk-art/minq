@@ -87,10 +87,15 @@ app.get("/questions", async (req, res) => {
     }
 
     // 各質問のリアルタイムなコメント数を集計してセット
-    for (let q of questions) {
-      const commentSnap = await firestore.collection(C_COLL).where("questionId", "==", q.id).get();
-      q.commentCount = commentSnap.size;
-    }
+    await Promise.all(
+      questions.map(async (q) => {
+        const commentSnap = await firestore
+          .collection(C_COLL)
+          .where("questionId", "==", q.id)
+          .get();
+        q.commentCount = commentSnap.size;
+      })
+    );
 
     if (sort === "view") {
       questions.sort((a, b) => (b.views || 0) - (a.views || 0));
