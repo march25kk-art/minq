@@ -114,36 +114,39 @@ async function postQuestion() {
 async function loadQuestions() {
   const div = document.getElementById("questions");
   if (!div) return;
- 
+
   div.innerHTML = `<div style="text-align: center; padding: 40px; color: #666; font-size: 14px;">アンケートを読み込み中...</div>`;
- 
+
   const params = new URLSearchParams({ page: String(page), search: currentSearch, tag: currentTag, sort: currentSort });
- 
+
   try {
     const res = await fetch(`/questions?${params.toString()}`);
     const data = await res.json();
- 
+
     totalPages = data.totalPages || 1;
     const questionsList = data.questions || [];
- 
+
     div.innerHTML = "";
- 
+
     if (questionsList.length === 0) {
       div.innerHTML = '<div style="text-align:center; padding:40px; color:#999;">アンケートが見つかりませんでした。</div>';
       return;
     }
- 
+
     questionsList.forEach(q => {
-      let total = q.totalVotes || 0; 
-      const commentCount = q.commentCount || 0; // 💡 サーバーで正確に集計された数値を使う
+      // 💡 サーバー側が抱えている「すでに集計済みの軽いデータ」をそのまま使う形に統一し、爆速化！
+      const total = q.voteCount || q.totalVotes || 0; 
+      const commentCount = q.commentCount || 0; 
+      const viewsCount = q.viewCount || q.views || 0;
+      
       const speed = total + commentCount * 3;
       let hotTag = "NEW";
- 
+
       if (speed > 100) hotTag = "HOT";
       else if (speed > 30) hotTag = "UP";
- 
+
       const rawDate = q.createdAt || "";
- 
+
       div.innerHTML += `
         <div class="thread" onclick="openDetail('${q.id}')">
           <div class="threadRow">
@@ -151,21 +154,22 @@ async function loadQuestions() {
             <div class="rightMeta">
               <span>${total}回答</span>
               <span>${commentCount}コメント</span>
-              <span>${q.views || 0}閲覧</span>
+              <span>${viewsCount}閲覧</span>
               <span class="postDate" style="color: #999; margin-left: 10px;">投稿日 ${rawDate}</span>
             </div>
           </div>
         </div>
       `;
     });
- 
+
     renderTopTags();
- 
+
     const pageText = document.getElementById("pageText");
     if (pageText) pageText.innerText = `${page} / ${totalPages} ページ`;
     updatePagerButtons();
   } catch (err) {
-    console.error(err);
+    console.error("読み込みエラー:", err);
+    div.innerHTML = '<div style="text-align:center; padding:40px; color:#ff4d4d;">データの読み込みに失敗しました。</div>';
   }
 }
  
