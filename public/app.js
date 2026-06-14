@@ -433,14 +433,23 @@ function renderGenderStats(q) {
       <div class="flipped-option-group">
         <div class="flipped-axis-label" style="font-weight: bold; font-size: 16px; margin-bottom: 6px; color: #333;">${sanitize(optionText)}</div>
         <div class="flipped-bars-stack" style="display: flex; flex-direction: column; gap: 4px; width: 100%;">
+          
+          <!-- 男性グラフ：ベースの枠の幅を300pxに固定して左寄せに -->
           <div class="flipped-bar-row" style="display: flex; align-items: center; gap: 12px; min-height: 20px; width: 100%;">
-            <div style="font-size: 14px; width: 120px;">男性 / ${data.male}%</div>
-            ${data.male > 0 ? `<div style="width: ${data.male}%; height: 16px; border-radius: 999px; background-color: #1e3a8a;"></div>` : ''}
+            <div style="font-size: 14px; width: 120px; flex-shrink: 0; white-space: nowrap;">男性 / ${data.male}%</div>
+            <div style="width: 300px; height: 16px; background-color: #f1f5f9; border-radius: 999px; overflow: hidden; flex-shrink: 0;">
+              <div style="width: ${data.male}%; height: 100%; background-color: #1e3a8a; border-radius: 999px;"></div>
+            </div>
           </div>
+          
+          <!-- 女性グラフ：ベースの枠の幅を300pxに固定して左寄せに -->
           <div class="flipped-bar-row" style="display: flex; align-items: center; gap: 12px; min-height: 20px; width: 100%;">
-            <div style="font-size: 14px; width: 120px;">女性 / ${data.female}%</div>
-            ${data.female > 0 ? `<div style="width: ${data.female}%; height: 16px; border-radius: 999px; background-color: #f43f5e;"></div>` : ''}
+            <div style="font-size: 14px; width: 120px; flex-shrink: 0; white-space: nowrap;">女性 / ${data.female}%</div>
+            <div style="width: 300px; height: 16px; background-color: #f1f5f9; border-radius: 999px; overflow: hidden; flex-shrink: 0;">
+              <div style="width: ${data.female}%; height: 100%; background-color: #f43f5e; border-radius: 999px;"></div>
+            </div>
           </div>
+          
         </div>
       </div>`;
   });
@@ -463,9 +472,12 @@ function renderAgeStats(q) {
     ages.forEach((age, ageIndex) => {
       const percent = optionAgeData[age] || 0;
       ageHTML += `
+        <!-- 年代グラフ：ベースの枠の幅を300pxに固定して左寄せに統一 -->
         <div class="flipped-bar-row" style="display: flex; align-items: center; gap: 12px; min-height: 20px; width: 100%;">
-          <div style="font-size: 14px; width: 90px;">${age} / ${percent}%</div>
-          ${percent > 0 ? `<div style="width: ${percent}%; height: 16px; border-radius: 999px; background-color: ${ageColors[ageIndex]};"></div>` : ''}
+          <div style="font-size: 14px; width: 120px; flex-shrink: 0; white-space: nowrap;">${age} / ${percent}%</div>
+          <div style="width: 300px; height: 16px; background-color: #f1f5f9; border-radius: 999px; overflow: hidden; flex-shrink: 0;">
+            <div style="width: ${percent}%; height: 100%; background-color: ${ageColors[ageIndex]}; border-radius: 999px;"></div>
+          </div>
         </div>`;
     });
     ageHTML += "</div></div>";
