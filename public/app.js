@@ -277,18 +277,6 @@ async function loadCombinedQuestion() {
         </div>
       `;
  
-      if (q.comments && q.comments.length) {
-        html += `<div style="max-width: 640px; margin: 32px auto 0 auto;"><h2 style="font-size: 18px; font-weight: bold; color: #333; margin-bottom: 10px;">コメント</h2>`;
-        q.comments.forEach(comment => {
-          const profileText = (comment.gender || comment.age) ? ` (${sanitize(comment.gender || "未回答")} / ${sanitize(comment.age || "未回答")})` : "";
-          html += `
-            <div class="comment" style="background: #fff; padding: 12px 16px; border-radius: 8px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-              <div style="font-size: 11px; color: #777; margin-bottom: 4px;">匿名ユーザー${profileText} ：${comment.createdAt || ""}</div>
-              <div style="font-size: 13px; color: #333; line-height: 1.4;">${sanitize(comment.text)}</div>
-            </div>`;
-        });
-        html += `</div>`;
-      }
       div.innerHTML = html;
     }
  
