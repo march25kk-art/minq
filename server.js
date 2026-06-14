@@ -1,5 +1,6 @@
 const express = require("express");
-const { firestore, FieldValue } = require("./firebase");
+const { firestore } = require("./firebase");
+const { FieldValue } = require("firebase-admin/firestore");
 const { updateSitemap } = require('./generateSitemap');
 
 const app = express();
@@ -21,7 +22,7 @@ const NG_WORDS = [
   "死", "殺す", "殺せ", "殺され", "バカ", "アホ", "マンコ", "チンコ", "まんこ", "ちんこ", "セックス"
 ];
 
-// 💡 【プランB】Render（本番）環境かローカル（開発）環境かを自動判別
+// 💡 Render（本番）環境かローカル（開発）環境かを自動判別
 const IS_PRODUCTION = process.env.NODE_ENV === 'production' || process.env.FIREBASE_SERVICE_ACCOUNT;
 
 // 💡 環境に応じてコレクション名（保存先フォルダ名）を自動で切り替える
@@ -67,7 +68,6 @@ app.get("/questions", async (req, res) => {
     const tag = String(req.query.tag || "");
     const sort = String(req.query.sort || "new");
 
-    // 💡 修正ポイント：エラーの原因になる orderBy などの複雑な絞り込みを一度外し、単純に全取得します
     let query = firestore.collection(Q_COLL);
 
     if (tag) {
@@ -80,18 +80,21 @@ app.get("/questions", async (req, res) => {
       ...doc.data()
     }));
 
-    // 💡 JS側で安全に通報数5未満をフィルタリング（これでインデックスエラーが永続的に消え去ります）
     questions = questions.filter(q => (q.reports || 0) < 5);
 
     if (keyword) {
       questions = questions.filter(q => q.title.includes(keyword));
     }
 
-    // 💡 JS側で並び替えを安全に行う
+    // 各質問のリアルタイムなコメント数を集計してセット
+    for (let q of questions) {
+      const commentSnap = await firestore.collection(C_COLL).where("questionId", "==", q.id).get();
+      q.commentCount = commentSnap.size;
+    }
+
     if (sort === "view") {
       questions.sort((a, b) => (b.views || 0) - (a.views || 0));
     } else {
-      // 新着順（createdAtの文字列比較）
       questions.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
     }
 
@@ -144,7 +147,6 @@ app.post("/questions", async (req, res) => {
 
     const cleanTags = Array.isArray(tags) ? tags.map(t => String(t || "").trim()).filter(Boolean) : [];
 
-    // 💡 固定の文字列から変数（Q_COLL）へ変更
     const docRef = await firestore.collection(Q_COLL).add({
       title: escapeHTML(title),
       description: escapeHTML(description),
@@ -165,14 +167,11 @@ app.post("/questions", async (req, res) => {
   }
 });
 
-// ==========================================
-// 3. 質問詳細取得 (詳細＋確実な統計％算出)
-// ==========================================
+// 3. 質問詳細取得
 app.get("/questions/:id", async (req, res) => {
   try {
     const id = req.params.id;
 
-    // 💡 固定の文字列から変数（Q_COLL）へ変更
     const doc = await firestore.collection(Q_COLL).doc(id).get();
     if (!doc.exists) {
       return res.json({ error: true, message: "アンケートが見つかりません" });
@@ -180,18 +179,16 @@ app.get("/questions/:id", async (req, res) => {
 
     const q = { id: doc.id, ...doc.data() };
 
-    // 💡 関連するコメントの取得（C_COLLへ変更）
+    // コメント取得（インデックスエラー防止のためにJS側でソート）
     const commentsSnapshot = await firestore
       .collection(C_COLL)
       .where("questionId", "==", id)
       .get();
     
     q.comments = commentsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    
-    // 💡 作成日時（createdAt）の古い順にJavaScript側でソート（インデックスエラーを永久回避）
     q.comments.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
 
-    // 💡 投票データの取得（V_COLLへ変更）
+    // 投票データの取得
     const votesSnapshot = await firestore
       .collection(V_COLL)
       .where("questionId", "==", id)
@@ -200,10 +197,9 @@ app.get("/questions/:id", async (req, res) => {
 
     const allVotesCount = votes.length;
 
-    // 性別統計 ＆ 選択肢全体の獲得パーセント（rawPercent）を算出
+    // 性別統計
     q.genderStats = q.options.map((option, index) => {
       const optionVotes = votes.filter(v => v.optionIndex === index);
-      
       const maleVotes = optionVotes.filter(v => GENDER_ALIASES.male.includes(v.gender)).length;
       const femaleVotes = optionVotes.filter(v => GENDER_ALIASES.female.includes(v.gender)).length;
       const genderTotal = maleVotes + femaleVotes;
@@ -238,16 +234,24 @@ app.get("/questions/:id", async (req, res) => {
   }
 });
 
-// 4. 閲覧数インクリメント
+// 4. 閲覧数インクリメント (最速・確実版)
 app.post("/view", async (req, res) => {
   try {
-    const { id } = req.body;
-    if (!id) return res.status(400).json({ error: true });
+    // フロントから送られてきた body の中の id を最優先で取得
+    const id = req.body.id;
+    console.log("=== [SERVER LOG] VIEW API CALLED FOR ID ===", id);
+
+    if (!id) {
+      console.log("=== [SERVER LOG] ERROR: ID IS EMPTY ===");
+      return res.status(400).json({ error: true, message: "IDがありません" });
+    }
     
-    // 💡 固定の文字列から変数（Q_COLL）へ変更
+    // Firestore の views カウントを +1 する
     await firestore.collection(Q_COLL).doc(String(id)).update({
       views: FieldValue.increment(1)
     });
+    
+    console.log("=== [SERVER LOG] VIEW UPDATED SUCCESS IN FIRESTORE ===");
     res.json({ success: true });
   } catch (error) {
     console.error("View Count Error:", error);
@@ -261,7 +265,6 @@ app.get("/check-vote/:id", async (req, res) => {
     const questionId = req.params.id;
     const ip = typeof getIp === "function" ? getIp(req) : (req.ip || "unknown-ip");
 
-    // 💡 固定の文字列から変数（V_COLL）へ変更
     const snapshot = await firestore.collection(V_COLL)
       .where("questionId", "==", questionId)
       .where("ip", "==", ip)
@@ -271,8 +274,6 @@ app.get("/check-vote/:id", async (req, res) => {
     res.json({ voted: !snapshot.empty });
   } catch (error) {
     console.error("====== 投票チェックエラー ======");
-    console.error(error);
-    console.error("==============================");
     res.status(500).json({ error: true, voted: false });
   }
 });
@@ -287,23 +288,17 @@ app.post("/vote", async (req, res) => {
   }
 
   try {
-    // 💡 固定の文字列から変数（Q_COLL）へ変更
     const questionRef = firestore.collection(Q_COLL).doc(id);
 
     await firestore.runTransaction(async (transaction) => {
       const sfDoc = await transaction.get(questionRef);
-      if (!sfDoc.exists) {
-        throw new Error("Document does not exist!");
-      }
+      if (!sfDoc.exists) throw new Error("Document does not exist!");
 
       const data = sfDoc.data();
       const currentTotalVotes = (data.totalVotes || 0) + 1;
 
-      transaction.update(questionRef, {
-        totalVotes: currentTotalVotes
-      });
+      transaction.update(questionRef, { totalVotes: currentTotalVotes });
 
-      // 💡 固定の文字列から変数（V_COLL）へ変更
       const voteLogRef = firestore.collection(V_COLL).doc();
       transaction.set(voteLogRef, {
         questionId: id,
@@ -322,11 +317,43 @@ app.post("/vote", async (req, res) => {
   }
 });
 
+app.post("/questions/:id/vote", async (req, res) => {
+  const id = req.params.id;
+  const { index, age, gender } = req.body;
+  
+  // 共通の投票用オブジェクトへ偽装して再マッピング
+  req.body.id = id;
+  
+  try {
+    const questionRef = firestore.collection(Q_COLL).doc(id);
+    await firestore.runTransaction(async (transaction) => {
+      const sfDoc = await transaction.get(questionRef);
+      if (!sfDoc.exists) throw new Error("Document does not exist!");
+      const data = sfDoc.data();
+      const currentTotalVotes = (data.totalVotes || 0) + 1;
+      transaction.update(questionRef, { totalVotes: currentTotalVotes });
+
+      const voteLogRef = firestore.collection(V_COLL).doc();
+      transaction.set(voteLogRef, {
+        questionId: id,
+        optionIndex: Number(index),
+        age: age || UNANSWERED,
+        gender: gender || UNANSWERED,
+        ip: getIp(req),
+        createdAt: new Date().toISOString()
+      });
+    });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Vote error:", err);
+    res.status(500).json({ error: true });
+  }
+});
+
 // 7. 統計データ取得
 app.get("/stats/:id", async (req, res) => {
   try {
     const id = req.params.id;
-    // 💡 固定の文字列から変数（V_COLL）へ変更
     const votesSnapshot = await firestore.collection(V_COLL).where("questionId", "==", id).get();
     
     const ageStats = {};
@@ -362,27 +389,25 @@ app.get("/stats/:id", async (req, res) => {
   }
 });
 
-// 8. コメント投稿
-app.post("/comment", async (req, res) => {
-  let { id, text, age, gender } = req.body;
-  text = String(text || "").trim();
-
-  const hasNgWord = NG_WORDS.some(word => text.includes(word));
-  if (hasNgWord) {
-    return res.json({ error: true, message: "使用できない言葉が含まれています" });
-  }
-  if (!text) return res.json({ error: true, message: "コメントを入力してください" });
-  if (text.length > 300) return res.json({ error: true, message: "コメントが長すぎます" });
-
-  const ip = getIp(req);
-  const now = Date.now();
-  if (commentCooldown[ip] && now - commentCooldown[ip] < 5000) {
-    return res.json({ error: true, message: "5秒待ってから投稿してください" });
-  }
-  commentCooldown[ip] = now;
-
+// 8. コメント投稿 (タイポ・定義漏れを完全に修正)
+const saveComment = async (req, res) => {
   try {
-    // 💡 固定の文字列から変数（C_COLL）へ変更
+    let id = req.params.id || req.body.id;
+    let { text, age, gender } = req.body;
+    text = String(text || "").trim();
+
+    // 💡 修正点：ここで判定に使う変数を正しくチェック
+    const hasNgWord = NG_WORDS.some(word => text.includes(word));
+    if (hasNgWord) return res.json({ error: true, message: "使用できない言葉が含まれています" });
+    if (!text) return res.json({ error: true, message: "コメントを入力してください" });
+
+    const ip = getIp(req);
+    const now = Date.now();
+    if (commentCooldown[ip] && now - commentCooldown[ip] < 5000) {
+      return res.json({ error: true, message: "5秒待ってから投稿してください" });
+    }
+    commentCooldown[ip] = now;
+
     await firestore.collection(C_COLL).add({
       questionId: String(id),
       text: escapeHTML(text),
@@ -391,13 +416,14 @@ app.post("/comment", async (req, res) => {
       createdAt: nowJSTString(),
       ip: ip
     });
-
     res.json({ success: true });
   } catch (error) {
     console.error("Comment Save Error:", error);
     res.status(500).json({ error: true, message: "コメントの投稿に失敗しました" });
   }
-});
+};
+app.post("/comment", saveComment);
+app.post("/questions/:id/comment", saveComment);
 
 // 9. 通報処理
 app.post("/report", async (req, res) => {
@@ -406,7 +432,6 @@ app.post("/report", async (req, res) => {
   if (!id) return res.status(400).json({ error: true, message: "不正なリクエストです" });
 
   try {
-    // 💡 固定の文字列から変数（R_COLL、Q_COLL）へ変更
     const reportLogRef = firestore.collection(R_COLL);
     const questionRef = firestore.collection(Q_COLL).doc(String(id));
 
@@ -425,17 +450,12 @@ app.post("/report", async (req, res) => {
         createdAt: new Date()
       });
 
-      transaction.update(questionRef, {
-        reports: FieldValue.increment(1)
-      });
+      transaction.update(questionRef, { reports: FieldValue.increment(1) });
     });
 
     res.json({ success: true });
   } catch (error) {
-    if (error.message === "ALREADY_REPORTED") {
-      return res.json({ error: true, message: "通報済みです" });
-    }
-    console.error("Report Transaction Error:", error);
+    if (error.message === "ALREADY_REPORTED") return res.json({ error: true, message: "通報済みです" });
     res.status(500).json({ error: true, message: "通報に失敗しました" });
   }
 });
@@ -443,17 +463,12 @@ app.post("/report", async (req, res) => {
 // 10. 管理者用：コメント削除
 app.post("/admin/delete-comment", async (req, res) => {
   const { password, id } = req.body;
-
-  if (password !== ADMIN_PASSWORD) {
-    return res.status(401).json({ error: true, message: "管理パスワードが違います" });
-  }
+  if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: true, message: "管理パスワードが違います" });
 
   try {
-    // 💡 固定の文字列から変数（C_COLL）へ変更
     await firestore.collection(C_COLL).doc(String(id)).delete();
     res.json({ success: true });
   } catch (error) {
-    console.error("Admin Delete Comment Error:", error);
     res.status(500).json({ error: true, message: "削除に失敗しました" });
   }
 });
@@ -461,17 +476,12 @@ app.post("/admin/delete-comment", async (req, res) => {
 // 11. 管理者用：アンケートデータ一括削除
 app.post("/admin/delete", async (req, res) => {
   const { password, id } = req.body;
-  if (password !== ADMIN_PASSWORD) {
-    return res.status(401).json({ error: true, message: "管理パスワードが違います" });
-  }
+  if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: true, message: "管理パスワードが違います" });
 
   try {
     const questionId = String(id);
-
-    // 💡 固定の文字列から変数（Q_COLL）へ変更
     await firestore.collection(Q_COLL).doc(questionId).delete();
 
-    // 💡 環境に応じた各コレクションから紐づくデータを削除
     const collectionsToClean = [C_COLL, V_COLL, R_COLL];
     for (const col of collectionsToClean) {
       const snapshot = await firestore.collection(col).where("questionId", "==", questionId).get();
@@ -479,15 +489,12 @@ app.post("/admin/delete", async (req, res) => {
       snapshot.docs.forEach(doc => batch.delete(doc.ref));
       await batch.commit();
     }
-
     res.json({ success: true });
   } catch (error) {
-    console.error("Admin Delete Question Error:", error);
     res.status(500).json({ error: true, message: "削除に失敗しました" });
   }
 });
 
-// 💡 本番（Render）が割り振る環境変数PORTを最優先に起動
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
