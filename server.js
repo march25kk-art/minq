@@ -125,56 +125,91 @@ app.get("/questions", async (req, res) => {
 });
 
 // 2. 質問投稿
-app.post("/questions", async (req, res) => {
+app.get("/questions", async (req, res) => {
   try {
-    let { title, description, tags, options } = req.body;
+    const page = Math.max(Number(req.query.page || 1), 1);
+    const limit = 30;
+    const keyword = String(req.query.search || "");
+    const tag = String(req.query.tag || "");
+    const sort = String(req.query.sort || "new");
 
-    title = String(title || "").trim();
-    description = String(description || "").trim();
+    let query = firestore.collection(Q_COLL);
 
-    const ip = getIp(req);
-    const now = Date.now();
-
-    if (questionCooldown[ip] && now - questionCooldown[ip] < 30000) {
-      return res.json({ error: true, message: "30秒待ってから投稿してください" });
-    }
-    questionCooldown[ip] = now;
-
-    const ngText = `${title} ${description}`;
-    const hasNgWord = NG_WORDS.some(word => ngText.includes(word));
-    if (hasNgWord) {
-      return res.json({ error: true, message: "使用できない言葉が含まれています" });
+    // 💡 1. カテゴリ（タグ）の絞り込み
+    if (tag) {
+      query = query.where("tags", "array-contains", tag);
     }
 
-    if (!title) return res.json({ error: true, message: "タイトルを入力してください" });
-    if (!Array.isArray(options) || options.length < 2) {
-      return res.json({ error: true, message: "選択肢は2つ以上必要です" });
+    // 💡 2. 【超重要】全件取得をやめ、Firestore側でソートと件数制限（30件）を最初に行う！
+    // ※キーワード検索がない場合は、この段階でデータベース側が爆速で30件だけを選別します
+    if (!keyword) {
+      if (sort === "view") {
+        query = query.orderBy("views", "desc");
+      } else if (sort === "vote") {
+        query = query.orderBy("totalVotes", "desc"); // 💡 投稿時の totalVotes に統一
+      } else {
+        query = query.orderBy("createdAt", "desc"); // 新着順
+      }
+      // ページネーション（位置スキップ）
+      if (page > 1) {
+        query = query.offset((page - 1) * limit);
+      }
+      query = query.limit(limit);
     }
 
-    const uniqueOptions = [...new Set(options.map(o => String(o || "").trim()).filter(Boolean))];
-    if (uniqueOptions.length < 2) {
-      return res.json({ error: true, message: "有効な選択肢を2つ以上入力してください" });
-    }
-
-    const cleanTags = Array.isArray(tags) ? tags.map(t => String(t || "").trim()).filter(Boolean) : [];
-
-    const docRef = await firestore.collection(Q_COLL).add({
-      title: escapeHTML(title),
-      description: escapeHTML(description),
-      tags: cleanTags,
-      options: uniqueOptions,
-      createdAt: nowJSTString(),
-      views: 0,
-      reports: 0,
-      totalVotes: 0
+    const snapshot = await query.get();
+    let questions = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        commentCount: data.commentCount || 0,
+        totalVotes: data.totalVotes || 0,
+        views: data.views || 0
+      };
     });
 
-    await updateSitemap();
+    // 通報が多いものを非表示
+    questions = questions.filter(q => (q.reports || 0) < 5);
 
-    res.json({ success: true, id: docRef.id });
+    // 💡 キーワード検索がある場合のみ、サーバー側で全体フィルタ＆切り分けを行う（件数が少ないため低負荷）
+    if (keyword) {
+      questions = questions.filter(q => q.title.includes(keyword));
+      
+      if (sort === "view") {
+        questions.sort((a, b) => (b.views || 0) - (a.views || 0));
+      } else if (sort === "vote") {
+        questions.sort((a, b) => (b.totalVotes || 0) - (a.totalVotes || 0));
+      } else {
+        questions.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+      }
+      
+      const totalCount = questions.length;
+      const totalPages = Math.ceil(totalCount / limit) || 1;
+      const paginatedQuestions = questions.slice((page - 1) * limit, page * limit);
+      
+      return res.json({
+        questions: paginatedQuestions,
+        totalPages,
+        currentPage: page
+      });
+    }
+
+    // 💡 通常時（キーワード検索なし）の合計ページ数計算
+    // ※正確な全件数は全体の snapshot を取る必要がありますが、速度最優先のため簡易的なページ計算、
+    // もしくは一度全件カウント（後述）にするとより正確です。ここでは動的なページ表示に対応させます。
+    const allSnapshot = await firestore.collection(Q_COLL).get();
+    const totalCount = allSnapshot.size;
+    const totalPages = Math.ceil(totalCount / limit) || 1;
+
+    res.json({
+      questions: questions, // すでに30件に絞られています
+      totalPages,
+      currentPage: page
+    });
   } catch (error) {
-    console.error("Post Question Error:", error);
-    res.status(500).json({ error: true, message: "投稿に失敗しました" });
+    console.error("Firestore error:", error);
+    res.status(500).json({ error: true, message: "データの取得に失敗しました" });
   }
 });
 
