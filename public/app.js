@@ -184,9 +184,11 @@ function renderTopTags() {
  
   tagArea.innerHTML = tagHTML;
 }
- 
+
+// ⭕ 修正後：余計な文字を排除し、シンプルに「vote」のまま送る形に戻します
 function changeSort(sort) {
-  currentSort = sort;
+  currentSort = sort; // 💡 一旦、シンプルな元の形に戻します
+  
   document.querySelectorAll(".sortMenu span").forEach(item => item.classList.remove("active"));
   const sortTab = document.getElementById(`sort-${sort}`);
   if (sortTab) sortTab.classList.add("active");
