@@ -75,10 +75,15 @@ app.get("/questions", async (req, res) => {
     }
 
     const snapshot = await query.get();
-    let questions = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    let questions = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        // 💡 激重処理をカットするため、データ内に保存されている commentCount をそのまま使用（なければ0）
+        commentCount: data.commentCount || 0 
+      };
+    });
 
     questions = questions.filter(q => (q.reports || 0) < 5);
 
@@ -86,20 +91,21 @@ app.get("/questions", async (req, res) => {
       questions = questions.filter(q => q.title.includes(keyword));
     }
 
-    // 各質問のリアルタイムなコメント数を集計してセット
-    await Promise.all(
-      questions.map(async (q) => {
-        const commentSnap = await firestore
-          .collection(C_COLL)
-          .where("questionId", "==", q.id)
-          .get();
-        q.commentCount = commentSnap.size;
-      })
-    );
+    // 💡 【超重要】毎回全コメントを数え直す重い処理（Promise.all）を完全に削除しました！
 
+    // 💡 並び替えロジックを修正：vote（回答順）の分岐を追加
     if (sort === "view") {
       questions.sort((a, b) => (b.views || 0) - (a.views || 0));
+    } else if (sort === "vote") {
+      // 💡 回答数（optionsの投票数の合計、またはデータに直であるフィールド）が多い順にソート
+      // バックエンドの保存形式に合わせて voteCount または totalVotes、どちらでも動くようにしています
+      questions.sort((a, b) => {
+        const votesB = b.voteCount || b.totalVotes || 0;
+        const votesA = a.voteCount || a.totalVotes || 0;
+        return votesB - votesA;
+      });
     } else {
+      // 新着順
       questions.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
     }
 
