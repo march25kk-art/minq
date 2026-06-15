@@ -243,35 +243,47 @@ app.get("/questions/:id", async (req, res) => {
 
     const allVotesCount = votes.length;
 
-    // 性別統計
+　　// ==========================================
+    // 性別統計（「回答しない」を分母から除外！）
+    // ==========================================
     q.genderStats = q.options.map((option, index) => {
       const optionVotes = votes.filter(v => v.optionIndex === index);
+      
+      // 💡 男性・女性の票だけをそれぞれきれいに抽出
       const maleVotes = optionVotes.filter(v => GENDER_ALIASES.male.includes(v.gender)).length;
       const femaleVotes = optionVotes.filter(v => GENDER_ALIASES.female.includes(v.gender)).length;
       
-      // 💡 修正：「性別未回答」も含めた、この選択肢に集まったリアルな全票数を分母にします
-      const optionTotal = optionVotes.length; 
+      // 💡 【修正】分母を「男性＋女性」の合計にする（これで「回答しない」の票が完全に除外されます）
+      const genderTotal = maleVotes + femaleVotes; 
 
       return {
         option: option,
-        // 💡 分母を optionTotal に変更することで、選択肢内での正しい割合（1票だけなら100%）になります
-        male: optionTotal > 0 ? Math.round((maleVotes * 100) / optionTotal) : 0,
-        female: optionTotal > 0 ? Math.round((femaleVotes * 100) / optionTotal) : 0,
-        // 💡 全体の回答（円グラフ用）は、従来通り全体におけるこの選択肢の割合を保持
+        // 💡 ちゃんと性別を答えた人だけの合計（genderTotal）で割るので、1人しかいなければ100%になります
+        male: genderTotal > 0 ? Math.round((maleVotes * 100) / genderTotal) : 0,
+        female: genderTotal > 0 ? Math.round((femaleVotes * 100) / genderTotal) : 0,
+        // 全体の回答（円グラフ用）は、未回答も含めたすべての票におけるこの選択肢の割合
         rawPercent: allVotesCount > 0 ? Math.round((optionVotes.length * 100) / allVotesCount) : 0
       };
     });
 
-    // 年代統計
+    // ==========================================
+    // 年代統計（「回答しない」を分母から除外！）
+    // ==========================================
     q.ageStats = q.options.map((option, index) => {
       const optionVotes = votes.filter(v => v.optionIndex === index);
-      const totalVotes = optionVotes.length;
+      
+      // 💡 【修正】「回答しない（または未回答）」を除外した、有効な年代の票だけを分母にする
+      const validAgeVotes = optionVotes.filter(v => v.age && v.age !== "回答しない" && v.age !== "未回答");
+      const totalAgeCount = validAgeVotes.length; // 💡 これを新たな分母にする
+      
       const row = { option: option };
 
-      AGE_GROUPS.forEach((age, ageIndex) => {
+      AGES.forEach((age, ageIndex) => {
         const legacyAge = LEGACY_AGE_GROUPS[ageIndex];
         const count = optionVotes.filter(v => v.age === age || v.age === legacyAge).length;
-        row[age] = totalVotes > 0 ? Math.round((count * 100) / totalVotes) : 0;
+        
+        // 💡 有効に年代が回答された合計数（totalAgeCount）で割る
+        row[age] = totalAgeCount > 0 ? Math.round((count * 100) / totalAgeCount) : 0;
       });
 
       return row;
