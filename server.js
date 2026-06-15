@@ -232,7 +232,7 @@ app.get("/questions/:id", async (req, res) => {
       .get();
     
     q.comments = commentsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    q.comments.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+    q.comments.sort((a, b) => String(a.createdAt || "").localeCompare(String(a.createdAt || "")));
 
     // 投票データの取得
     const votesSnapshot = await firestore
@@ -248,12 +248,16 @@ app.get("/questions/:id", async (req, res) => {
       const optionVotes = votes.filter(v => v.optionIndex === index);
       const maleVotes = optionVotes.filter(v => GENDER_ALIASES.male.includes(v.gender)).length;
       const femaleVotes = optionVotes.filter(v => GENDER_ALIASES.female.includes(v.gender)).length;
-      const genderTotal = maleVotes + femaleVotes;
+      
+      // 💡 修正：「性別未回答」も含めた、この選択肢に集まったリアルな全票数を分母にします
+      const optionTotal = optionVotes.length; 
 
       return {
         option: option,
-        male: genderTotal > 0 ? Math.round((maleVotes * 100) / genderTotal) : 0,
-        female: genderTotal > 0 ? Math.round((femaleVotes * 100) / genderTotal) : 0,
+        // 💡 分母を optionTotal に変更することで、選択肢内での正しい割合（1票だけなら100%）になります
+        male: optionTotal > 0 ? Math.round((maleVotes * 100) / optionTotal) : 0,
+        female: optionTotal > 0 ? Math.round((femaleVotes * 100) / optionTotal) : 0,
+        // 💡 全体の回答（円グラフ用）は、従来通り全体におけるこの選択肢の割合を保持
         rawPercent: allVotesCount > 0 ? Math.round((optionVotes.length * 100) / allVotesCount) : 0
       };
     });
