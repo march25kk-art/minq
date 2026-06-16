@@ -55,7 +55,7 @@ const nowJSTString = () => new Date(Date.now() + 9 * 60 * 60 * 1000)
 // ルーティング
 // -----------------------------------------------------------------------------
 
-// 1. 質問一覧取得 (爆速最適化版に1本化)
+// 1. 質問一覧取得（過去のデータでもコメント数が正しく表示される修正版）
 app.get("/questions", async (req, res) => {
   try {
     const page = Math.max(Number(req.query.page || 1), 1);
@@ -85,31 +85,41 @@ app.get("/questions", async (req, res) => {
     }
 
     const snapshot = await query.get();
-    let questions = snapshot.docs.map(doc => {
+    
+    // 💡 過去のアンケートデータでも、コメント数が正しく反映されるように修正
+    const questions = await Promise.all(snapshot.docs.map(async (doc) => {
       const data = doc.data();
+      
+      // データ内に commentCount が無ければ、実際のコメント数をFirestoreから直接数えて持ってくる
+      let commentCount = data.commentCount;
+      if (commentCount === undefined) {
+        const commentsComm = await firestore.collection(C_COLL).where("questionId", "==", doc.id).get();
+        commentCount = commentsComm.size;
+      }
+
       return {
         id: doc.id,
         ...data,
-        commentCount: data.commentCount || 0,
+        commentCount: commentCount || 0,
         totalVotes: data.totalVotes || 0,
         views: data.views || 0
       };
-    });
+    }));
 
-    questions = questions.filter(q => (q.reports || 0) < 5);
+    let filteredQuestions = questions.filter(q => (q.reports || 0) < 5);
 
     if (keyword) {
-      questions = questions.filter(q => q.title.includes(keyword));
+      filteredQuestions = filteredQuestions.filter(q => q.title.includes(keyword));
       if (sort === "view") {
-        questions.sort((a, b) => (b.views || 0) - (a.views || 0));
+        filteredQuestions.sort((a, b) => (b.views || 0) - (a.views || 0));
       } else if (sort === "vote") {
-        questions.sort((a, b) => (b.totalVotes || 0) - (a.totalVotes || 0));
+        filteredQuestions.sort((a, b) => (b.totalVotes || 0) - (a.totalVotes || 0));
       } else {
-        questions.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+        filteredQuestions.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
       }
-      const totalCount = questions.length;
+      const totalCount = filteredQuestions.length;
       const totalPages = Math.ceil(totalCount / limit) || 1;
-      const paginatedQuestions = questions.slice((page - 1) * limit, page * limit);
+      const paginatedQuestions = filteredQuestions.slice((page - 1) * limit, page * limit);
       return res.json({
         questions: paginatedQuestions,
         totalPages,
@@ -122,7 +132,7 @@ app.get("/questions", async (req, res) => {
     const totalPages = Math.ceil(totalCount / limit) || 1;
 
     res.json({
-      questions: questions,
+      questions: filteredQuestions,
       totalPages,
       currentPage: page
     });
