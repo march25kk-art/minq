@@ -24,10 +24,10 @@ const NG_WORDS = [
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production' || process.env.FIREBASE_SERVICE_ACCOUNT;
 
-const Q_COLL = 'questions_dev';
-const V_COLL = 'votes_dev';
-const C_COLL = 'comments_dev';
-const R_COLL = 'reportsLog_dev';
+const Q_COLL = IS_PRODUCTION ? 'questions' : 'questions_dev';
+const V_COLL = IS_PRODUCTION ? 'votes' : 'votes_dev';
+const C_COLL = IS_PRODUCTION ? 'comments' : 'comments_dev';
+const R_COLL = IS_PRODUCTION ? 'reportsLog' : 'reportsLog_dev';
 
 app.use(express.json());
 app.use(express.static("public"));
