@@ -25,11 +25,11 @@ const NG_WORDS = [
 // 💡 Render（本番）環境かローカル（開発）環境かを自動判別
 const IS_PRODUCTION = process.env.NODE_ENV === 'production' || process.env.FIREBASE_SERVICE_ACCOUNT;
 
-// 💡 環境に応じてコレクション名（保存先フォルダ名）を自動で切り替える
-const Q_COLL = IS_PRODUCTION ? 'questions' : 'questions_dev';
-const V_COLL = IS_PRODUCTION ? 'votes' : 'votes_dev';
-const C_COLL = IS_PRODUCTION ? 'comments' : 'comments_dev';
-const R_COLL = IS_PRODUCTION ? 'reportsLog' : 'reportsLog_dev';
+// 💡 【修正】本番環境でも、これまで確実に動いていた _dev フォルダを強制的に使用する
+const Q_COLL = 'questions_dev';
+const V_COLL = 'votes_dev';
+const C_COLL = 'comments_dev';
+const R_COLL = 'reportsLog_dev';
 
 app.use(express.json());
 app.use(express.static("public"));
