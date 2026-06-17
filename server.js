@@ -169,32 +169,47 @@ app.get("/questions", async (req, res) => {
     }
 
     if (!keyword) {
-      if (sort === "view") {
-        query = query.orderBy("views", "desc");
-      } else if (sort === "vote") {
-        query = query.orderBy("totalVotes", "desc");
-      } else {
-        query = query.orderBy("createdAt", "desc");
+      // 変更点: サーバー側での並び替えに対応するため、orderByは一旦外してデータを取得
+      let query = firestore.collection(Q_COLL).where("reports", "<", 5);
+
+      if (tag) {
+        query = query.where("tags", "array-contains", tag);
       }
       
-      query = query.offset((page - 1) * limit).limit(limit);
-      const snapshot = await query.get();
-
-      const questions = snapshot.docs.map(doc => {
-        const data = doc.data();
-        const normalized = normalizeQuestionData(data);
-        return { id: doc.id, ...data, ...normalized };
-      });
-
+      // 全件数を取得（別クエリ）
       let countQuery = firestore.collection(Q_COLL).where("reports", "<", 5);
       if (tag) {
-        countQuery = countQuery.where("tags", "array-contains", tag); // 修正: 再代入するように変更
+        countQuery = countQuery.where("tags", "array-contains", tag);
       }
       const countSnapshot = await countQuery.get();
       const totalCount = countSnapshot.size;
       const totalPages = Math.ceil(totalCount / limit) || 1;
 
-      return res.json({ questions, totalPages, currentPage: page });
+      // 一旦すべてのドキュメントを取得して、サーバー側でソートとページングを行う
+      const snapshot = await query.get();
+      let questions = snapshot.docs.map(doc => {
+        const data = doc.data();
+        const normalized = normalizeQuestionData(data);
+        return { id: doc.id, ...data, ...normalized };
+      });
+
+      // サーバー側（JavaScript）で並び替えを実行
+      if (sort === "view") {
+        questions.sort((a, b) => (b.views || 0) - (a.views || 0));
+      } else if (sort === "vote") {
+        questions.sort((a, b) => (b.totalVotes || 0) - (a.totalVotes || 0));
+      } else {
+        questions.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+      }
+
+      // ページング処理（該当ページの部分だけ切り取る）
+      const paginatedQuestions = questions.slice((page - 1) * limit, page * limit);
+
+      return res.json({
+        questions: paginatedQuestions,
+        totalPages,
+        currentPage: page
+      });
     }
 
     query = query.limit(1000);
