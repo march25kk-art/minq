@@ -29,6 +29,12 @@ const V_COLL = IS_PRODUCTION ? 'votes' : 'votes_dev';
 const C_COLL = IS_PRODUCTION ? 'comments' : 'comments_dev';
 const R_COLL = IS_PRODUCTION ? 'reportsLog' : 'reportsLog_dev';
 
+// ===== キャッシュ設定 =====
+const CACHE_STATS = new Map();          // 統計情報キャッシュ
+const CACHE_TTL = 30 * 1000;            // 30秒のTTL
+const COMMENTS_LIMIT = 100;             // 最新コメント数の制限
+const VOTES_STATS_LIMIT = 5000;         // 統計計算用の投票データ制限
+
 app.use(express.json());
 app.use(express.static("public"));
 
@@ -51,11 +57,93 @@ const nowJSTString = () => new Date(Date.now() + 9 * 60 * 60 * 1000)
   .replace("T", " ")
   .substring(0, 19);
 
+// ===== cooldown オブジェクトの自動クリーンアップ =====
+const cleanExpiredCooldowns = () => {
+  const now = Date.now();
+  const COOLDOWN_EXPIRY = 60 * 1000; // 60秒でクリア
+
+  Object.keys(questionCooldown).forEach(ip => {
+    if (now - questionCooldown[ip] > COOLDOWN_EXPIRY) {
+      delete questionCooldown[ip];
+    }
+  });
+
+  Object.keys(commentCooldown).forEach(ip => {
+    if (now - commentCooldown[ip] > COOLDOWN_EXPIRY) {
+      delete commentCooldown[ip];
+    }
+  });
+};
+setInterval(cleanExpiredCooldowns, 60 * 1000); // 1分ごとにクリーンアップ
+
+// ===== キャッシュクリーンアップ =====
+const cleanExpiredCache = () => {
+  const now = Date.now();
+  for (const [key, value] of CACHE_STATS.entries()) {
+    if (now - value.timestamp > CACHE_TTL) {
+      CACHE_STATS.delete(key);
+    }
+  }
+};
+setInterval(cleanExpiredCache, CACHE_TTL);
+
+// ===== 統計情報キャッシュ取得関数 =====
+const getCachedStats = (questionId) => {
+  const cached = CACHE_STATS.get(questionId);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+  return null;
+};
+
+const setCachedStats = (questionId, stats) => {
+  CACHE_STATS.set(questionId, {
+    data: stats,
+    timestamp: Date.now()
+  });
+};
+
+// ===== 統計計算関数 =====
+const calculateStats = (votes, options) => {
+  const allVotesCount = votes.length;
+
+  const genderStats = (options || []).map((option, index) => {
+    const optionVotes = votes.filter(v => v && v.optionIndex === index);
+    const maleVotes = optionVotes.filter(v => v.gender && GENDER_ALIASES.male.includes(v.gender)).length;
+    const femaleVotes = optionVotes.filter(v => v.gender && GENDER_ALIASES.female.includes(v.gender)).length;
+    const genderTotal = maleVotes + femaleVotes;
+
+    return {
+      option: option,
+      male: genderTotal > 0 ? Math.round((maleVotes * 100) / genderTotal) : 0,
+      female: genderTotal > 0 ? Math.round((femaleVotes * 100) / genderTotal) : 0,
+      rawPercent: allVotesCount > 0 ? Math.round((optionVotes.length * 100) / allVotesCount) : 0
+    };
+  });
+
+  const ageStats = (options || []).map((option, index) => {
+    const optionVotes = votes.filter(v => v && v.optionIndex === index);
+    const validAgeVotes = optionVotes.filter(v => v && v.age && v.age !== "回答しない" && v.age !== "未回答");
+    const totalAgeCount = validAgeVotes.length;
+    const row = { option: option };
+
+    AGE_GROUPS.filter(age => age !== "回答しない").forEach((age, ageIndex) => {
+      const legacyAge = LEGACY_AGE_GROUPS ? LEGACY_AGE_GROUPS[ageIndex] : undefined;
+      const count = optionVotes.filter(v => v && (v.age === age || (legacyAge && v.age === legacyAge))).length;
+      row[age] = totalAgeCount > 0 ? Math.round((count * 100) / totalAgeCount) : 0;
+    });
+
+    return row;
+  });
+
+  return { genderStats, ageStats };
+};
+
 // -----------------------------------------------------------------------------
 // ルーティング
 // -----------------------------------------------------------------------------
 
-// 1. 質問一覧取得（過去のデータでもコメント数が正しく表示される修正版）
+// 1. 質問一覧取得（最適化版）
 app.get("/questions", async (req, res) => {
   try {
     const page = Math.max(Number(req.query.page || 1), 1);
@@ -64,13 +152,15 @@ app.get("/questions", async (req, res) => {
     const tag = String(req.query.tag || "");
     const sort = String(req.query.sort || "new");
 
-    let query = firestore.collection(Q_COLL);
+    let query = firestore.collection(Q_COLL)
+      .where("reports", "<", 5);  // サーバー側で通報済みを除外
 
     if (tag) {
       query = query.where("tags", "array-contains", tag);
     }
 
     if (!keyword) {
+      // キーワード検索がない場合はサーバー側で並び替え＋ページング
       if (sort === "view") {
         query = query.orderBy("views", "desc");
       } else if (sort === "vote") {
@@ -78,18 +168,43 @@ app.get("/questions", async (req, res) => {
       } else {
         query = query.orderBy("createdAt", "desc");
       }
-      if (page > 1) {
-        query = query.offset((page - 1) * limit);
+      
+      query = query.offset((page - 1) * limit).limit(limit);
+      const snapshot = await query.get();
+
+      const questions = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          commentCount: data.commentCount || 0,
+          totalVotes: data.totalVotes || 0,
+          views: data.views || 0
+        };
+      });
+
+      // 全件数を取得（別クエリ）
+      const countQuery = firestore.collection(Q_COLL).where("reports", "<", 5);
+      if (tag) {
+        countQuery.where("tags", "array-contains", tag);
       }
-      query = query.limit(limit);
+      const countSnapshot = await countQuery.get();
+      const totalCount = countSnapshot.size;
+      const totalPages = Math.ceil(totalCount / limit) || 1;
+
+      return res.json({
+        questions,
+        totalPages,
+        currentPage: page
+      });
     }
-    
-    // 💡 過去のアンケートデータでも、コメント数が正しく反映されるように修正
+
+    // キーワード検索の場合（制限件数で検索）
+    query = query.limit(1000);
     const snapshot = await query.get();
 
     const questions = snapshot.docs.map(doc => {
       const data = doc.data();
-
       return {
         id: doc.id,
         ...data,
@@ -97,34 +212,24 @@ app.get("/questions", async (req, res) => {
         totalVotes: data.totalVotes || 0,
         views: data.views || 0
       };
-   });
+    });
 
-    let filteredQuestions = questions.filter(q => (q.reports || 0) < 5);
+    let filteredQuestions = questions.filter(q => q.title.includes(keyword));
 
-    if (keyword) {
-      filteredQuestions = filteredQuestions.filter(q => q.title.includes(keyword));
-      if (sort === "view") {
-        filteredQuestions.sort((a, b) => (b.views || 0) - (a.views || 0));
-      } else if (sort === "vote") {
-        filteredQuestions.sort((a, b) => (b.totalVotes || 0) - (a.totalVotes || 0));
-      } else {
-        filteredQuestions.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
-      }
-      const totalCount = filteredQuestions.length;
-      const totalPages = Math.ceil(totalCount / limit) || 1;
-      const paginatedQuestions = filteredQuestions.slice((page - 1) * limit, page * limit);
-      return res.json({
-        questions: paginatedQuestions,
-        totalPages,
-        currentPage: page
-      });
+    if (sort === "view") {
+      filteredQuestions.sort((a, b) => (b.views || 0) - (a.views || 0));
+    } else if (sort === "vote") {
+      filteredQuestions.sort((a, b) => (b.totalVotes || 0) - (a.totalVotes || 0));
+    } else {
+      filteredQuestions.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
     }
 
     const totalCount = filteredQuestions.length;
     const totalPages = Math.ceil(totalCount / limit) || 1;
+    const paginatedQuestions = filteredQuestions.slice((page - 1) * limit, page * limit);
 
     res.json({
-      questions: filteredQuestions,
+      questions: paginatedQuestions,
       totalPages,
       currentPage: page
     });
@@ -134,7 +239,7 @@ app.get("/questions", async (req, res) => {
   }
 });
 
-// 2. 質問投稿 (正しく POST ルートとして復活させました)
+// 2. 質問投稿
 app.post("/questions", async (req, res) => {
   try {
     let { title, options, tags } = req.body;
@@ -170,7 +275,7 @@ app.post("/questions", async (req, res) => {
 
     const docRef = await firestore.collection(Q_COLL).add(newQuestion);
 
-    // 💡 バックグラウンドでサイトマップ更新を動かし、投稿を邪魔しない（権限エラーでも投稿自体は成功させる）
+    // バックグラウンドでサイトマップ更新を動かし、投稿を邪魔しない
     try {
       if (typeof updateSitemap === 'function') {
         updateSitemap({ id: docRef.id, ...newQuestion });
@@ -186,7 +291,7 @@ app.post("/questions", async (req, res) => {
   }
 });
 
-// 3. 質問詳細取得
+// 3. 質問詳細取得（最適化版）
 app.get("/questions/:id", async (req, res) => {
   try {
     const id = req.params.id;
@@ -198,50 +303,36 @@ app.get("/questions/:id", async (req, res) => {
 
     const q = { id: doc.id, ...doc.data() };
 
+    // 最新コメント100件のみ取得
     const commentsSnapshot = await firestore
       .collection(C_COLL)
       .where("questionId", "==", id)
+      .orderBy("createdAt", "asc")
+      .limit(COMMENTS_LIMIT)
       .get();
     
     q.comments = commentsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    q.comments.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
 
-    const votesSnapshot = await firestore
-      .collection(V_COLL)
-      .where("questionId", "==", id)
-      .get();
-    const votes = votesSnapshot.docs.map(d => d.data()) || [];
+    // キャッシュから統計情報を取得、なければ計算
+    let statsData = getCachedStats(id);
+    
+    if (!statsData) {
+      // 統計用投票データは制限を設ける
+      const votesSnapshot = await firestore
+        .collection(V_COLL)
+        .where("questionId", "==", id)
+        .limit(VOTES_STATS_LIMIT)
+        .get();
+      
+      const votes = votesSnapshot.docs.map(d => d.data()) || [];
+      statsData = calculateStats(votes, q.options);
+      
+      // キャッシュに保存
+      setCachedStats(id, statsData);
+    }
 
-    const allVotesCount = votes.length;
-
-    q.genderStats = (q.options || []).map((option, index) => {
-      const optionVotes = votes.filter(v => v && v.optionIndex === index);
-      const maleVotes = optionVotes.filter(v => v.gender && GENDER_ALIASES.male.includes(v.gender)).length;
-      const femaleVotes = optionVotes.filter(v => v.gender && GENDER_ALIASES.female.includes(v.gender)).length;
-      const genderTotal = maleVotes + femaleVotes; 
-
-      return {
-        option: option,
-        male: genderTotal > 0 ? Math.round((maleVotes * 100) / genderTotal) : 0,
-        female: genderTotal > 0 ? Math.round((femaleVotes * 100) / genderTotal) : 0,
-        rawPercent: allVotesCount > 0 ? Math.round((optionVotes.length * 100) / allVotesCount) : 0
-      };
-    });
-
-    q.ageStats = (q.options || []).map((option, index) => {
-      const optionVotes = votes.filter(v => v && v.optionIndex === index);
-      const validAgeVotes = optionVotes.filter(v => v && v.age && v.age !== "回答しない" && v.age !== "未回答");
-      const totalAgeCount = validAgeVotes.length; 
-      const row = { option: option };
-
-      AGE_GROUPS.filter(age => age !== "回答しない").forEach((age, ageIndex) => {
-        const legacyAge = LEGACY_AGE_GROUPS ? LEGACY_AGE_GROUPS[ageIndex] : undefined;
-        const count = optionVotes.filter(v => v && (v.age === age || (legacyAge && v.age === legacyAge))).length;
-        row[age] = totalAgeCount > 0 ? Math.round((count * 100) / totalAgeCount) : 0;
-      });
-
-      return row;
-    });
+    q.genderStats = statsData.genderStats;
+    q.ageStats = statsData.ageStats;
 
     res.json(q);
   } catch (error) {
@@ -314,6 +405,10 @@ app.post("/vote", async (req, res) => {
         createdAt: new Date().toISOString()
       });
     });
+
+    // キャッシュをクリア
+    CACHE_STATS.delete(id);
+
     res.json({ success: true });
   } catch (err) {
     console.error("Vote error:", err);
@@ -357,6 +452,10 @@ app.post("/questions/:id/vote", async (req, res) => {
         createdAt: new Date().toISOString()
       });
     });
+
+    // キャッシュをクリア
+    CACHE_STATS.delete(id);
+
     res.json({ success: true });
   } catch (err) {
     console.error("Vote error:", err);
@@ -364,11 +463,42 @@ app.post("/questions/:id/vote", async (req, res) => {
   }
 });
 
-// 7. 統計データ取得
+// 7. 統計データ取得（最適化版）
 app.get("/stats/:id", async (req, res) => {
   try {
     const id = req.params.id;
-    const votesSnapshot = await firestore.collection(V_COLL).where("questionId", "==", id).get();
+    
+    // キャッシュから取得を試みる
+    let cached = getCachedStats(id);
+    if (cached) {
+      // キャッシュから統計データを返す
+      const ageStats = [];
+      const genderStats = [];
+
+      // ageStats と genderStats を再構築
+      cached.ageStats.forEach((ageRow, optIdx) => {
+        AGE_GROUPS.filter(age => age !== "回答しない").forEach((age) => {
+          if (ageRow[age]) {
+            ageStats.push({ age, optionIndex: optIdx, votes: ageRow[age] });
+          }
+        });
+      });
+
+      cached.genderStats.forEach((genderRow, optIdx) => {
+        genderStats.push({ gender: "male", optionIndex: optIdx, votes: genderRow.male });
+        genderStats.push({ gender: "female", optionIndex: optIdx, votes: genderRow.female });
+      });
+
+      return res.json({ ageStats, genderStats });
+    }
+
+    // キャッシュにない場合は計算
+    const votesSnapshot = await firestore
+      .collection(V_COLL)
+      .where("questionId", "==", id)
+      .limit(VOTES_STATS_LIMIT)
+      .get();
+
     const ageStats = {};
     const genderStats = {};
 
@@ -426,10 +556,10 @@ const saveComment = async (req, res) => {
     });
 
     await firestore.collection(Q_COLL)
-    .doc(String(id))
-    .update({
-      commentCount: FieldValue.increment(1)
-    });
+      .doc(String(id))
+      .update({
+        commentCount: FieldValue.increment(1)
+      });
 
     res.json({ success: true });
   } catch (error) {
@@ -466,6 +596,10 @@ app.post("/report", async (req, res) => {
       });
       transaction.update(questionRef, { reports: FieldValue.increment(1) });
     });
+
+    // キャッシュをクリア
+    CACHE_STATS.delete(id);
+
     res.json({ success: true });
   } catch (error) {
     if (error.message === "ALREADY_REPORTED") return res.json({ error: true, message: "通報済みです" });
@@ -502,6 +636,10 @@ app.post("/admin/delete", async (req, res) => {
       snapshot.docs.forEach(doc => batch.delete(doc.ref));
       await batch.commit();
     }
+
+    // キャッシュをクリア
+    CACHE_STATS.delete(questionId);
+
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: true, message: "削除に失敗しました" });
