@@ -83,28 +83,21 @@ app.get("/questions", async (req, res) => {
       }
       query = query.limit(limit);
     }
-
-    const snapshot = await query.get();
     
     // 💡 過去のアンケートデータでも、コメント数が正しく反映されるように修正
-    const questions = await Promise.all(snapshot.docs.map(async (doc) => {
+    const snapshot = await query.get();
+
+    const questions = snapshot.docs.map(doc => {
       const data = doc.data();
-      
-      // データ内に commentCount が無ければ、実際のコメント数をFirestoreから直接数えて持ってくる
-      let commentCount = data.commentCount;
-      if (commentCount === undefined) {
-        const commentsComm = await firestore.collection(C_COLL).where("questionId", "==", doc.id).get();
-        commentCount = commentsComm.size;
-      }
 
       return {
         id: doc.id,
         ...data,
-        commentCount: commentCount || 0,
+        commentCount: data.commentCount || 0,
         totalVotes: data.totalVotes || 0,
         views: data.views || 0
       };
-    }));
+   });
 
     let filteredQuestions = questions.filter(q => (q.reports || 0) < 5);
 
@@ -432,6 +425,13 @@ const saveComment = async (req, res) => {
       createdAt: nowJSTString(),
       ip: ip
     });
+
+    await firestore.collection(Q_COLL)
+    .doc(String(id))
+    .update({
+      commentCount: FieldValue.increment(1)
+    });
+
     res.json({ success: true });
   } catch (error) {
     console.error("Comment Save Error:", error);
