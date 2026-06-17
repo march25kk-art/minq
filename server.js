@@ -136,6 +136,7 @@ const calculateStats = (votes, options) => {
     return row;
   });
 
+  // 🔴 重要: 余計なデータを混ぜず、統計データだけを正確に返す
   return { genderStats, ageStats };
 };
 
