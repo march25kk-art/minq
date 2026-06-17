@@ -120,8 +120,7 @@ app.get("/questions", async (req, res) => {
       });
     }
 
-    const allSnapshot = await firestore.collection(Q_COLL).get();
-    const totalCount = allSnapshot.size;
+    const totalCount = filteredQuestions.length;
     const totalPages = Math.ceil(totalCount / limit) || 1;
 
     res.json({
