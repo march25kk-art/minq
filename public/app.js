@@ -191,9 +191,11 @@ async function loadQuestions() {
     const fragment = document.createDocumentFragment();
     
     questionsList.forEach(q => {
-      const total = q.voteCount || q.totalVotes || 0;
-      const commentCount = q.commentCount || 0;
-      const viewsCount = q.viewCount || q.views || 0;
+      const total = q.totalVotes || 0;
+      // コメント数取得を改善（フィールドが無い可能性に対応）
+      const commentCount = (typeof q.commentCount === 'number' && q.commentCount >= 0) ? q.commentCount : 
+                            (q.comments && Array.isArray(q.comments)) ? q.comments.length : 0;
+      const viewsCount = q.views || 0;
       const hotTag = getOptimalHotTag(total, commentCount);
 
       const thread = document.createElement("div");
@@ -226,6 +228,7 @@ async function loadQuestions() {
     div.innerHTML = '<div style="text-align:center; padding:40px; color:#ff4d4d;">データの読み込みに失敗しました。</div>';
   }
 }
+
 
 function renderTopTags() {
   const tagArea = document.getElementById("tagArea");
