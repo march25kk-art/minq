@@ -601,12 +601,9 @@ function renderGenderStats(q) {
   ];
 
   genders.forEach((genderObj) => {
-    // 💡 1. 【合計100%化】この性別（男性 / 女性）の「生得票数」の合計をまず計算する
     let genderTotalRaw = 0;
     q.options.forEach((_, index) => {
-      // 過去の投票データから、この選択肢を選んだ該当性別の人数（割合の逆算、またはデータ）を足し上げる
       const data = q.genderStats[index] || { male: 0, female: 0 };
-      // 既存の％表示が「選択肢内の割合」になっているため、正確にこの性別の分布を出すための重み付け
       genderTotalRaw += (data[genderObj.key] || 0);
     });
 
@@ -627,8 +624,6 @@ function renderGenderStats(q) {
     q.options.forEach((option, index) => {
       const data = q.genderStats[index] || { male: 0, female: 0 };
       const rawVal = data[genderObj.key] || 0;
-      
-      // 💡 2. 【合計100%化】この性別内での相対的な割合（％）を算出する
       const percent = genderTotalRaw > 0 ? Math.round((rawVal * 100) / genderTotalRaw) : 0;
       
       const color = colors[index % colors.length];
@@ -638,9 +633,9 @@ function renderGenderStats(q) {
       row.className = "flipped-bar-row";
       row.style.cssText = "display: flex; align-items: center; gap: 12px; min-height: 18px; width: 100%; box-sizing: border-box;";
       
-      // 💡 3. 【始まり不揃い対策】ラベルの幅を大きめの「width: 140px;」に固定し、右揃え（text-align: right）にすることで、グラフの左端を完全に一直線に揃えます！
+      // 💡 【修正点】「text-align: left」で完璧な左揃えにし、幅を「min-width: 140px」に広げ、さらに「overflowやwhite-spaceの省略制限」を完全に撤廃。文字が長い場合は自動で改行して全文字を表示させます。
       row.innerHTML = `
-        <div style="font-size: 13px; width: 140px; flex-shrink: 0; text-align: right; color: #475569; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${sanitize(optionText)}">${sanitize(optionText)}</div>
+        <div style="font-size: 13px; min-width: 140px; max-width: 200px; flex-shrink: 0; text-align: left; color: #475569; font-weight: 500; line-height: 1.2; padding-right: 4px; box-sizing: border-box;">${sanitize(optionText)}</div>
         <div style="flex: 1; height: 14px; background-color: #e2e8f0; border-radius: 999px; overflow: hidden; position: relative;">
           <div style="width: ${percent}%; height: 100%; background-color: ${color}; border-radius: 999px; transition: width 0.3s ease;"></div>
         </div>
@@ -671,7 +666,6 @@ function renderAgeStats(q) {
   container.style.cssText = "display: flex; flex-direction: column; gap: 16px; width: 100%; box-sizing: border-box;";
 
   ages.forEach((age) => {
-    // 💡 1. 【合計100%化】この年代の「生得票数」の合計をまず計算する
     let ageTotalRaw = 0;
     q.options.forEach((_, optionIndex) => {
       const optionAgeData = q.ageStats[optionIndex] || {};
@@ -695,8 +689,6 @@ function renderAgeStats(q) {
     q.options.forEach((option, optionIndex) => {
       const optionAgeData = q.ageStats[optionIndex] || {};
       const rawVal = optionAgeData[age] || 0;
-      
-      // 💡 2. 【合計100%化】この年代内での相対的な割合（％）を算出する
       const percent = ageTotalRaw > 0 ? Math.round((rawVal * 100) / ageTotalRaw) : 0;
       
       const color = colors[optionIndex % colors.length];
@@ -706,9 +698,9 @@ function renderAgeStats(q) {
       row.className = "flipped-bar-row";
       row.style.cssText = "display: flex; align-items: center; gap: 12px; min-height: 18px; width: 100%; box-sizing: border-box;";
       
-      // 💡 3. 【始まり不揃い対策】こちらも同様にラベル幅を「width: 140px;」に固定し右揃えに
+      // 💡 【修正点】年代側も同様に、左揃え＆長いときは改行を許可して文字切れを完全に排除
       row.innerHTML = `
-        <div style="font-size: 13px; width: 140px; flex-shrink: 0; text-align: right; color: #475569; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${sanitize(optionText)}">${sanitize(optionText)}</div>
+        <div style="font-size: 13px; min-width: 140px; max-width: 200px; flex-shrink: 0; text-align: left; color: #475569; font-weight: 500; line-height: 1.2; padding-right: 4px; box-sizing: border-box;">${sanitize(optionText)}</div>
         <div style="flex: 1; height: 14px; background-color: #e2e8f0; border-radius: 999px; overflow: hidden; position: relative;">
           <div style="width: ${percent}%; height: 100%; background-color: ${color}; border-radius: 999px; transition: width 0.3s ease;"></div>
         </div>
