@@ -213,18 +213,22 @@ async function loadQuestions() {
     
     questionsList.forEach(q => {
       const total = q.totalVotes || 0;
-      // コメント数取得を改善（フィールドが無い可能性に対応）
       const commentCount = (typeof q.commentCount === 'number' && q.commentCount >= 0) ? q.commentCount : 
                             (q.comments && Array.isArray(q.comments)) ? q.comments.length : 0;
       const viewsCount = q.views || 0;
-      const hotTag = getOptimalHotTag(total, commentCount, q.createdAt);
+
+      // 💡 【修正点】作成時に選択されたカテゴリ（タグ）を取得。無ければ「なし」
+      const hasTag = q.tags && Array.isArray(q.tags) && q.tags.length > 0 && q.tags[0];
+      const categoryTag = hasTag ? `【${sanitize(q.tags[0])}】` : "【なし】";
 
       const thread = document.createElement("div");
       thread.className = "thread";
       thread.onclick = () => openDetail(q.id);
+      
+      // 💡 【エラー解決】古い hotTag を完全に排除し、categoryTag を表示するように統一しました
       thread.innerHTML = `
         <div class="threadRow">
-          <div class="leftTitle">${hotTag ? `<span class="hotTag">${hotTag}</span>` : ''}${sanitize(q.title)}</div>
+          <div class="leftTitle"><span class="hotTag">${categoryTag}</span>${sanitize(q.title)}</div>
           <div class="rightMeta">
             <span>${total}回答</span>
             <span>${commentCount}コメント</span>
