@@ -460,13 +460,13 @@ function renderResultsScreen(div, q, id) {
       <div class="resultHeader">
         <div class="resultQuestionTitle">${sanitize(q.title)}</div>
         <!-- 💡 「回答結果」を2段階小さく (元のh1サイズから18px相当に縮小) -->
-        <h1 style="font-size: 18px; margin-top: 4px; color: #333;">回答結果</h1>
+        <h1 style="font-size: 17px; margin-top: 4px; color: #333;">回答結果</h1>
       </div>
 
       <div class="resultGrid-top">
         <div class="resultCard">
           <!-- 💡 「全体の回答」を2段階小さく (元のh2サイズから15px相当に縮小) -->
-          <h2 style="font-size: 15px; font-weight: bold; margin-bottom: 12px; color: #111;">全体の回答</h2>
+          <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 12px; color: #111;">全体の回答</h2>
           <div class="overallWrap">
             <div class="pieChart" style="background: conic-gradient(${conicParts.join(", ")});"></div>
             <div class="overallStats" style="width:100%;">
@@ -495,14 +495,14 @@ function renderResultsScreen(div, q, id) {
         </div>
         <div class="resultCard">
           <!-- 💡 「性別ごとの割合」を2段階小さく (15px相当に縮小) -->
-          <h2 style="font-size: 15px; font-weight: bold; margin-bottom: 12px; color: #111;">性別ごとの割合</h2>
+          <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 12px; color: #111;">性別ごとの割合</h2>
           <div id="genderStats"></div>
         </div>
       </div>
 
       <div class="resultCard margin-top-20">
         <!-- 💡 「年代ごとの割合」を2段階小さく (15px相当に縮小) -->
-        <h2 style="font-size: 15px; font-weight: bold; margin-bottom: 12px; color: #111;">年代ごとの割合</h2>
+        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 12px; color: #111;">年代ごとの割合</h2>
         <div id="ageStats"></div>
       </div>
   `;
