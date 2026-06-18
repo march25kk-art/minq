@@ -225,12 +225,10 @@ async function loadQuestions() {
       thread.className = "thread";
       thread.onclick = () => openDetail(q.id);
       
-      // 💡 背景色の赤を消し、文字を黒・タイトルと同じ大きさに統一しました
+      // 💡 カテゴリタグ（categoryTag）の表示を完全に削除し、タイトルのみにしました
       thread.innerHTML = `
         <div class="threadRow">
-          <div class="leftTitle">
-            <span style="background: none !important; color: #333 !important; font-size: inherit !important; font-weight: bold; padding: 0; margin-right: 6px; border-radius: 0;">${categoryTag}</span>${sanitize(q.title)}
-          </div>
+          <div class="leftTitle">${sanitize(q.title)}</div>
           <div class="rightMeta">
             <span>${total}回答</span>
             <span>${commentCount}コメント</span>
