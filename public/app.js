@@ -282,8 +282,32 @@ function searchQuestions() {
   state.page = 1;
   loadQuestions();
 }
-function searchTag(tag) { state.currentTag = tag; state.page = 1; loadQuestions(); }
-function clearTag() { state.currentTag = ""; state.page = 1; loadQuestions(); }
+
+async function searchTag(tag) {
+  console.log("searchTag called with:", tag);
+  state.currentTag = tag;
+  state.page = 1;
+  
+  const url = new URL(window.location.href);
+  url.searchParams.set("tag", tag);
+  url.searchParams.set("page", "1");
+  window.history.pushState({}, "", url);
+  
+  await loadQuestions();
+}
+
+async function clearTag() {
+  console.log("clearTag called");
+  state.currentTag = "";
+  state.page = 1;
+  
+  const url = new URL(window.location.href);
+  url.searchParams.delete("tag");
+  url.searchParams.set("page", "1");
+  window.history.pushState({}, "", url);
+  
+  await loadQuestions();
+}
 function nextPage() { if (state.page < state.totalPages) { state.page++; loadQuestions(); } }
 function prevPage() { if (state.page > 1) { state.page--; loadQuestions(); } }
 
