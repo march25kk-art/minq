@@ -510,7 +510,18 @@ function renderResultsScreen(div, q, id) {
         </div>
         <div id="commentList">
           ${q.comments ? q.comments.map((comment, index) => {
-            const profileText = (comment.gender || comment.age) ? ` (${sanitize(comment.gender || "未回答")} / ${sanitize(comment.age || "未回答")})` : "";
+            // 💡 「回答しない」「未回答」以外の中身がある場合のみプロフィールを表示する
+            let profileText = "";
+            const g = comment.gender;
+            const a = comment.age;
+
+            const hasValidGender = g && g !== "回答しない" && g !== "未回答";
+            const hasValidAge = a && a !== "回答しない" && a !== "未回答";
+
+            if (hasValidGender || hasValidAge) {
+              profileText = ` (${sanitize(g || "未回答")} / ${sanitize(a || "未回答")})`;
+            }
+
             return `
             <div class="comment">
               <div style="font-size:11px; color:#777; margin-bottom:4px;">No.${index + 1} 匿名ユーザー${profileText} ：${comment.createdAt}</div>
