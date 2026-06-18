@@ -51,26 +51,19 @@ function getOptimalHotTag(total, commentCount, createdAtStr) {
   const speed = total + commentCount * 3;
 
   if (createdAtStr) {
-    // タイムスタンプ文字列（"2026-06-15 12:00:00" など）を日付オブジェクトに変換
-    // ハイフンとスペースが含まれるフォーマットを安全にパースするため置換処理を挟みます
     const formattedStr = createdAtStr.replace(/-/g, "/");
     const postDate = new Date(formattedStr);
     const now = new Date();
 
-    // 3日間をミリ秒に計算 (3日 × 24時間 × 60分 × 60秒 × 1000ミリ秒)
     const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
 
-    // 💡 投稿から3日（72時間）以上経過している場合
+    // 💡 投稿から3日（72時間）以上経過している場合は「空っぽ」を返す
     if (now.getTime() - postDate.getTime() > threeDaysMs) {
-      if (speed > 100) return "HOT";
-      if (speed > 30) return "UP";
-      return ""; // 3日以上経っていて勢いもない場合は「タグなし」にする
+      return ""; 
     }
   }
 
-  // 💡 3日以内の場合（従来通りの判定）
-  if (speed > 100) return "HOT";
-  if (speed > 30) return "UP";
+  // 💡 3日以内なら「NEW」を返す
   return "NEW";
 }
 
@@ -217,18 +210,20 @@ async function loadQuestions() {
                             (q.comments && Array.isArray(q.comments)) ? q.comments.length : 0;
       const viewsCount = q.views || 0;
 
-      // 💡 【修正点】作成時に選択されたカテゴリ（タグ）を取得。無ければ「なし」
-      const hasTag = q.tags && Array.isArray(q.tags) && q.tags.length > 0 && q.tags[0];
-      const categoryTag = hasTag ? `【${sanitize(q.tags[0])}】` : "【なし】";
+      // 💡 復活：3日以内かどうかの判定を呼び出す
+      const hotTag = getOptimalHotTag(total, commentCount, q.createdAt);
 
       const thread = document.createElement("div");
       thread.className = "thread";
       thread.onclick = () => openDetail(q.id);
       
-      // 💡 カテゴリタグ（categoryTag）の表示を完全に削除し、タイトルのみにしました
+      // 💡 隙間を揃える対策：hotTag が空（3日超え）の場合は、背景を透明にして「幅42pxの透明な隙間」をキープさせます
       thread.innerHTML = `
         <div class="threadRow">
-          <div class="leftTitle">${sanitize(q.title)}</div>
+          <div class="leftTitle" style="display: flex; align-items: center; gap: 8px;">
+            <span class="hotTag" style="${hotTag ? '' : 'background: transparent !important; color: transparent !important; border: none !important;'} display: inline-block; width: 42px; text-align: center; flex-shrink: 0;">${hotTag || 'NEW'}</span>
+            <span>${sanitize(q.title)}</span>
+          </div>
           <div class="rightMeta">
             <span>${total}回答</span>
             <span>${commentCount}コメント</span>
