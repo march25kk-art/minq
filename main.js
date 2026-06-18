@@ -42,7 +42,7 @@ async function loadQuestions() {
       thread.onclick = () => openDetail(q.id);
       thread.innerHTML = `
         <div class="threadRow">
-          <div class="leftTitle"><span class="hotTag">${hotTag}</span>${sanitize(q.title)}</div>
+          <div class="leftTitle"><span class="hotTag">${categoryTag}</span>${sanitize(q.title)}</div>
           <div class="rightMeta">
             <span>${total}回答</span>
             <span>${commentCount}コメント</span>

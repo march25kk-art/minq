@@ -217,7 +217,8 @@ async function loadQuestions() {
       const commentCount = (typeof q.commentCount === 'number' && q.commentCount >= 0) ? q.commentCount : 
                             (q.comments && Array.isArray(q.comments)) ? q.comments.length : 0;
       const viewsCount = q.views || 0;
-      const hotTag = getOptimalHotTag(total, commentCount, q.createdAt);
+      const hasTag = q.tags && Array.isArray(q.tags) && q.tags.length > 0 && q.tags[0];
+      const categoryTag = hasTag ? `【${sanitize(q.tags[0])}】` : "【なし】";
 
       const thread = document.createElement("div");
       thread.className = "thread";
