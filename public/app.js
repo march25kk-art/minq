@@ -581,52 +581,52 @@ function renderGenderStats(q) {
   const genderDiv = document.getElementById("genderStats");
   if (!genderDiv || !q.genderStats) return;
   
+  const colors = CHART_COLORS;
   const fragment = document.createDocumentFragment();
   const container = document.createElement("div");
   container.className = "axis-flipped-container";
-  container.style.cssText = "display: flex; flex-direction: column; gap: 20px;";
+  container.style.cssText = "display: flex; flex-direction: column; gap: 16px; width: 100%; box-sizing: border-box;";
 
-  q.options.forEach((option, index) => {
-    const data = q.genderStats[index] || { male: 0, female: 0 };
-    const optionText = typeof option === "string" ? option : (option.text || "");
-    
+  const genders = [
+    { key: "male", label: "男性" },
+    { key: "female", label: "女性" }
+  ];
+
+  genders.forEach((genderObj) => {
     const group = document.createElement("div");
-    group.className = "flipped-option-group";
-    group.style.cssText = "display: flex; flex-direction: column; align-items: flex-start; width: 100%;";
+    group.className = "flipped-gender-group";
+    group.style.cssText = "display: flex; flex-direction: column; align-items: flex-start; width: 100%; background: #f8fafc; padding: 12px 16px; border-radius: 12px; border: 1px solid #edf2f7; box-sizing: border-box;";
 
     const label = document.createElement("div");
     label.className = "flipped-axis-label";
-    label.style.cssText = "font-weight: bold; font-size: 14px; margin-bottom: 6px; color: #333; width: 100%; text-align: left;";
-    label.textContent = sanitize(optionText);
+    label.style.cssText = "font-weight: bold; font-size: 16px; margin-bottom: 8px; color: #1e293b; width: 100%; text-align: left; box-sizing: border-box;";
+    label.textContent = genderObj.label;
     group.appendChild(label);
 
     const stack = document.createElement("div");
     stack.className = "flipped-bars-stack";
-    stack.style.cssText = "display: flex; flex-direction: column; gap: 6px; width: 100%;";
+    stack.style.cssText = "display: flex; flex-direction: column; gap: 4px; width: 100%; box-sizing: border-box;";
 
-    // 男性
-    const maleRow = document.createElement("div");
-    maleRow.className = "flipped-bar-row";
-    maleRow.style.cssText = "display: flex; align-items: center; gap: 12px; min-height: 20px; width: 100%;";
-    maleRow.innerHTML = `
-      <div style="font-size: 13px; width: 90px; flex-shrink: 0; white-space: nowrap; color: #555;">男性 / ${data.male}%</div>
-      <div style="width: 100%; max-width: 500px; height: 16px; background-color: #f1f5f9; border-radius: 999px; overflow: hidden; flex-shrink: 1;">
-        <div style="width: ${data.male}%; height: 100%; background-color: #1e3a8a; border-radius: 999px;"></div>
-      </div>
-    `;
-    stack.appendChild(maleRow);
-
-    // 女性
-    const femaleRow = document.createElement("div");
-    femaleRow.className = "flipped-bar-row";
-    femaleRow.style.cssText = "display: flex; align-items: center; gap: 12px; min-height: 20px; width: 100%;";
-    femaleRow.innerHTML = `
-      <div style="font-size: 13px; width: 90px; flex-shrink: 0; white-space: nowrap; color: #555;">女性 / ${data.female}%</div>
-      <div style="width: 100%; max-width: 500px; height: 16px; background-color: #f1f5f9; border-radius: 999px; overflow: hidden; flex-shrink: 1;">
-        <div style="width: ${data.female}%; height: 100%; background-color: #f43f5e; border-radius: 999px;"></div>
-      </div>
-    `;
-    stack.appendChild(femaleRow);
+    q.options.forEach((option, index) => {
+      const data = q.genderStats[index] || { male: 0, female: 0 };
+      const percent = data[genderObj.key] || 0;
+      const color = colors[index % colors.length];
+      const optionText = typeof option === "string" ? option : (option.text || "");
+      
+      const row = document.createElement("div");
+      row.className = "flipped-bar-row";
+      row.style.cssText = "display: flex; align-items: center; gap: 12px; min-height: 18px; width: 100%; box-sizing: border-box;";
+      
+      // 💡 【文字消え対策】width: 60px を撤廃し、min-width: 80px と flex-shrink: 0 に変更。white-space も正常に戻して文字を絶対省略させない
+      row.innerHTML = `
+        <div style="font-size: 13px; min-width: 80px; flex-shrink: 0; text-align: left; color: #475569; font-weight: 500;">${sanitize(optionText)}</div>
+        <div style="flex: 1; height: 14px; background-color: #e2e8f0; border-radius: 999px; overflow: hidden; position: relative;">
+          <div style="width: ${percent}%; height: 100%; background-color: ${color}; border-radius: 999px; transition: width 0.3s ease;"></div>
+        </div>
+        <div style="font-size: 13px; width: 45px; flex-shrink: 0; text-align: right; font-weight: bold; color: #1e293b;">${percent}%</div>
+      `;
+      stack.appendChild(row);
+    });
 
     group.appendChild(stack);
     container.appendChild(group);
@@ -641,40 +641,46 @@ function renderAgeStats(q) {
   const ageDiv = document.getElementById("ageStats");
   if (!ageDiv || !q.ageStats) return;
   
+  const colors = CHART_COLORS;
   const ages = AGE_GROUPS.filter(age => age !== "回答しない");
   
   const fragment = document.createDocumentFragment();
   const container = document.createElement("div");
   container.className = "axis-flipped-container";
-  container.style.cssText = "display: flex; flex-direction: column; gap: 16px;";
+  container.style.cssText = "display: flex; flex-direction: column; gap: 16px; width: 100%; box-sizing: border-box;";
 
-  q.options.forEach((option, optionIndex) => {
-    const optionAgeData = q.ageStats[optionIndex] || {};
-    const optionText = typeof option === "string" ? option : (option.text || "");
-    
+  ages.forEach((age) => {
     const group = document.createElement("div");
-    group.className = "flipped-option-group";
-    
+    group.className = "flipped-age-group";
+    group.style.cssText = "display: flex; flex-direction: column; align-items: flex-start; width: 100%; background: #f8fafc; padding: 12px 16px; border-radius: 12px; border: 1px solid #edf2f7; box-sizing: border-box;";
+
     const label = document.createElement("div");
     label.className = "flipped-axis-label";
-    label.style.cssText = "font-weight: bold; font-size: 16px; margin-bottom: 6px; color: #333;";
-    label.textContent = sanitize(optionText);
+    label.style.cssText = "font-weight: bold; font-size: 16px; margin-bottom: 8px; color: #1e293b; width: 100%; text-align: left; box-sizing: border-box;";
+    label.textContent = age;
     group.appendChild(label);
 
     const stack = document.createElement("div");
     stack.className = "flipped-bars-stack";
-    stack.style.cssText = "display: flex; flex-direction: column; gap: 4px; width: 100%;";
+    stack.style.cssText = "display: flex; flex-direction: column; gap: 4px; width: 100%; box-sizing: border-box;";
 
-    ages.forEach((age, ageIndex) => {
+    q.options.forEach((option, optionIndex) => {
+      const optionAgeData = q.ageStats[optionIndex] || {};
       const percent = optionAgeData[age] || 0;
+      const color = colors[optionIndex % colors.length];
+      const optionText = typeof option === "string" ? option : (option.text || "");
+      
       const row = document.createElement("div");
       row.className = "flipped-bar-row";
-      row.style.cssText = "display: flex; align-items: center; gap: 12px; min-height: 20px; width: 100%;";
+      row.style.cssText = "display: flex; align-items: center; gap: 12px; min-height: 18px; width: 100%; box-sizing: border-box;";
+      
+      // 💡 【文字消え対策】こちらも同様にラベル幅を柔軟にして文字切れを完全に防ぐ
       row.innerHTML = `
-        <div style="font-size: 14px; width: 120px; flex-shrink: 0; white-space: nowrap;">${age} / ${percent}%</div>
-        <div style="width: 100%; max-width: 500px; height: 16px; background-color: #f1f5f9; border-radius: 999px; overflow: hidden; flex-shrink: 1;">
-          <div style="width: ${percent}%; height: 100%; background-color: ${AGE_COLORS[ageIndex]}; border-radius: 999px;"></div>
+        <div style="font-size: 13px; min-width: 80px; flex-shrink: 0; text-align: left; color: #475569; font-weight: 500;">${sanitize(optionText)}</div>
+        <div style="flex: 1; height: 14px; background-color: #e2e8f0; border-radius: 999px; overflow: hidden; position: relative;">
+          <div style="width: ${percent}%; height: 100%; background-color: ${color}; border-radius: 999px; transition: width 0.3s ease;"></div>
         </div>
+        <div style="font-size: 13px; width: 45px; flex-shrink: 0; text-align: right; font-weight: bold; color: #1e293b;">${percent}%</div>
       `;
       stack.appendChild(row);
     });
