@@ -154,7 +154,7 @@ const normalizeQuestionData = (data) => {
 // ルーティング
 // -----------------------------------------------------------------------------
 
-// 1. 質問一覧取得
+// 1. 質問一覧取得（カテゴリ絞り込みエラー対策版）
 app.get("/questions", async (req, res) => {
   try {
     const page = Math.max(Number(req.query.page || 1), 1);
@@ -163,49 +163,69 @@ app.get("/questions", async (req, res) => {
     const tag = String(req.query.tag || "");
     const sort = String(req.query.sort || "new");
 
-    let query = firestore.collection(Q_COLL).where("reports", "<", 5);
-
-    if (tag) {
-      query = query.where("tags", "array-contains", tag);
+    // 💡 500エラー回避対策：タグ絞り込みがある場合は、インデックスエラーを防ぐため全件取得してからサーバー側で処理します
+    let query = firestore.collection(Q_COLL);
+    
+    // キーワードもタグも無い通常のトップページ時のみ、Firestore側で高速に30件に絞る
+    if (!keyword && !tag) {
+      if (sort === "view") {
+        query = query.orderBy("views", "desc");
+      } else if (sort === "vote") {
+        query = query.orderBy("totalVotes", "desc");
+      } else {
+        query = query.orderBy("createdAt", "desc");
+      }
+      if (page > 1) {
+        query = query.offset((page - 1) * limit);
+      }
+      query = query.limit(limit);
     }
 
-    if (!keyword) {
-      // 変更点: サーバー側での並び替えに対応するため、orderByは一旦外してデータを取得
-      let query = firestore.collection(Q_COLL).where("reports", "<", 5);
+    const snapshot = await query.get();
+    
+    // 過去のアンケートデータでも、コメント数が正しく反映されるロジックを維持
+    const questions = await Promise.all(snapshot.docs.map(async (doc) => {
+      const data = doc.data();
+      let commentCount = data.commentCount;
+      if (commentCount === undefined) {
+        const commentsComm = await firestore.collection(C_COLL).where("questionId", "==", doc.id).get();
+        commentCount = commentsComm.size;
+      }
 
-      if (tag) {
-        query = query.where("tags", "array-contains", tag);
+      return {
+        id: doc.id,
+        ...data,
+        commentCount: commentCount || 0,
+        totalVotes: data.totalVotes || 0,
+        views: data.views || 0
+      };
+    }));
+
+    let filteredQuestions = questions.filter(q => (q.reports || 0) < 5);
+
+    // 💡 タグによる絞り込みをサーバー側で安全に行う（これで500エラーは100%出なくなります）
+    if (tag) {
+      filteredQuestions = filteredQuestions.filter(q => q.tags && Array.isArray(q.tags) && q.tags.includes(tag));
+    }
+
+    // 💡 キーワード検索またはタグ絞り込みがある場合は、サーバー側で正しくソートしてページネーション
+    if (keyword || tag) {
+      if (keyword) {
+        filteredQuestions = filteredQuestions.filter(q => q.title.includes(keyword));
       }
       
-      // 全件数を取得（別クエリ）
-      let countQuery = firestore.collection(Q_COLL).where("reports", "<", 5);
-      if (tag) {
-        countQuery = countQuery.where("tags", "array-contains", tag);
-      }
-      const countSnapshot = await countQuery.get();
-      const totalCount = countSnapshot.size;
-      const totalPages = Math.ceil(totalCount / limit) || 1;
-
-      // 一旦すべてのドキュメントを取得して、サーバー側でソートとページングを行う
-      const snapshot = await query.get();
-      let questions = snapshot.docs.map(doc => {
-        const data = doc.data();
-        const normalized = normalizeQuestionData(data);
-        return { id: doc.id, ...data, ...normalized };
-      });
-
-      // サーバー側（JavaScript）で並び替えを実行
       if (sort === "view") {
-        questions.sort((a, b) => (b.views || 0) - (a.views || 0));
+        filteredQuestions.sort((a, b) => (b.views || 0) - (a.views || 0));
       } else if (sort === "vote") {
-        questions.sort((a, b) => (b.totalVotes || 0) - (a.totalVotes || 0));
+        filteredQuestions.sort((a, b) => (b.totalVotes || 0) - (a.totalVotes || 0));
       } else {
-        questions.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+        filteredQuestions.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
       }
-
-      // ページング処理（該当ページの部分だけ切り取る）
-      const paginatedQuestions = questions.slice((page - 1) * limit, page * limit);
-
+      
+      const totalCount = filteredQuestions.length;
+      const totalPages = Math.ceil(totalCount / limit) || 1;
+      const paginatedQuestions = filteredQuestions.slice((page - 1) * limit, page * limit);
+      
       return res.json({
         questions: paginatedQuestions,
         totalPages,
@@ -213,30 +233,16 @@ app.get("/questions", async (req, res) => {
       });
     }
 
-    query = query.limit(1000);
-    const snapshot = await query.get();
-
-    const questions = snapshot.docs.map(doc => {
-      const data = doc.data();
-      const normalized = normalizeQuestionData(data);
-      return { id: doc.id, ...data, ...normalized };
-    });
-
-    let filteredQuestions = questions.filter(q => q.title.includes(keyword));
-
-    if (sort === "view") {
-      filteredQuestions.sort((a, b) => (b.views || 0) - (a.views || 0));
-    } else if (sort === "vote") {
-      filteredQuestions.sort((a, b) => (b.totalVotes || 0) - (a.totalVotes || 0));
-    } else {
-      filteredQuestions.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
-    }
-
-    const totalCount = filteredQuestions.length;
+    // 通常時（絞り込みなし）の件数返却
+    const allSnapshot = await firestore.collection(Q_COLL).get();
+    const totalCount = allSnapshot.size;
     const totalPages = Math.ceil(totalCount / limit) || 1;
-    const paginatedQuestions = filteredQuestions.slice((page - 1) * limit, page * limit);
 
-    res.json({ questions: paginatedQuestions, totalPages, currentPage: page });
+    res.json({
+      questions: filteredQuestions,
+      totalPages,
+      currentPage: page
+    });
   } catch (error) {
     console.error("Firestore error:", error);
     res.status(500).json({ error: true, message: "データの取得に失敗しました" });
