@@ -459,12 +459,14 @@ function renderResultsScreen(div, q, id) {
     <div class="resultDashboard">
       <div class="resultHeader">
         <div class="resultQuestionTitle">${sanitize(q.title)}</div>
-        <h1>回答結果</h1>
+        <!-- 💡 「回答結果」を2段階小さく (元のh1サイズから18px相当に縮小) -->
+        <h1 style="font-size: 18px; margin-top: 4px; color: #333;">回答結果</h1>
       </div>
 
       <div class="resultGrid-top">
         <div class="resultCard">
-          <h2>全体の回答</h2>
+          <!-- 💡 「全体の回答」を2段階小さく (元のh2サイズから15px相当に縮小) -->
+          <h2 style="font-size: 15px; font-weight: bold; margin-bottom: 12px; color: #111;">全体の回答</h2>
           <div class="overallWrap">
             <div class="pieChart" style="background: conic-gradient(${conicParts.join(", ")});"></div>
             <div class="overallStats" style="width:100%;">
@@ -492,46 +494,17 @@ function renderResultsScreen(div, q, id) {
           </div>
         </div>
         <div class="resultCard">
-          <h2>性別ごとの割合</h2>
+          <!-- 💡 「性別ごとの割合」を2段階小さく (15px相当に縮小) -->
+          <h2 style="font-size: 15px; font-weight: bold; margin-bottom: 12px; color: #111;">性別ごとの割合</h2>
           <div id="genderStats"></div>
         </div>
       </div>
 
       <div class="resultCard margin-top-20">
-        <h2>年代ごとの割合</h2>
+        <!-- 💡 「年代ごとの割合」を2段階小さく (15px相当に縮小) -->
+        <h2 style="font-size: 15px; font-weight: bold; margin-bottom: 12px; color: #111;">年代ごとの割合</h2>
         <div id="ageStats"></div>
       </div>
-
-      <div class="resultCard margin-top-20 commentSection">
-        <h2>コメント一覧</h2>
-        <textarea id="commentText" placeholder="意見を入力..." style="width:100%; height:70px; padding:10px; border-radius:8px; font-size:13px; border:1px solid #ccc; box-sizing:border-box; resize:none;"></textarea>
-        <div style="text-align:center;">
-          <button onclick="addCommentAndReload('${q.id}')" style="width:150px; height:42px; display:block; margin:12px auto; border:none; border-radius:8px; background:#2563eb; color:white; font-size:14px; font-weight:bold; cursor:pointer;" type="button">コメント投稿</button>
-        </div>
-        <div id="commentList">
-          ${q.comments ? q.comments.map((comment, index) => {
-            // 💡 「回答しない」「未回答」以外の中身がある場合のみプロフィールを表示する
-            let profileText = "";
-            const g = comment.gender;
-            const a = comment.age;
-
-            const hasValidGender = g && g !== "回答しない" && g !== "未回答";
-            const hasValidAge = a && a !== "回答しない" && a !== "未回答";
-
-            if (hasValidGender || hasValidAge) {
-              profileText = ` (${sanitize(g || "未回答")} / ${sanitize(a || "未回答")})`;
-            }
-
-            return `
-            <div class="comment">
-              <div style="font-size:11px; color:#777; margin-bottom:4px;">No.${index + 1} 匿名ユーザー${profileText} ：${comment.createdAt}</div>
-              <div style="font-size:13px; color:#333; line-height:1.4;">${sanitize(comment.text)}</div>
-            </div>
-          `;
-          }).join("") : ""}
-        </div>
-      </div>
-    </div>
   `;
 
   div.innerHTML = html;
