@@ -225,10 +225,12 @@ async function loadQuestions() {
       thread.className = "thread";
       thread.onclick = () => openDetail(q.id);
       
-      // 💡 【エラー解決】古い hotTag を完全に排除し、categoryTag を表示するように統一しました
+      // 💡 背景色の赤を消し、文字を黒・タイトルと同じ大きさに統一しました
       thread.innerHTML = `
         <div class="threadRow">
-          <div class="leftTitle"><span class="hotTag">${categoryTag}</span>${sanitize(q.title)}</div>
+          <div class="leftTitle">
+            <span style="background: none !important; color: #333 !important; font-size: inherit !important; font-weight: bold; padding: 0; margin-right: 6px; border-radius: 0;">${categoryTag}</span>${sanitize(q.title)}
+          </div>
           <div class="rightMeta">
             <span>${total}回答</span>
             <span>${commentCount}コメント</span>
