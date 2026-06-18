@@ -217,7 +217,7 @@ async function loadQuestions() {
       thread.className = "thread";
       thread.onclick = () => openDetail(q.id);
       
-      // 💡 隙間をギリギリ3桁分に詰め、すべての文字が完璧に左揃えになるよう幅を再設計
+      // 💡 固定幅をすべて撤廃し、文字数に合わせて自動で隙間が広がる（二段にならない）設計にしました
       thread.innerHTML = `
         <div class="threadRow" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
           <div class="leftTitle" style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
@@ -225,11 +225,11 @@ async function loadQuestions() {
             <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sanitize(q.title)}</span>
           </div>
           
-          <div class="rightMeta" style="display: flex; align-items: center; flex-shrink: 0; text-align: left; gap: 12px;">
-            <span style="width: 50px; display: inline-block; flex-shrink: 0;">${total}回答</span>
-            <span style="width: 72px; display: inline-block; flex-shrink: 0;">${commentCount}コメント</span>
-            <span style="width: 50px; display: inline-block; flex-shrink: 0;">${viewsCount}閲覧</span>
-            <span class="postDate" style="color: #999; width: 165px; display: inline-block; flex-shrink: 0; margin-left: 4px;">投稿日 ${q.createdAt || ""}</span>
+          <div class="rightMeta" style="display: flex; align-items: center; flex-shrink: 0; text-align: left; gap: 8px; font-size: 13px; color: #666; margin-left: 10px;">
+            <span style="white-space: nowrap; flex-shrink: 0;">${total}回答</span>
+            <span style="white-space: nowrap; flex-shrink: 0;">${commentCount}コメント</span>
+            <span style="white-space: nowrap; flex-shrink: 0;">${viewsCount}閲覧</span>
+            <span class="postDate" style="color: #999; white-space: nowrap; flex-shrink: 0;">投稿日 ${q.createdAt || ""}</span>
           </div>
         </div>
       `;
