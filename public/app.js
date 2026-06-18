@@ -2,13 +2,13 @@
 // 1. 定数・グローバル変数の定義
 // ==========================================
 const TAGS = [
-  "ニュース", "政治", "投資", "お金", "仕事", "恋愛", "ゲーム", "食べ物",
-  "音楽", "趣味・ホビー", "自転車・バイク", "美容・コスメ", "科学",
-  "環境", "法律", "相談", "歴史", "本・読書", "映画", "ドラマ",
-  "日常", "旅行", "教育", "海外", "社会", "悩み", "子育て・育児",
+  "ニュース", "政治", "投資", "お金", "仕事", "恋愛", "ゲーム", "食べ物", "生活",
+  "音楽", "趣味", "自転車・バイク", "美容・コスメ", "科学", "テクノロジー",
+  "AI","環境", "法律", "相談", "歴史", "本・読書", "映画", "ドラマ", "海外",
+  "日常", "旅行", "教育", "海外", "社会", "悩み", "子育て・育児", "飲食店",
   "医療", "健康", "住まい・不動産", "人間関係", "ペット", "ファッション",
-  "ビジネス", "テクノロジー", "スポーツ", "エンタメ", "アート",
-  "デザイン", "アダルト", "暇つぶし", "ギャンブル", "その他"
+  "ビジネス", "テクノロジー", "スポーツ", "エンタメ", "アート", "おもちゃ",
+  "デザイン", "アダルト", "暇つぶし", "ギャンブル", "ストレス", "その他"
 ];
 
 const TOP_CATEGORIES = ["ニュース", "政治", "投資", "恋愛", "仕事", "ゲーム", "食べ物"];
@@ -46,8 +46,29 @@ function sanitize(str) {
     .replace(/'/g, "&#39;");
 }
 
-function getOptimalHotTag(total, commentCount) {
+// 💡 修正版：第3引数に投稿日時（createdAtStr）を受け取れるように拡張
+function getOptimalHotTag(total, commentCount, createdAtStr) {
   const speed = total + commentCount * 3;
+
+  if (createdAtStr) {
+    // タイムスタンプ文字列（"2026-06-15 12:00:00" など）を日付オブジェクトに変換
+    // ハイフンとスペースが含まれるフォーマットを安全にパースするため置換処理を挟みます
+    const formattedStr = createdAtStr.replace(/-/g, "/");
+    const postDate = new Date(formattedStr);
+    const now = new Date();
+
+    // 3日間をミリ秒に計算 (3日 × 24時間 × 60分 × 60秒 × 1000ミリ秒)
+    const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+
+    // 💡 投稿から3日（72時間）以上経過している場合
+    if (now.getTime() - postDate.getTime() > threeDaysMs) {
+      if (speed > 100) return "HOT";
+      if (speed > 30) return "UP";
+      return ""; // 3日以上経っていて勢いもない場合は「タグなし」にする
+    }
+  }
+
+  // 💡 3日以内の場合（従来通りの判定）
   if (speed > 100) return "HOT";
   if (speed > 30) return "UP";
   return "NEW";
@@ -196,14 +217,14 @@ async function loadQuestions() {
       const commentCount = (typeof q.commentCount === 'number' && q.commentCount >= 0) ? q.commentCount : 
                             (q.comments && Array.isArray(q.comments)) ? q.comments.length : 0;
       const viewsCount = q.views || 0;
-      const hotTag = getOptimalHotTag(total, commentCount);
+      const hotTag = getOptimalHotTag(total, commentCount, q.createdAt);
 
       const thread = document.createElement("div");
       thread.className = "thread";
       thread.onclick = () => openDetail(q.id);
       thread.innerHTML = `
         <div class="threadRow">
-          <div class="leftTitle"><span class="hotTag">${hotTag}</span>${sanitize(q.title)}</div>
+          <div class="leftTitle">${hotTag ? `<span class="hotTag">${hotTag}</span>` : ''}${sanitize(q.title)}</div>
           <div class="rightMeta">
             <span>${total}回答</span>
             <span>${commentCount}コメント</span>
