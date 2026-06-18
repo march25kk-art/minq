@@ -217,11 +217,11 @@ async function loadQuestions() {
       thread.className = "thread";
       thread.onclick = () => openDetail(q.id);
       
-      // 💡 隙間を揃える対策：hotTag が空（3日超え）の場合は、背景を透明にして「幅42pxの透明な隙間」をキープさせます
+      // 💡 横幅を 42px → 32px に縮め、余白（gap）も 6px にスリム化しました
       thread.innerHTML = `
         <div class="threadRow">
-          <div class="leftTitle" style="display: flex; align-items: center; gap: 8px;">
-            <span class="hotTag" style="${hotTag ? '' : 'background: transparent !important; color: transparent !important; border: none !important;'} display: inline-block; width: 42px; text-align: center; flex-shrink: 0;">${hotTag || 'NEW'}</span>
+          <div class="leftTitle" style="display: flex; align-items: center; gap: 6px;">
+            <span class="hotTag" style="${hotTag ? '' : 'background: transparent !important; color: transparent !important; border: none !important;'} display: inline-block; width: 32px; text-align: center; flex-shrink: 0; padding: 2px 0;">${hotTag || 'NEW'}</span>
             <span>${sanitize(q.title)}</span>
           </div>
           <div class="rightMeta">
