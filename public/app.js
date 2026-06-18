@@ -217,7 +217,7 @@ async function loadQuestions() {
       thread.className = "thread";
       thread.onclick = () => openDetail(q.id);
       
-      // 💡 横幅を固定して右側エリアを完全に縦に揃えるスタイルに修正
+      // 💡 隙間をギリギリ3桁分に詰め、すべての文字が完璧に左揃えになるよう幅を再設計
       thread.innerHTML = `
         <div class="threadRow" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
           <div class="leftTitle" style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
@@ -225,11 +225,11 @@ async function loadQuestions() {
             <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sanitize(q.title)}</span>
           </div>
           
-          <div class="rightMeta" style="display: flex; align-items: center; flex-shrink: 0; text-align: left;">
-            <span style="width: 65px; display: inline-block; flex-shrink: 0;">${total}回答</span>
-            <span style="width: 85px; display: inline-block; flex-shrink: 0;">${commentCount}コメント</span>
-            <span style="width: 65px; display: inline-block; flex-shrink: 0;">${viewsCount}閲覧</span>
-            <span class="postDate" style="color: #999; width: 175px; display: inline-block; flex-shrink: 0; margin-left: 10px;">投稿日 ${q.createdAt || ""}</span>
+          <div class="rightMeta" style="display: flex; align-items: center; flex-shrink: 0; text-align: left; gap: 12px;">
+            <span style="width: 50px; display: inline-block; flex-shrink: 0;">${total}回答</span>
+            <span style="width: 72px; display: inline-block; flex-shrink: 0;">${commentCount}コメント</span>
+            <span style="width: 50px; display: inline-block; flex-shrink: 0;">${viewsCount}閲覧</span>
+            <span class="postDate" style="color: #999; width: 165px; display: inline-block; flex-shrink: 0; margin-left: 4px;">投稿日 ${q.createdAt || ""}</span>
           </div>
         </div>
       `;
