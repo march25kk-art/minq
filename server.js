@@ -36,7 +36,7 @@ const COMMENTS_LIMIT = 100;             // 最新コメント数の制限
 const VOTES_STATS_LIMIT = 5000;         // 統計計算用の投票データ制限
 
 app.use(express.json());
-app.use(express.static("public"));
+app.use(express.static("public", { extensions: ["html"] }));
 
 function escapeHTML(str = "") {
   return String(str)

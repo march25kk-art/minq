@@ -102,7 +102,7 @@ window.addEventListener("DOMContentLoaded", () => {
   if (adminDiv) loadAdmin();
 
   document.querySelectorAll("#topBtn, .topBtn").forEach(btn => {
-    btn.addEventListener("click", () => { location.href = "index.html"; });
+    btn.addEventListener("click", () => { location.href = "/"; });
   });
 });
 
@@ -170,7 +170,7 @@ async function postQuestion() {
   if (data.error) return alert(data.message);
 
   alert("投稿しました");
-  location.href = "index.html";
+  location.href = "/";
 }
 
 // ==========================================
@@ -295,7 +295,7 @@ function changeSort(sort) {
   loadQuestions();
 }
 
-function openDetail(id) { location.href = `question.html?id=${id}`; }
+function openDetail(id) { location.href = `/question?id=${id}`; }
 function searchQuestions() {
   const searchInput = document.getElementById("searchInput");
   state.currentSearch = searchInput ? searchInput.value : "";
