@@ -460,7 +460,7 @@ function renderResultsScreen(div, q, id) {
       <div class="resultHeader">
         <div class="resultQuestionTitle">${sanitize(q.title)}</div>
         <!-- 💡 「回答結果」を2段階小さく (元のh1サイズから18px相当に縮小) -->
-        <h1 style="font-size: 17px; margin-top: 4px; color: #333;">回答結果</h1>
+        <h1 style="font-size: 16px; margin-top: 4px; color: #333;">回答結果</h1>
       </div>
 
       <div class="resultGrid-top">
