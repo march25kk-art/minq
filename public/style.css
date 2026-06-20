@@ -906,7 +906,7 @@ header {
   .custom-row {
     flex-direction: column;
     align-items: flex-start; /* 左揃えに強制 */
-    gap: 4px; /* 上下の隙間を少し詰める */
+    gap: 4px;
   }
 
   .custom-title {
@@ -914,17 +914,19 @@ header {
   }
 
   .title-text {
-    white-space: normal; /* スマホではタイトルを綺麗に自動改行させる */
+    white-space: normal;
     word-break: break-all;
   }
 
-  /* 💡 投稿日も同列に並べるため、完全に横並びの1行（Flexbox）にします */
+  /* 💡 2段目の情報を右寄せ（右端ぴったり）に配置します */
   .custom-meta {
     display: flex;
-    flex-wrap: wrap; /* 万が一画面幅が極端に狭い時だけ自然に折り返す安全策 */
-    align-items: center;
-    gap: 8px; /* 項目同士の隙間をギリギリに詰める */
-    margin-left: 38px; /* 1段目のタイトル文字の開始位置と綺麗に縦を揃える */
+    flex-wrap: wrap;
+    justify-content: flex-end; /* 💡 右寄せにする */
+    gap: 8px;
+    width: 100%;               /* 💡 横幅いっぱいを確保して右寄せを有効にする */
+    margin-left: 0;            /* 💡 左余白をリセット */
+    box-sizing: border-box;
     font-size: 12px;
   }
 
@@ -932,7 +934,6 @@ header {
     white-space: nowrap;
   }
 
-  /* 💡 三段目への強制落下を撤廃し、他の項目と同じように横に並ばせます */
   .custom-meta .postDate {
     display: inline;
     width: auto;
