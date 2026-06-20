@@ -901,12 +901,12 @@ header {
   text-align: left;
 }
 
-/* 2. スマホ時（画面幅が 768px 以下の時）：Gridを完全破壊して綺麗な2段組にします */
+/* 2. スマホ時（画面幅が 768px 以下の時）：Gridを完全破壊して綺麗な「2段組」にします */
 @media (max-width: 768px) {
   .custom-row {
     flex-direction: column;
     align-items: flex-start; /* 左揃えに強制 */
-    gap: 6px;
+    gap: 4px; /* 上下の隙間を少し詰める */
   }
 
   .custom-title {
@@ -914,22 +914,29 @@ header {
   }
 
   .title-text {
-    white-space: normal; /* スマホではタイトルが長い時、右に押し出さず綺麗に自動改行させる */
+    white-space: normal; /* スマホではタイトルを綺麗に自動改行させる */
     word-break: break-all;
   }
 
-  /* Gridを解除して横並びのFlexboxに変更 */
+  /* 💡 投稿日も同列に並べるため、完全に横並びの1行（Flexbox）にします */
   .custom-meta {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-wrap: wrap; /* 万が一画面幅が極端に狭い時だけ自然に折り返す安全策 */
+    align-items: center;
+    gap: 8px; /* 項目同士の隙間をギリギリに詰める */
     margin-left: 38px; /* 1段目のタイトル文字の開始位置と綺麗に縦を揃える */
     font-size: 12px;
   }
 
+  .custom-meta .meta-item {
+    white-space: nowrap;
+  }
+
+  /* 💡 三段目への強制落下を撤廃し、他の項目と同じように横に並ばせます */
   .custom-meta .postDate {
-    display: block;
-    width: 100%; /* 投稿日だけさらにその下（3段目）に落として絶対にはみ出させない */
-    margin-top: 2px;
+    display: inline;
+    width: auto;
+    color: #999;
+    white-space: nowrap;
   }
 }
