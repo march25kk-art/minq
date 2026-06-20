@@ -217,20 +217,20 @@ async function loadQuestions() {
       thread.className = "thread";
       thread.onclick = () => openDetail(q.id);
       
-      // 💡 パソコン（広い画面）では Grid で完璧に一列に同期させ、スマホ（狭い画面）では自動で2段に折り返します
+      // 💡 インラインCSSを撤廃し、CSSファイル側でパソコンとスマホの切り替えを完璧に行います
       thread.innerHTML = `
-        <div class="threadRow" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; width: 100%; gap: 8px;">
+        <div class="threadRow custom-row">
           
-          <div class="leftTitle" style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 280px; text-align: left;">
+          <div class="leftTitle custom-title">
             <span class="hotTag" style="${hotTag ? '' : 'background: transparent !important; color: transparent !important; border: none !important;'} display: inline-block; width: 32px; text-align: center; flex-shrink: 0; padding: 2px 0;">${hotTag || 'NEW'}</span>
-            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: bold; color: #333;">${sanitize(q.title)}</span>
+            <span class="title-text">${sanitize(q.title)}</span>
           </div>
           
-          <div class="rightMeta" style="display: grid; grid-template-columns: minmax(45px, max-content) minmax(65px, max-content) minmax(45px, max-content) max-content; gap: 10px; align-items: center; flex-shrink: 0; font-size: 13px; color: #666; margin-left: auto; padding-left: 38px;">
-            <span style="white-space: nowrap; text-align: left;">${total}回答</span>
-            <span style="white-space: nowrap; text-align: left;">${commentCount}コメント</span>
-            <span style="white-space: nowrap; text-align: left;">${viewsCount}閲覧</span>
-            <span class="postDate" style="color: #999; white-space: nowrap; text-align: left;">投稿日 ${q.createdAt || ""}</span>
+          <div class="rightMeta custom-meta">
+            <span class="meta-item item-vote">${total}回答</span>
+            <span class="meta-item item-comment">${commentCount}コメント</span>
+            <span class="meta-item item-view">${viewsCount}閲覧</span>
+            <span class="postDate">${q.createdAt || ""}</span>
           </div>
 
         </div>

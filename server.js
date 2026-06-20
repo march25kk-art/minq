@@ -365,10 +365,19 @@ app.post("/view", async (req, res) => {
 // 5. 投票済みチェック
 app.get("/check-vote/:id", async (req, res) => {
   try {
-    // 💡 履歴のチェックを完全に無視して、常に「まだ投票していない」として画面を表示させます
-    res.json({ voted: false });
+    const questionId = req.params.id;
+    const ip = typeof getIp === "function" ? getIp(req) : (req.ip || "unknown-ip");
+
+    const snapshot = await firestore.collection(V_COLL)
+      .where("questionId", "==", questionId)
+      .where("ip", "==", ip)
+      .limit(1)
+      .get();
+
+    res.json({ voted: !snapshot.empty });
   } catch (error) {
-    res.json({ voted: false });
+    console.error("====== 投票チェックエラー ======");
+    res.status(500).json({ error: true, voted: false });
   }
 });
 

@@ -851,3 +851,85 @@ header {
     padding-bottom: 4px;
   }
 }
+
+/* ===== パソコンとスマホのハイブリッド・最適化スタイル ===== */
+
+/* 1. 基本（画面が広いパソコン時）：Gridレイアウトで完璧に列幅を同期させます */
+.custom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.custom-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.title-text {
+  font-weight: bold;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-meta {
+  display: grid;
+  grid-template-columns: minmax(45px, max-content) minmax(65px, max-content) minmax(45px, max-content) max-content;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+  font-size: 13px;
+  color: #666;
+  margin-left: 14px;
+}
+
+.custom-meta .meta-item {
+  white-space: nowrap;
+  text-align: left;
+}
+
+.custom-meta .postDate {
+  color: #999;
+  white-space: nowrap;
+  text-align: left;
+}
+
+/* 2. スマホ時（画面幅が 768px 以下の時）：Gridを完全破壊して綺麗な2段組にします */
+@media (max-width: 768px) {
+  .custom-row {
+    flex-direction: column;
+    align-items: flex-start; /* 左揃えに強制 */
+    gap: 6px;
+  }
+
+  .custom-title {
+    width: 100%;
+  }
+
+  .title-text {
+    white-space: normal; /* スマホではタイトルが長い時、右に押し出さず綺麗に自動改行させる */
+    word-break: break-all;
+  }
+
+  /* Gridを解除して横並びのFlexboxに変更 */
+  .custom-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-left: 38px; /* 1段目のタイトル文字の開始位置と綺麗に縦を揃える */
+    font-size: 12px;
+  }
+
+  .custom-meta .postDate {
+    display: block;
+    width: 100%; /* 投稿日だけさらにその下（3段目）に落として絶対にはみ出させない */
+    margin-top: 2px;
+  }
+}
