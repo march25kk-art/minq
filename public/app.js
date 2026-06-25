@@ -3,8 +3,8 @@
 // ==========================================
 const TAGS = [
   "ニュース", "政治", "投資", "お金", "仕事", "恋愛", "ゲーム", "食べ物", "生活",
-  "音楽", "趣味", "自転車・バイク", "美容・コスメ", "科学", "テクノロジー",
-  "AI","環境", "法律", "相談", "歴史", "本・読書", "映画", "ドラマ", "海外",
+  "音楽", "趣味", "自転車・バイク", "美容・コスメ", "科学", "動物", "ペット",
+  "AI","環境", "法律", "相談", "歴史", "本・読書", "映画", "ドラマ", "料理",
   "日常", "旅行", "教育", "海外", "社会", "悩み", "子育て・育児", "飲食店",
   "医療", "健康", "住まい・不動産", "人間関係", "ペット", "ファッション",
   "ビジネス", "テクノロジー", "スポーツ", "エンタメ", "アート", "おもちゃ",
@@ -180,8 +180,13 @@ async function loadQuestions() {
   const div = document.getElementById("questions");
   if (!div) return;
 
-  div.innerHTML = `<div style="text-align: center; padding: 40px; color: #666; font-size: 14px;">アンケートを読み込み中...</div>`;
 
+  // 最低でも画面の高さ（80vh）を確保し、アンケートが挿入された時のレイアウトシフトを防ぐ
+  div.innerHTML = `
+  <div style="text-align: center; padding: 100px 40px; color: #666; font-size: 14px; min-height: 80vh; box-sizing: border-box;">
+    アンケートを読み込み中...
+  </div>
+  `;
   const params = {
     page: String(state.page),
     search: state.currentSearch,
