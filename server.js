@@ -250,16 +250,24 @@ app.get("/questions", async (req, res) => {
 });
 
 // 2. 質問投稿
+// 2. 質問投稿（【修正版】説明文の保存バグを完全に修正）
 app.post("/questions", async (req, res) => {
   try {
+    // 💡 description を安全に文字列として受け取り、トリムします
     let { title, options, tags } = req.body;
+    let description = String(req.body.description || "").trim(); // 💡 変数名を description で統一
     title = String(title || "").trim();
 
     if (!title || !options || !Array.isArray(options) || options.length < 2) {
       return res.json({ error: true, message: "タイトルと2つ以上の選択肢が必要です" });
     }
 
-    const hasNgWord = NG_WORDS.some(word => title.includes(word) || options.some(o => String(o).includes(word)));
+    // 💡 NGワードチェック対象に description も含めます
+    const hasNgWord = NG_WORDS.some(word => 
+      title.includes(word) || 
+      description.includes(word) || 
+      options.some(o => String(o).includes(word))
+    );
     if (hasNgWord) {
       return res.json({ error: true, message: "使用できない言葉が含まれています" });
     }
@@ -273,6 +281,7 @@ app.post("/questions", async (req, res) => {
 
     const newQuestion = {
       title: escapeHTML(title),
+      description: escapeHTML(description), // 💡 これでエラーなく確実に保存されます
       options: options.map(o => escapeHTML(String(o).trim())),
       tags: Array.isArray(tags) ? tags.map(t => escapeHTML(String(t).trim())) : [],
       createdAt: nowJSTString(),
