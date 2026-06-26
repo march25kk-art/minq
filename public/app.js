@@ -183,10 +183,10 @@ async function loadQuestions() {
 
   // 最低でも画面の高さ（80vh）を確保し、アンケートが挿入された時のレイアウトシフトを防ぐ
   div.innerHTML = `
-  <div style="text-align: center; padding: 100px 40px; color: #666; font-size: 14px; min-height: 80vh; box-sizing: border-box;">
+  <div style="text-align: center; padding: 150px 40px; color: #666; font-size: 14px; min-height: 1200px; box-sizing: border-box;">
     アンケートを読み込み中...
   </div>
-  `;
+`;
   const params = {
     page: String(state.page),
     search: state.currentSearch,
