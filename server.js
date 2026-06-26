@@ -250,7 +250,6 @@ app.get("/questions", async (req, res) => {
 });
 
 // 2. 質問投稿
-// 2. 質問投稿（【修正版】説明文の保存バグを完全に修正）
 app.post("/questions", async (req, res) => {
   try {
     // 💡 description を安全に文字列として受け取り、トリムします
