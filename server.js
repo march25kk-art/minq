@@ -305,13 +305,12 @@ app.post("/view", async (req, res) => {
   }
 });
 
-// 5. 投票済みチェック（本日以降の投票ログのみを厳密にチェックする仕様）
+// 5. 投票済みチェック（UTCタイムスタンプ完全同期版）
 app.get("/check-vote/:id", async (req, res) => {
   try {
     const questionId = req.params.id;
     const ip = getIp(req);
 
-    // 💡 文字列と数値の両方のパターンで既存の投票ログ（votes）を検索
     const queries = [
       firestore.collection(V_COLL).where("questionId", "==", String(questionId)).get()
     ];
@@ -321,17 +320,18 @@ app.get("/check-vote/:id", async (req, res) => {
 
     const snapshots = await Promise.all(queries);
     
-    // 💡 修正：今日（2026年6月27日 22:30以降）の新しい投票ログだけを二重投票チェックの対象にする
-    const RESET_TIMESTAMP = new Date("2026-06-27T22:30:00").getTime();
+    // 💡 完全にミリ秒（UTC）で統一。これより未来のログだけを二重投票チェック対象にする
+    // 2026年6月27日 22:30 JST は、UTCだと 13:30 です (1467034200000 ミリ秒)
+    const RESET_TIME_MS = 1467034200000;
 
     const isVoted = snapshots.some(snapshot => 
       snapshot.docs.some(doc => {
         const data = doc.data();
         if (data.ip !== ip) return false;
         
-        // ログの作成日時をミリ秒に変換して比較
+        // ログの日時を確実にミリ秒に変換
         const logTime = data.createdAt ? new Date(data.createdAt).getTime() : 0;
-        return logTime > RESET_TIMESTAMP; // 本日以降の新しいログがある場合のみ「投票済み」とする
+        return logTime > RESET_TIME_MS; // 今回のリセット日時以降の新しいログがあるか
       })
     );
 
@@ -342,7 +342,7 @@ app.get("/check-vote/:id", async (req, res) => {
   }
 });
 
-// 6. 投票処理（本日以降の重複投票のみをブロックする仕様）
+// 6. 投票処理（UTCタイムスタンプ完全同期版）
 const handleVote = async (req, res) => {
   const id = req.params.id || req.body.id;
   const { index, age, gender } = req.body;
@@ -353,7 +353,6 @@ const handleVote = async (req, res) => {
   const selectedGender = gender || UNANSWERED;
 
   try {
-    // 💡 ここでも同様に、本日以降の新しいログに絞って重複を判定
     const queries = [
       firestore.collection(V_COLL).where("questionId", "==", String(id)).get()
     ];
@@ -362,19 +361,20 @@ const handleVote = async (req, res) => {
     }
 
     const snapshots = await Promise.all(queries);
-    const RESET_TIMESTAMP = new Date("2026-06-27T22:30:00").getTime();
+    const RESET_TIME_MS = 1467034200000;
 
     const hasVoted = snapshots.some(snapshot => 
       snapshot.docs.some(doc => {
         const data = doc.data();
         if (data.ip !== ip) return false;
         const logTime = data.createdAt ? new Date(data.createdAt).getTime() : 0;
-        return logTime > RESET_TIMESTAMP;
+        return logTime > RESET_TIME_MS;
       })
     );
       
+    // 💡 既に投票済みの場合は、フロントが「投票済み状態」を確実に覚えるように明示的に弾く
     if (hasVoted) {
-      return res.json({ success: true, message: "既に投票済みです" });
+      return res.status(400).json({ error: true, message: "既に投票済みです" });
     }
 
     const questionRef = firestore.collection(Q_COLL).doc(String(id));
@@ -409,7 +409,7 @@ const handleVote = async (req, res) => {
         age: selectedAge, 
         gender: selectedGender, 
         ip: ip, 
-        createdAt: new Date().toISOString() // 💡 これ以降、この新しいログが二重投票を防ぎます
+        createdAt: new Date().toISOString() // 💡 UTC表記（ISO文字列）でクリーンに保存
       });
     });
 
