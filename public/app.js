@@ -222,7 +222,7 @@ async function loadQuestions() {
             <span class="meta-item item-vote">${total}回答</span>
             <span class="meta-item item-comment">${commentCount}コメント</span>
             <span class="meta-item item-view">${viewsCount}閲覧</span>
-            <span class="postDate">${q.createdAt || ""}</span>
+            <span class="postDate">${q.updatedAt || q.createdAt || ""}</span>
           </div>
         </div>
       `;
