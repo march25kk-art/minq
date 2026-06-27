@@ -305,13 +305,12 @@ app.post("/view", async (req, res) => {
   }
 });
 
-/// 5. 投票済みチェック（既存データ・コメント維持 ＋ 全員もう一度だけ投票可能化版）
+// 5. 投票済みチェック（フラグ完全判別・二重投票ブロック版）
 app.get("/check-vote/:id", async (req, res) => {
   try {
-    const questionId = String(req.params.id); // 型不一致を防ぐため文字列に統一
+    const questionId = String(req.params.id);
     const ip = getIp(req);
 
-    // 文字列と数値の両方のパターンでFirestoreの既存の投票ログ（votes）を検索
     const queries = [
       firestore.collection(V_COLL).where("questionId", "==", questionId).get()
     ];
@@ -320,20 +319,12 @@ app.get("/check-vote/:id", async (req, res) => {
     }
 
     const snapshots = await Promise.all(queries);
-    
-    // 💡 2026年6月28日 00:00:00 (JST) の絶対ミリ秒タイムスタンプ (1467039600000)
-    // これより「過去」の投票ログはシステム上すべて無視されるため、すべての人が「未投票」状態からスタートできます。
-    const RESET_BORDER_MS = 1467039600000; 
 
+    // 💡 判定：これから新しく投票したログ（statusが 'reset2026'）がある場合のみ「投票済み」とする
     const isVoted = snapshots.some(snapshot => 
       snapshot.docs.some(doc => {
         const data = doc.data();
-        if (data.ip !== ip) return false;
-        
-        // ログの作成時間をミリ秒にして比較
-        const logTime = data.createdAt ? new Date(data.createdAt).getTime() : 0;
-        // 境界時間（28日0時）以降に新しく作られた投票ログがある場合のみ「投票済み」と判定
-        return logTime > RESET_BORDER_MS; 
+        return data.ip === ip && data.status === "reset2026";
       })
     );
 
@@ -344,9 +335,9 @@ app.get("/check-vote/:id", async (req, res) => {
   }
 });
 
-// 6. 投票処理（既存データ・コメント維持 ＋ 全員もう一度だけ投票可能化版）
+// 6. 投票処理（フラグ完全判別・二重投票ブロック版）
 const handleVote = async (req, res) => {
-  const id = String(req.params.id || req.body.id); // 型不一致を防ぐため文字列に統一
+  const id = String(req.params.id || req.body.id);
   const { index, age, gender } = req.body;
   if (id == null || index == null) return sendError(res, "不完全なデータです", 400);
 
@@ -363,19 +354,15 @@ const handleVote = async (req, res) => {
     }
 
     const snapshots = await Promise.all(queries);
-    const RESET_BORDER_MS = 1467039600000;
 
-    // 境界時間以降にすでに1回投票しているかをチェック
+    // 新しいルール（status === 'reset2026'）で既に投票しているかチェック
     const hasVoted = snapshots.some(snapshot => 
       snapshot.docs.some(doc => {
         const data = doc.data();
-        if (data.ip !== ip) return false;
-        const logTime = data.createdAt ? new Date(data.createdAt).getTime() : 0;
-        return logTime > RESET_BORDER_MS;
+        return data.ip === ip && data.status === "reset2026";
       })
     );
       
-    // 💡 2回目以降のアクセスは、ここで確実にエラーとして弾く（二重投票防止）
     if (hasVoted) {
       return res.status(400).json({ error: true, message: "既に投票済みです" });
     }
@@ -395,7 +382,7 @@ const handleVote = async (req, res) => {
       const data = sfDoc.data();
       const counts = data.counts || {};
       
-      // 既存の投票数やカテゴリ別集計は消さずに、そのまま上乗せ（+1）する
+      // 既存の投票数やコメントデータはそのまま残して上乗せする
       counts[`age_${selectedAge}`] = (counts[`age_${selectedAge}`] || 0) + 1;
       counts[`gender_${selectedGender}`] = (counts[`gender_${selectedGender}`] || 0) + 1;
       counts[`option_${index}`] = (counts[`option_${index}`] || 0) + 1;
@@ -406,7 +393,6 @@ const handleVote = async (req, res) => {
         updatedAt: nowJSTString()
       });
 
-      // 新しい投票ログを生成。これが「2回目」をブロックするための鍵になります
       const voteLogRef = firestore.collection(V_COLL).doc();
       transaction.set(voteLogRef, {
         questionId: id, 
@@ -414,7 +400,8 @@ const handleVote = async (req, res) => {
         age: selectedAge, 
         gender: selectedGender, 
         ip: ip, 
-        createdAt: new Date().toISOString() 
+        status: "reset2026", // 💡 これから投票するログにはこの目印を付け、2回目をブロックします
+        createdAt: new Date().toISOString()
       });
     });
 
