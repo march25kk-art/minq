@@ -305,26 +305,27 @@ app.post("/view", async (req, res) => {
   }
 });
 
-// 5. 投票済みチェック（💡 確実にIPが一致するログがあるかチェックするよう修正）
+// 5. 投票済みチェック（インデックスエラー回避版）
 app.get("/check-vote/:id", async (req, res) => {
   try {
     const questionId = req.params.id;
     const ip = getIp(req);
 
+    // 💡 複合インデックスエラーを避けるため、questionIdのみで取得してからサーバー側でIPを判定
     const snapshot = await firestore.collection(V_COLL)
       .where("questionId", "==", questionId)
-      .where("ip", "==", ip)
-      .limit(1)
       .get();
 
-    res.json({ voted: !snapshot.empty });
+    const isVoted = snapshot.docs.some(doc => doc.data().ip === ip);
+
+    res.json({ voted: isVoted });
   } catch (error) {
-    console.error("====== 投票チェックエラー ======");
+    console.error("====== 投票チェックエラー ======", error);
     res.status(500).json({ error: true, voted: false });
   }
 });
 
-// 6. 投票処理（💡 重複投票の完全なブロックと、遷移バグを防ぐデータ整合性の修正）
+// 6. 投票処理（インデックスエラー回避・二重投票完全ブロック版）
 const handleVote = async (req, res) => {
   const id = req.params.id || req.body.id;
   const { index, age, gender } = req.body;
@@ -335,15 +336,15 @@ const handleVote = async (req, res) => {
   const selectedGender = gender || UNANSWERED;
 
   try {
-    // 🔴 2重投票防止ガード：同一IPから既に同じquestionIdへのログがあればここで即座に弾く
-    const alreadyVoted = await firestore.collection(V_COLL)
+    // 💡 複合インデックスエラーを避けるため、同様にサーバー側でIP重複判定を行う
+    const voteLogsSnapshot = await firestore.collection(V_COLL)
       .where("questionId", "==", id)
-      .where("ip", "==", ip)
-      .limit(1)
       .get();
       
-    if (!alreadyVoted.empty) {
-      return res.json({ success: true, message: "既に投票済みです" }); // 既に投票済みの場合は正常終了させてリロードへ導く
+    const hasVoted = voteLogsSnapshot.docs.some(doc => doc.data().ip === ip);
+      
+    if (hasVoted) {
+      return res.json({ success: true, message: "既に投票済みです" });
     }
 
     const questionRef = firestore.collection(Q_COLL).doc(id);
