@@ -118,20 +118,19 @@ const normalizeQuestionData = (data) => ({
 // ルーティング
 // -----------------------------------------------------------------------------
 
-// 1. 質問一覧取得（更新順をデフォルトに修正）
+// 1. 質問一覧取得
 app.get("/questions", async (req, res) => {
   try {
     const page = Math.max(Number(req.query.page || 1), 1);
     const limit = 30;
     const keyword = String(req.query.search || "");
     const tag = String(req.query.tag || "");
-    const sort = String(req.query.sort || "update"); // 💡 デフォルトを "update" に変更
+    const sort = String(req.query.sort || "update");
 
     let query = firestore.collection(Q_COLL);
     const isFiltered = keyword || tag;
 
     if (!isFiltered) {
-      // 💡 "update" の場合は新設の updatedAt でソート。過去データ用に "createdAt" もフォールバックとして対応
       const sortFields = { 
         update: "updatedAt", 
         new: "createdAt", 
@@ -159,7 +158,7 @@ app.get("/questions", async (req, res) => {
         commentCount: commentCount || 0,
         totalVotes: data.totalVotes || 0,
         views: data.views || 0,
-        updatedAt: data.updatedAt || data.createdAt || "" // 💡 過去のデータ対策
+        updatedAt: data.updatedAt || data.createdAt || ""
       };
     }));
 
@@ -179,7 +178,6 @@ app.get("/questions", async (req, res) => {
       } else if (sort === "new") {
         questions.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
       } else {
-        // 💡 サーバー側での更新順（デフォルト）ソート
         questions.sort((a, b) => String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || "")));
       }
 
@@ -203,7 +201,7 @@ app.get("/questions", async (req, res) => {
   }
 });
 
-// 2. 質問投稿（updatedAt の初期化を追加）
+// 2. 質問投稿
 app.post("/questions", async (req, res) => {
   try {
     let { title, options, tags } = req.body;
@@ -234,7 +232,7 @@ app.post("/questions", async (req, res) => {
       options: options.map(o => escapeHTML(String(o).trim())),
       tags: Array.isArray(tags) ? tags.map(t => escapeHTML(String(t).trim())) : [],
       createdAt: timeStr,
-      updatedAt: timeStr, // 💡 新規投稿時は作成日時を更新日時にセット
+      updatedAt: timeStr,
       views: 0,
       totalVotes: 0,
       commentCount: 0,
@@ -298,11 +296,18 @@ app.post("/view", async (req, res) => {
   }
 });
 
-// 5. 投票済みチェック
+// 5. 投票済みチェック（💡 確実にIPが一致するログがあるかチェックするよう修正）
 app.get("/check-vote/:id", async (req, res) => {
   try {
+    const questionId = req.params.id;
+    const ip = getIp(req);
+
     const snapshot = await firestore.collection(V_COLL)
-      .where("questionId", "==", req.params.id).where("ip", "==", getIp(req)).limit(1).get();
+      .where("questionId", "==", questionId)
+      .where("ip", "==", ip)
+      .limit(1)
+      .get();
+
     res.json({ voted: !snapshot.empty });
   } catch (error) {
     console.error("====== 投票チェックエラー ======");
@@ -310,16 +315,28 @@ app.get("/check-vote/:id", async (req, res) => {
   }
 });
 
-// 6. 投票処理（updatedAt の更新を追加）
+// 6. 投票処理（💡 重複投票の完全なブロックと、遷移バグを防ぐデータ整合性の修正）
 const handleVote = async (req, res) => {
   const id = req.params.id || req.body.id;
   const { index, age, gender } = req.body;
   if (id == null || index == null) return sendError(res, "不完全なデータです", 400);
 
+  const ip = getIp(req);
   const selectedAge = age || UNANSWERED;
   const selectedGender = gender || UNANSWERED;
 
   try {
+    // 🔴 2重投票防止ガード：同一IPから既に同じquestionIdへのログがあればここで即座に弾く
+    const alreadyVoted = await firestore.collection(V_COLL)
+      .where("questionId", "==", id)
+      .where("ip", "==", ip)
+      .limit(1)
+      .get();
+      
+    if (!alreadyVoted.empty) {
+      return res.json({ success: true, message: "既に投票済みです" }); // 既に投票済みの場合は正常終了させてリロードへ導く
+    }
+
     const questionRef = firestore.collection(Q_COLL).doc(id);
     await firestore.runTransaction(async (transaction) => {
       const sfDoc = await transaction.get(questionRef);
@@ -327,17 +344,28 @@ const handleVote = async (req, res) => {
 
       const data = sfDoc.data();
       const counts = data.counts || {};
+      
+      // 性別・年齢別の統計用集計
       counts[`age_${selectedAge}`] = (counts[`age_${selectedAge}`] || 0) + 1;
       counts[`gender_${selectedGender}`] = (counts[`gender_${selectedGender}`] || 0) + 1;
+      
+      // 各選択肢ごとの投票数も正しく保管
+      counts[`option_${index}`] = (counts[`option_${index}`] || 0) + 1;
 
-      // 💡 投票時に updatedAt を最新に更新
       transaction.update(questionRef, { 
         totalVotes: (data.totalVotes || 0) + 1, 
         counts,
         updatedAt: nowJSTString()
       });
-      transaction.set(firestore.collection(V_COLL).doc(), {
-        questionId: id, optionIndex: Number(index), age: selectedAge, gender: selectedGender, ip: getIp(req), createdAt: new Date().toISOString()
+
+      const voteLogRef = firestore.collection(V_COLL).doc();
+      transaction.set(voteLogRef, {
+        questionId: id, 
+        optionIndex: Number(index), 
+        age: selectedAge, 
+        gender: selectedGender, 
+        ip: ip, 
+        createdAt: new Date().toISOString()
       });
     });
 
@@ -391,7 +419,7 @@ app.get("/stats/:id", async (req, res) => {
   }
 });
 
-// 8. コメント投稿（updatedAt の更新を追加）
+// 8. コメント投稿
 const saveComment = async (req, res) => {
   try {
     const id = req.params.id || req.body.id;
@@ -414,7 +442,6 @@ const saveComment = async (req, res) => {
       questionId: String(id), text: escapeHTML(text), age: age || UNANSWERED, gender: gender || UNANSWERED, createdAt: timeStr, ip
     });
     
-    // 💡 コメント追加時に commentCount と共に updatedAt も最新に更新
     await firestore.collection(Q_COLL).doc(String(id)).update({ 
       commentCount: FieldValue.increment(1),
       updatedAt: timeStr
