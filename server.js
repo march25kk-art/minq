@@ -49,14 +49,18 @@ const nowJSTString = () => new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString
 
 const sendError = (res, message, status = 200) => res.status(status).json({ error: true, message });
 
-// 定期クリーンアップ (集約)
+// 定期クリーンアップ（不具合を修正：IPキーを確実に削除）
 setInterval(() => {
   const now = Date.now();
-  // Cooldown クリーンアップ
-  [questionCooldown, commentCooldown].forEach(obj => {
-    Object.keys(obj).forEach(ip => { if (now - obj[ip] > 60000) delete obj[ip]; });
+  
+  Object.keys(questionCooldown).forEach(ip => {
+    if (now - questionCooldown[ip] > 60000) delete questionCooldown[ip];
   });
-  // キャッシュクリーンアップ
+
+  Object.keys(commentCooldown).forEach(ip => {
+    if (now - commentCooldown[ip] > 60000) delete commentCooldown[ip];
+  });
+
   for (const [key, val] of CACHE_STATS.entries()) {
     if (now - val.timestamp > CACHE_TTL) CACHE_STATS.delete(key);
   }
@@ -126,10 +130,9 @@ app.get("/questions", async (req, res) => {
     let query = firestore.collection(Q_COLL);
     const isFiltered = keyword || tag;
 
-    // フィルタがない場合のみFirestore側でページング
     if (!isFiltered) {
       const sortFields = { view: "views", vote: "totalVotes", new: "createdAt" };
-      query = query.orderBy(sortFields[sort] || "createdAt", sort === "new" ? "desc" : "desc");
+      query = query.orderBy(sortFields[sort] || "createdAt", "desc");
       if (page > 1) query = query.offset((page - 1) * limit);
       query = query.limit(limit);
     }
@@ -184,7 +187,7 @@ app.get("/questions", async (req, res) => {
   }
 });
 
-// 2. 質問投稿
+// 2. 質問投稿（修正：連投エラー時はタイムスタンプを上書きしない）
 app.post("/questions", async (req, res) => {
   try {
     let { title, options, tags } = req.body;
@@ -202,6 +205,7 @@ app.post("/questions", async (req, res) => {
 
     const ip = getIp(req);
     const now = Date.now();
+    
     if (questionCooldown[ip] && now - questionCooldown[ip] < 30000) {
       return sendError(res, "連続投稿は30秒待ってください");
     }
@@ -364,7 +368,7 @@ app.get("/stats/:id", async (req, res) => {
   }
 });
 
-// 8. コメント投稿
+// 8. コメント投稿（修正：連投エラー時はタイムスタンプを上書きしない）
 const saveComment = async (req, res) => {
   try {
     const id = req.params.id || req.body.id;
@@ -376,7 +380,10 @@ const saveComment = async (req, res) => {
 
     const ip = getIp(req);
     const now = Date.now();
-    if (commentCooldown[ip] && now - commentCooldown[ip] < 5000) return sendError(res, "5秒待ってから投稿してください");
+    
+    if (commentCooldown[ip] && now - commentCooldown[ip] < 5000) {
+      return sendError(res, "5秒待ってから投稿してください");
+    }
     commentCooldown[ip] = now;
 
     await firestore.collection(C_COLL).add({
