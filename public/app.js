@@ -503,6 +503,8 @@ function renderResultsScreen(div, q, id) {
       <div class="resultHeader">
         <div class="resultQuestionTitle">${sanitize(q.title)}</div>
         
+        ${q.description ? `<p style="font-size: 14px; color: #666; margin: 12px 0; line-height: 1.5; text-align: left;">${sanitize(q.description)}</p>` : ''}
+        
         <div class="share-buttons" style="display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; margin: 12px 0; padding: 0 4px; box-sizing: border-box; width: 100%;">
           <a href="https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareText}" target="_blank" rel="noopener noreferrer" 
              style="background: #000000; color: #fff; text-decoration: none; font-size: 11px; font-weight: bold; padding: 6px 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; width: 72px; box-sizing: border-box;">
