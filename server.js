@@ -37,6 +37,14 @@ const CACHE_TTL = 30 * 1000;            // 30秒のTTL
 const COMMENTS_LIMIT = 100;             // 最新コメント数の制限
 const VOTES_STATS_LIMIT = 5000;         // 統計計算用の投票データ制限
 
+// 💡 【ここに入れます！】
+const getIp = (req) => {
+  // Renderのプロキシが仕込む x-forwarded-for を最優先で取得
+  const forwarded = req.headers["x-forwarded-for"];
+  const ip = Array.isArray(forwarded) ? forwarded[0] : String(forwarded || req.socket.remoteAddress).split(",")[0].trim();
+  return ip;
+};
+
 app.use(express.json());
 app.use(express.static("public", { extensions: ["html"] }));
 
@@ -372,16 +380,16 @@ app.post("/view", async (req, res) => {
   }
 });
 
-// 5. 投票済みチェック（修正後）
+// 5. 投票済みチェック（安全強化版）
 app.get("/check-vote/:id", async (req, res) => {
   try {
     const questionId = req.params.id;
     const ip = typeof getIp === "function" ? getIp(req) : (req.ip || "unknown-ip");
 
-    // 💡 【これを追加】サーバーのログに実際のIPを吐き出させる
     console.log("★デバッグ★ アクセスしてきた人のIPはこれです:", ip);
 
-    if (ip === ADMIN_IP) {
+    // 💡 安全弁：お互いがちゃんとした値で、かつ完全に一致する場合のみ管理者として通す
+    if (ADMIN_IP && ADMIN_IP.length > 3 && ip === ADMIN_IP) {
       return res.json({ voted: false });
     }
 
@@ -398,7 +406,7 @@ app.get("/check-vote/:id", async (req, res) => {
   }
 });
 
-// 6. 投票処理（修正版）
+// 6. 投票処理（一般ユーザーは重複を弾く仕様に修正）
 const handleVote = async (req, res) => {
   const id = req.params.id || req.body.id;
   const { index, age, gender } = req.body;
@@ -413,6 +421,22 @@ const handleVote = async (req, res) => {
 
   try {
     const questionRef = firestore.collection(Q_COLL).doc(id);
+    
+    // 💡 あなた（管理者）ではない場合、すでに同じIPで投票ログがあるかチェックする
+    const isClientAdmin = (ADMIN_IP && ADMIN_IP.length > 3 && ip === ADMIN_IP);
+    
+    if (!isClientAdmin) {
+      const alreadyVoted = await firestore.collection(V_COLL)
+        .where("questionId", "==", id)
+        .where("ip", "==", ip)
+        .limit(1)
+        .get();
+        
+      if (!alreadyVoted.empty) {
+        return res.json({ error: true, message: "すでに投票済みです" });
+      }
+    }
+
     await firestore.runTransaction(async (transaction) => {
       const sfDoc = await transaction.get(questionRef);
       if (!sfDoc.exists) throw new Error("Document does not exist!");
@@ -431,7 +455,6 @@ const handleVote = async (req, res) => {
         counts: counts
       });
 
-      // 💡 あなた(ADMIN_IP)の場合は、過去の投票データと重複しても構わないのでランダムなIDでログを都度生成して保存
       const voteLogRef = firestore.collection(V_COLL).doc();
       transaction.set(voteLogRef, {
         questionId: id,
