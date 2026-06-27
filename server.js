@@ -305,18 +305,24 @@ app.post("/view", async (req, res) => {
   }
 });
 
-// 5. 投票済みチェック（インデックスエラー回避版）
+// 5. 投票済みチェック（文字列・数値の型不一致バグ完全解消版）
 app.get("/check-vote/:id", async (req, res) => {
   try {
     const questionId = req.params.id;
     const ip = getIp(req);
 
-    // 💡 複合インデックスエラーを避けるため、questionIdのみで取得してからサーバー側でIPを判定
-    const snapshot = await firestore.collection(V_COLL)
-      .where("questionId", "==", questionId)
-      .get();
+    // 💡 過去の数値IDデータ対策：文字列と数値の両方のパターンでログを検索
+    const queries = [
+      firestore.collection(V_COLL).where("questionId", "==", String(questionId)).get()
+    ];
+    if (!isNaN(questionId)) {
+      queries.push(firestore.collection(V_COLL).where("questionId", "==", Number(questionId)).get());
+    }
 
-    const isVoted = snapshot.docs.some(doc => doc.data().ip === ip);
+    const snapshots = await Promise.all(queries);
+    const isVoted = snapshots.some(snapshot => 
+      snapshot.docs.some(doc => doc.data().ip === ip)
+    );
 
     res.json({ voted: isVoted });
   } catch (error) {
@@ -325,7 +331,7 @@ app.get("/check-vote/:id", async (req, res) => {
   }
 });
 
-// 6. 投票処理（インデックスエラー回避・二重投票完全ブロック版）
+// 6. 投票処理（文字列・数値の型不一致バグ完全解消版）
 const handleVote = async (req, res) => {
   const id = req.params.id || req.body.id;
   const { index, age, gender } = req.body;
@@ -336,30 +342,41 @@ const handleVote = async (req, res) => {
   const selectedGender = gender || UNANSWERED;
 
   try {
-    // 💡 複合インデックスエラーを避けるため、同様にサーバー側でIP重複判定を行う
-    const voteLogsSnapshot = await firestore.collection(V_COLL)
-      .where("questionId", "==", id)
-      .get();
-      
-    const hasVoted = voteLogsSnapshot.docs.some(doc => doc.data().ip === ip);
+    // 💡 過去の数値IDデータ対策：ここでも文字列・数値の両方で既存の投票ログをチェック
+    const queries = [
+      firestore.collection(V_COLL).where("questionId", "==", String(id)).get()
+    ];
+    if (!isNaN(id)) {
+      queries.push(firestore.collection(V_COLL).where("questionId", "==", Number(id)).get());
+    }
+
+    const snapshots = await Promise.all(queries);
+    const hasVoted = snapshots.some(snapshot => 
+      snapshot.docs.some(doc => doc.data().ip === ip)
+    );
       
     if (hasVoted) {
       return res.json({ success: true, message: "既に投票済みです" });
     }
 
-    const questionRef = firestore.collection(Q_COLL).doc(id);
-    await firestore.runTransaction(async (transaction) => {
-      const sfDoc = await transaction.get(questionRef);
-      if (!sfDoc.exists) throw new Error("Document does not exist!");
+    // ドキュメント自体の参照も、文字列と数値の両方で存在をチェックする安全設計
+    let questionRef = firestore.collection(Q_COLL).doc(String(id));
+    let sfDoc = await questionRef.get();
+    
+    if (!sfDoc.exists && !isNaN(id)) {
+      questionRef = firestore.collection(Q_COLL).doc(String(Number(id)));
+      sfDoc = await questionRef.get();
+    }
+    
+    if (!sfDoc.exists) throw new Error("Document does not exist!");
 
-      const data = sfDoc.data();
+    await firestore.runTransaction(async (transaction) => {
+      const freshDoc = await transaction.get(questionRef);
+      const data = freshDoc.data();
       const counts = data.counts || {};
       
-      // 性別・年齢別の統計用集計
       counts[`age_${selectedAge}`] = (counts[`age_${selectedAge}`] || 0) + 1;
       counts[`gender_${selectedGender}`] = (counts[`gender_${selectedGender}`] || 0) + 1;
-      
-      // 各選択肢ごとの投票数も正しく保管
       counts[`option_${index}`] = (counts[`option_${index}`] || 0) + 1;
 
       transaction.update(questionRef, { 
@@ -368,9 +385,10 @@ const handleVote = async (req, res) => {
         updatedAt: nowJSTString()
       });
 
+      // 新しい投票ログは一貫して文字列として安全に保存
       const voteLogRef = firestore.collection(V_COLL).doc();
       transaction.set(voteLogRef, {
-        questionId: id, 
+        questionId: String(id), 
         optionIndex: Number(index), 
         age: selectedAge, 
         gender: selectedGender, 
