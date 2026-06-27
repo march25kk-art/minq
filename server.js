@@ -130,16 +130,17 @@ app.get("/questions", async (req, res) => {
     let query = firestore.collection(Q_COLL);
     const isFiltered = keyword || tag;
 
-    if (!isFiltered) {
+    // 💡 変更：Firestore側での orderBy("updatedAt") を撤廃し、過去データ（updatedAtなし）の除外を防ぐ
+    if (!isFiltered && sort !== "update") {
       const sortFields = { 
-        update: "updatedAt", 
         new: "createdAt", 
         view: "views", 
         vote: "totalVotes" 
       };
-      const orderField = sortFields[sort] || "updatedAt";
+      const orderField = sortFields[sort] || "createdAt";
       query = query.orderBy(orderField, "desc");
       
+      // 通常の一覧（新着・閲覧・回答順）の時はFirestore側で制限して高速化
       if (page > 1) query = query.offset((page - 1) * limit);
       query = query.limit(limit);
     }
@@ -158,7 +159,7 @@ app.get("/questions", async (req, res) => {
         commentCount: commentCount || 0,
         totalVotes: data.totalVotes || 0,
         views: data.views || 0,
-        updatedAt: data.updatedAt || data.createdAt || ""
+        updatedAt: data.updatedAt || data.createdAt || "" // 💡 過去のデータは作成日時で代用
       };
     }));
 
@@ -168,9 +169,12 @@ app.get("/questions", async (req, res) => {
       questions = questions.filter(q => q.tags?.includes(tag));
     }
 
-    if (isFiltered) {
-      if (keyword) questions = questions.filter(q => q.title.includes(keyword));
-      
+    if (keyword) {
+      questions = questions.filter(q => q.title.includes(keyword));
+    }
+
+    // 💡 「更新順（update）」の並び替え、またはキーワード・タグ絞り込みがある場合はサーバー側でソート
+    if (sort === "update" || isFiltered) {
       if (sort === "view") {
         questions.sort((a, b) => (b.views || 0) - (a.views || 0));
       } else if (sort === "vote") {
@@ -178,17 +182,22 @@ app.get("/questions", async (req, res) => {
       } else if (sort === "new") {
         questions.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
       } else {
+        // 💡 更新順ソート（updatedAtがない過去データもcreatedAtで安全に比較される）
         questions.sort((a, b) => String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || "")));
       }
 
-      const totalPages = Math.ceil(questions.length / limit) || 1;
+      const totalCount = questions.length;
+      const totalPages = Math.ceil(totalCount / limit) || 1;
+      const paginatedQuestions = questions.slice((page - 1) * limit, page * limit);
+
       return res.json({
-        questions: questions.slice((page - 1) * limit, page * limit),
+        questions: paginatedQuestions,
         totalPages,
         currentPage: page
       });
     }
 
+    // 通常時（絞り込みなし・更新順以外）の件数返却
     const allSnapshot = await firestore.collection(Q_COLL).get();
     res.json({
       questions,
