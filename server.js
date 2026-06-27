@@ -305,7 +305,7 @@ app.post("/view", async (req, res) => {
   }
 });
 
-// 5. 投票済みチェック（既存データ・コメント完全維持 ＋ 全員もう一度だけ投票可能化版）
+/// 5. 投票済みチェック（既存データ・コメント維持 ＋ 全員もう一度だけ投票可能化版）
 app.get("/check-vote/:id", async (req, res) => {
   try {
     const questionId = String(req.params.id); // 型不一致を防ぐため文字列に統一
@@ -321,9 +321,9 @@ app.get("/check-vote/:id", async (req, res) => {
 
     const snapshots = await Promise.all(queries);
     
-    // 💡 2026年6月27日 23:00 (JST) の絶対ミリ秒タイムスタンプ
-    // これより「過去」の投票ログはシステム上すべて無視されるため、全員が「未投票」状態からスタートできます。
-    const RESET_BORDER_MS = 1467036000000; 
+    // 💡 2026年6月28日 00:00:00 (JST) の絶対ミリ秒タイムスタンプ (1467039600000)
+    // これより「過去」の投票ログはシステム上すべて無視されるため、すべての人が「未投票」状態からスタートできます。
+    const RESET_BORDER_MS = 1467039600000; 
 
     const isVoted = snapshots.some(snapshot => 
       snapshot.docs.some(doc => {
@@ -332,7 +332,7 @@ app.get("/check-vote/:id", async (req, res) => {
         
         // ログの作成時間をミリ秒にして比較
         const logTime = data.createdAt ? new Date(data.createdAt).getTime() : 0;
-        // 今（23:00）以降に新しく作られた投票ログがある場合のみ「投票済み」と判定
+        // 境界時間（28日0時）以降に新しく作られた投票ログがある場合のみ「投票済み」と判定
         return logTime > RESET_BORDER_MS; 
       })
     );
@@ -344,7 +344,7 @@ app.get("/check-vote/:id", async (req, res) => {
   }
 });
 
-// 6. 投票処理（既存データ・コメント完全維持 ＋ 全員もう一度だけ投票可能化版）
+// 6. 投票処理（既存データ・コメント維持 ＋ 全員もう一度だけ投票可能化版）
 const handleVote = async (req, res) => {
   const id = String(req.params.id || req.body.id); // 型不一致を防ぐため文字列に統一
   const { index, age, gender } = req.body;
@@ -363,9 +363,9 @@ const handleVote = async (req, res) => {
     }
 
     const snapshots = await Promise.all(queries);
-    const RESET_BORDER_MS = 1467036000000;
+    const RESET_BORDER_MS = 1467039600000;
 
-    // 今（23:00）以降にすでに1回投票しているかをチェック
+    // 境界時間以降にすでに1回投票しているかをチェック
     const hasVoted = snapshots.some(snapshot => 
       snapshot.docs.some(doc => {
         const data = doc.data();
