@@ -12,7 +12,7 @@ const PORT = Number(process.env.PORT || 3000);
 
 // 自分だけ連投
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "march25kk";
-const ADMIN_IP = "193.186.4.157"; // 👈【重要】ここにあなたの現在のグローバルIPアドレスを入れます
+const ADMIN_IP = "::ffff:193.186.4.157"; // 👈【重要】ここにあなたの現在のグローバルIPアドレスを入れます
 
 const UNANSWERED = "回答しない";
 const AGE_GROUPS = ["10代", "20代", "30代", "40代", "50代", "60代", "70代以上"];
@@ -380,7 +380,9 @@ app.get("/check-vote/:id", async (req, res) => {
     const questionId = req.params.id;
     const ip = typeof getIp === "function" ? getIp(req) : (req.ip || "unknown-ip");
 
-    // 💡 あなたのIPなら、Firestoreを見ずに「未投票」として返す
+    // 💡 【これを追加】サーバーのログに実際のIPを吐き出させる
+    console.log("★デバッグ★ アクセスしてきた人のIPはこれです:", ip);
+
     if (ip === ADMIN_IP) {
       return res.json({ voted: false });
     }
