@@ -507,12 +507,46 @@ function renderResultsScreen(div, q, id) {
   });
   if (cumulativePercent < 100) conicParts.push(`#e2e8f0 ${cumulativePercent}% 100%`);
 
+  // 💡 シェア用のURLと文言を生成
+  const shareUrl = encodeURIComponent(window.location.href);
+  const shareText = encodeURIComponent(`「${q.title}」のアンケート結果をチェック！ #みんQ`);
+
   let html = `
     <div class="resultDashboard">
       <div class="resultHeader">
         <div class="resultQuestionTitle">${sanitize(q.title)}</div>
-        <h1 style="font-size: 16px; margin-top: 4px; color: #333;">回答結果</h1>
-      </div>
+        
+        <div class="share-buttons" style="display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; margin: 12px 0; padding: 0 4px; box-sizing: border-box; width: 100%;">
+          <a href="https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareText}" target="_blank" rel="noopener noreferrer" 
+             style="background: #000000; color: #fff; text-decoration: none; font-size: 11px; font-weight: bold; padding: 6px 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; width: 72px; box-sizing: border-box;">
+            X
+          </a>
+          
+          <a href="https://social-plugins.line.me/lineit/share?url=${shareUrl}" target="_blank" rel="noopener noreferrer" 
+             style="background: #06C755; color: #fff; text-decoration: none; font-size: 11px; font-weight: bold; padding: 6px 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; width: 72px; box-sizing: border-box;">
+            LINE
+          </a>
+
+          <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" rel="noopener noreferrer" 
+             style="background: #1877F2; color: #fff; text-decoration: none; font-size: 11px; font-weight: bold; padding: 6px 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; width: 72px; box-sizing: border-box;">
+            Facebook
+          </a>
+
+          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" 
+             style="background: linear-gradient(135deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D); color: #fff; text-decoration: none; font-size: 11px; font-weight: bold; padding: 6px 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; width: 72px; box-sizing: border-box;">
+            Instagram
+          </a>
+          
+          <a href="https://www.threads.net/intent/post?url=${shareUrl}&text=${shareText}" target="_blank" rel="noopener noreferrer" 
+             style="background: #000000; color: #fff; text-decoration: none; font-size: 11px; font-weight: bold; padding: 6px 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; width: 72px; box-sizing: border-box; border: 1px solid #333;">
+            Threads
+          </a>
+        </div>
+
+        <h1 style="font-size: 13px; margin-top: 6px; color: #666; font-weight: bold;">回答結果</h1> </div>
+
+      <div class="resultGrid-top">
+        <div class="resultCard">
 
       <div class="resultGrid-top">
         <div class="resultCard">
