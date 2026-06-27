@@ -305,13 +305,13 @@ app.post("/view", async (req, res) => {
   }
 });
 
-// 5. 投票済みチェック（文字列・数値の型不一致バグ完全解消版）
+// 5. 投票済みチェック（本日以降の投票ログのみを厳密にチェックする仕様）
 app.get("/check-vote/:id", async (req, res) => {
   try {
     const questionId = req.params.id;
     const ip = getIp(req);
 
-    // 💡 過去の数値IDデータ対策：文字列と数値の両方のパターンでログを検索
+    // 💡 文字列と数値の両方のパターンで既存の投票ログ（votes）を検索
     const queries = [
       firestore.collection(V_COLL).where("questionId", "==", String(questionId)).get()
     ];
@@ -320,8 +320,19 @@ app.get("/check-vote/:id", async (req, res) => {
     }
 
     const snapshots = await Promise.all(queries);
+    
+    // 💡 修正：今日（2026年6月27日 22:30以降）の新しい投票ログだけを二重投票チェックの対象にする
+    const RESET_TIMESTAMP = new Date("2026-06-27T22:30:00").getTime();
+
     const isVoted = snapshots.some(snapshot => 
-      snapshot.docs.some(doc => doc.data().ip === ip)
+      snapshot.docs.some(doc => {
+        const data = doc.data();
+        if (data.ip !== ip) return false;
+        
+        // ログの作成日時をミリ秒に変換して比較
+        const logTime = data.createdAt ? new Date(data.createdAt).getTime() : 0;
+        return logTime > RESET_TIMESTAMP; // 本日以降の新しいログがある場合のみ「投票済み」とする
+      })
     );
 
     res.json({ voted: isVoted });
@@ -331,7 +342,7 @@ app.get("/check-vote/:id", async (req, res) => {
   }
 });
 
-// 6. 投票処理（文字列・数値の型不一致バグ完全解消版）
+// 6. 投票処理（本日以降の重複投票のみをブロックする仕様）
 const handleVote = async (req, res) => {
   const id = req.params.id || req.body.id;
   const { index, age, gender } = req.body;
@@ -342,7 +353,7 @@ const handleVote = async (req, res) => {
   const selectedGender = gender || UNANSWERED;
 
   try {
-    // 💡 過去の数値IDデータ対策：ここでも文字列・数値の両方で既存の投票ログをチェック
+    // 💡 ここでも同様に、本日以降の新しいログに絞って重複を判定
     const queries = [
       firestore.collection(V_COLL).where("questionId", "==", String(id)).get()
     ];
@@ -351,41 +362,46 @@ const handleVote = async (req, res) => {
     }
 
     const snapshots = await Promise.all(queries);
+    const RESET_TIMESTAMP = new Date("2026-06-27T22:30:00").getTime();
+
     const hasVoted = snapshots.some(snapshot => 
-      snapshot.docs.some(doc => doc.data().ip === ip)
+      snapshot.docs.some(doc => {
+        const data = doc.data();
+        if (data.ip !== ip) return false;
+        const logTime = data.createdAt ? new Date(data.createdAt).getTime() : 0;
+        return logTime > RESET_TIMESTAMP;
+      })
     );
       
     if (hasVoted) {
       return res.json({ success: true, message: "既に投票済みです" });
     }
 
-    // ドキュメント自体の参照も、文字列と数値の両方で存在をチェックする安全設計
-    let questionRef = firestore.collection(Q_COLL).doc(String(id));
-    let sfDoc = await questionRef.get();
-    
-    if (!sfDoc.exists && !isNaN(id)) {
-      questionRef = firestore.collection(Q_COLL).doc(String(Number(id)));
-      sfDoc = await questionRef.get();
-    }
-    
-    if (!sfDoc.exists) throw new Error("Document does not exist!");
-
+    const questionRef = firestore.collection(Q_COLL).doc(String(id));
     await firestore.runTransaction(async (transaction) => {
-      const freshDoc = await transaction.get(questionRef);
-      const data = freshDoc.data();
+      let sfDoc = await transaction.get(questionRef);
+      let targetRef = questionRef;
+      
+      if (!sfDoc.exists && !isNaN(id)) {
+        targetRef = firestore.collection(Q_COLL).doc(String(Number(id)));
+        sfDoc = await transaction.get(targetRef);
+      }
+      
+      if (!sfDoc.exists) throw new Error("Document does not exist!");
+
+      const data = sfDoc.data();
       const counts = data.counts || {};
       
       counts[`age_${selectedAge}`] = (counts[`age_${selectedAge}`] || 0) + 1;
       counts[`gender_${selectedGender}`] = (counts[`gender_${selectedGender}`] || 0) + 1;
       counts[`option_${index}`] = (counts[`option_${index}`] || 0) + 1;
 
-      transaction.update(questionRef, { 
+      transaction.update(targetRef, { 
         totalVotes: (data.totalVotes || 0) + 1, 
         counts,
         updatedAt: nowJSTString()
       });
 
-      // 新しい投票ログは一貫して文字列として安全に保存
       const voteLogRef = firestore.collection(V_COLL).doc();
       transaction.set(voteLogRef, {
         questionId: String(id), 
@@ -393,7 +409,7 @@ const handleVote = async (req, res) => {
         age: selectedAge, 
         gender: selectedGender, 
         ip: ip, 
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString() // 💡 これ以降、この新しいログが二重投票を防ぎます
       });
     });
 
