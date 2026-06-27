@@ -305,48 +305,35 @@ app.post("/view", async (req, res) => {
   }
 });
 
-// 5. 投票済みチェック（過去データ・新データ完全対応版）
+// 5. 投票済みチェック（既存データ・コメント完全維持 ＋ 全員もう一度だけ投票可能化版）
 app.get("/check-vote/:id", async (req, res) => {
   try {
-    const questionId = req.params.id;
+    const questionId = String(req.params.id); // 型不一致を防ぐため文字列に統一
     const ip = getIp(req);
 
-    // 1. 対象のアンケートデータを取得して「最終更新日時」を確認する
-    let questionRef = firestore.collection(Q_COLL).doc(String(questionId));
-    let qDoc = await questionRef.get();
-    if (!qDoc.exists && !isNaN(questionId)) {
-      questionRef = firestore.collection(Q_COLL).doc(String(Number(questionId)));
-      qDoc = await questionRef.get();
-    }
-
-    // アンケートが存在しない、または総投票数が0なら未投票(false)
-    if (!qDoc.exists || (qDoc.data().totalVotes || 0) === 0) {
-      return res.json({ voted: false });
-    }
-
-    const qData = qDoc.data();
-    // 💡 過去データ対策：updatedAt がなければ作成日時(createdAt)を基準にする
-    const lastUpdateTime = qData.updatedAt ? new Date(qData.updatedAt.replace(" ", "T") + "+09:00").getTime() : 0;
-
-    // 2. 投票ログ（votes）を検索
+    // 文字列と数値の両方のパターンでFirestoreの既存の投票ログ（votes）を検索
     const queries = [
-      firestore.collection(V_COLL).where("questionId", "==", String(questionId)).get()
+      firestore.collection(V_COLL).where("questionId", "==", questionId).get()
     ];
     if (!isNaN(questionId)) {
       queries.push(firestore.collection(V_COLL).where("questionId", "==", Number(questionId)).get());
     }
 
     const snapshots = await Promise.all(queries);
+    
+    // 💡 2026年6月27日 23:00 (JST) の絶対ミリ秒タイムスタンプ
+    // これより「過去」の投票ログはシステム上すべて無視されるため、全員が「未投票」状態からスタートできます。
+    const RESET_BORDER_MS = 1467036000000; 
 
-    // 💡 判定：自分のIPのログがあり、かつそれが「アンケートの最終更新日時」以降のものである場合のみ投票済みとする
     const isVoted = snapshots.some(snapshot => 
       snapshot.docs.some(doc => {
         const data = doc.data();
         if (data.ip !== ip) return false;
         
+        // ログの作成時間をミリ秒にして比較
         const logTime = data.createdAt ? new Date(data.createdAt).getTime() : 0;
-        // 最終更新より「後」に自分が投票したログが存在するかどうか
-        return logTime >= (lastUpdateTime - 2000); // 2秒の猶予を持たせる
+        // 今（23:00）以降に新しく作られた投票ログがある場合のみ「投票済み」と判定
+        return logTime > RESET_BORDER_MS; 
       })
     );
 
@@ -357,9 +344,9 @@ app.get("/check-vote/:id", async (req, res) => {
   }
 });
 
-// 6. 投票処理（過去データ・新データ完全対応版）
+// 6. 投票処理（既存データ・コメント完全維持 ＋ 全員もう一度だけ投票可能化版）
 const handleVote = async (req, res) => {
-  const id = req.params.id || req.body.id;
+  const id = String(req.params.id || req.body.id); // 型不一致を防ぐため文字列に統一
   const { index, age, gender } = req.body;
   if (id == null || index == null) return sendError(res, "不完全なデータです", 400);
 
@@ -368,46 +355,47 @@ const handleVote = async (req, res) => {
   const selectedGender = gender || UNANSWERED;
 
   try {
-    let questionRef = firestore.collection(Q_COLL).doc(String(id));
-    let qDoc = await questionRef.get();
-    let targetRef = questionRef;
-    
-    if (!qDoc.exists && !isNaN(id)) {
-      targetRef = firestore.collection(Q_COLL).doc(String(Number(id)));
-      qDoc = await targetRef.get();
-    }
-    if (!qDoc.exists) throw new Error("Document does not exist!");
-
-    const qData = qDoc.data();
-    const lastUpdateTime = qData.updatedAt ? new Date(qData.updatedAt.replace(" ", "T") + "+09:00").getTime() : 0;
-
-    // 重複チェック
     const queries = [
-      firestore.collection(V_COLL).where("questionId", "==", String(id)).get()
+      firestore.collection(V_COLL).where("questionId", "==", id).get()
     ];
     if (!isNaN(id)) {
       queries.push(firestore.collection(V_COLL).where("questionId", "==", Number(id)).get());
     }
 
     const snapshots = await Promise.all(queries);
+    const RESET_BORDER_MS = 1467036000000;
+
+    // 今（23:00）以降にすでに1回投票しているかをチェック
     const hasVoted = snapshots.some(snapshot => 
       snapshot.docs.some(doc => {
         const data = doc.data();
         if (data.ip !== ip) return false;
         const logTime = data.createdAt ? new Date(data.createdAt).getTime() : 0;
-        return logTime >= (lastUpdateTime - 2000);
+        return logTime > RESET_BORDER_MS;
       })
     );
       
+    // 💡 2回目以降のアクセスは、ここで確実にエラーとして弾く（二重投票防止）
     if (hasVoted) {
       return res.status(400).json({ error: true, message: "既に投票済みです" });
     }
 
+    const questionRef = firestore.collection(Q_COLL).doc(id);
     await firestore.runTransaction(async (transaction) => {
-      const freshDoc = await transaction.get(targetRef);
-      const data = freshDoc.data();
+      let sfDoc = await transaction.get(questionRef);
+      let targetRef = questionRef;
+      
+      if (!sfDoc.exists && !isNaN(id)) {
+        targetRef = firestore.collection(Q_COLL).doc(String(Number(id)));
+        sfDoc = await transaction.get(targetRef);
+      }
+      
+      if (!sfDoc.exists) throw new Error("Document does not exist!");
+
+      const data = sfDoc.data();
       const counts = data.counts || {};
       
+      // 既存の投票数やカテゴリ別集計は消さずに、そのまま上乗せ（+1）する
       counts[`age_${selectedAge}`] = (counts[`age_${selectedAge}`] || 0) + 1;
       counts[`gender_${selectedGender}`] = (counts[`gender_${selectedGender}`] || 0) + 1;
       counts[`option_${index}`] = (counts[`option_${index}`] || 0) + 1;
@@ -415,17 +403,18 @@ const handleVote = async (req, res) => {
       transaction.update(targetRef, { 
         totalVotes: (data.totalVotes || 0) + 1, 
         counts,
-        updatedAt: nowJSTString() // 💡 投票が成功すると updatedAt が新しくなるため、次回から二重投票が防げます
+        updatedAt: nowJSTString()
       });
 
+      // 新しい投票ログを生成。これが「2回目」をブロックするための鍵になります
       const voteLogRef = firestore.collection(V_COLL).doc();
       transaction.set(voteLogRef, {
-        questionId: String(id), 
+        questionId: id, 
         optionIndex: Number(index), 
         age: selectedAge, 
         gender: selectedGender, 
         ip: ip, 
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString() 
       });
     });
 
