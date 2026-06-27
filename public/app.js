@@ -23,7 +23,7 @@ const state = {
   totalPages: 1,
   currentSearch: "",
   currentTag: "",
-  currentSort: "update", // 💡 デフォルト（標準表示）を新着順("new")から更新順("update")に変更
+  currentSort: "update",
   options: ["", ""]
 };
 
@@ -47,8 +47,6 @@ function sanitize(str) {
 }
 
 function getOptimalHotTag(total, commentCount, createdAtStr) {
-  const speed = total + commentCount * 3;
-
   if (createdAtStr) {
     const formattedStr = createdAtStr.replace(/-/g, "/");
     const postDate = new Date(formattedStr);
@@ -279,7 +277,6 @@ function renderTopTags() {
   tagArea.appendChild(fragment);
 }
 
-// 💡 更新順（update）タブのactive制御に対応
 function changeSort(sort) {
   state.currentSort = sort;
 
@@ -300,7 +297,6 @@ function searchQuestions() {
 }
 
 async function searchTag(tag) {
-  console.log("searchTag called with:", tag);
   state.currentTag = tag;
   state.page = 1;
   
@@ -313,7 +309,6 @@ async function searchTag(tag) {
 }
 
 async function clearTag() {
-  console.log("clearTag called");
   state.currentTag = "";
   state.page = 1;
   
@@ -335,11 +330,9 @@ function updatePagerButtons() {
 }
 
 // ==========================================
-// 6. 詳細・結果 統合画面の制御
+// 6. 詳細・結果 統合画面の制御 (💡 修正：画面遷移が絶対にバグらない安全設計に強化)
 // ==========================================
 async function loadCombinedQuestion() {
-  console.log("loadCombinedQuestion start");
-
   const div = document.getElementById("questionArea");
   if (!div) return;
 
@@ -350,12 +343,19 @@ async function loadCombinedQuestion() {
   }
 
   try {
-    const [viewRes, checkRes, questionRes] = await Promise.all([
-      fetch("/view", {
+    // 💡 閲覧数インクリメントAPIの失敗に巻き込まれないように try-catch で独立処理化
+    try {
+      await fetch("/view", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id })
-      }).catch(e => { console.error(e); return { json: async () => ({}) }; }),
+      });
+    } catch (e) {
+      console.warn("View counter tracking failed, skipping...", e);
+    }
+
+    // 💡 投票チェックとアンケート詳細データを安全に並列リクエスト
+    const [checkRes, questionRes] = await Promise.all([
       fetch(`/check-vote/${id}`),
       fetch(`/questions/${id}`)
     ]);
@@ -370,10 +370,11 @@ async function loadCombinedQuestion() {
 
     cache.questionDetail[id] = q;
 
-    if (!checkData.voted) {
-      renderVotingScreen(div, q, id);
-    } else {
+    // 💡 厳密な判定: voted が明確に true である場合のみ結果画面、それ以外はすべて「回答（投票）画面」へ
+    if (checkData && checkData.voted === true) {
       renderResultsScreen(div, q, id);
+    } else {
+      renderVotingScreen(div, q, id);
     }
 
   } catch (err) {
