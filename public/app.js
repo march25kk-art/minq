@@ -23,7 +23,7 @@ const state = {
   totalPages: 1,
   currentSearch: "",
   currentTag: "",
-  currentSort: "new",
+  currentSort: "update", // 💡 デフォルト（標準表示）を新着順("new")から更新順("update")に変更
   options: ["", ""]
 };
 
@@ -46,7 +46,6 @@ function sanitize(str) {
     .replace(/'/g, "&#39;");
 }
 
-// 💡 修正版：第3引数に投稿日時（createdAtStr）を受け取れるように拡張
 function getOptimalHotTag(total, commentCount, createdAtStr) {
   const speed = total + commentCount * 3;
 
@@ -54,16 +53,12 @@ function getOptimalHotTag(total, commentCount, createdAtStr) {
     const formattedStr = createdAtStr.replace(/-/g, "/");
     const postDate = new Date(formattedStr);
     const now = new Date();
-
     const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
 
-    // 💡 投稿から3日（72時間）以上経過している場合は「空っぽ」を返す
     if (now.getTime() - postDate.getTime() > threeDaysMs) {
       return ""; 
     }
   }
-
-  // 💡 3日以内なら「NEW」を返す
   return "NEW";
 }
 
@@ -180,8 +175,6 @@ async function loadQuestions() {
   const div = document.getElementById("questions");
   if (!div) return;
 
-
-  // 最低でも画面の高さ（80vh）を確保し、アンケートが挿入された時のレイアウトシフトを防ぐ
   div.innerHTML = `
   <div style="text-align: center; padding: 150px 40px; color: #666; font-size: 14px; min-height: 1200px; box-sizing: border-box;">
     アンケートを読み込み中...
@@ -215,29 +208,24 @@ async function loadQuestions() {
                             (q.comments && Array.isArray(q.comments)) ? q.comments.length : 0;
       const viewsCount = q.views || 0;
 
-      // 💡 復活：3日以内かどうかの判定を呼び出す
       const hotTag = getOptimalHotTag(total, commentCount, q.createdAt);
 
       const thread = document.createElement("div");
       thread.className = "thread";
       thread.onclick = () => openDetail(q.id);
       
-      // 💡 インラインCSSを撤廃し、CSSファイル側でパソコンとスマホの切り替えを完璧に行います
       thread.innerHTML = `
         <div class="threadRow custom-row">
-          
           <div class="leftTitle custom-title">
             <span class="hotTag" style="${hotTag ? '' : 'background: transparent !important; color: transparent !important; border: none !important;'} display: inline-block; width: 32px; text-align: center; flex-shrink: 0; padding: 2px 0;">${hotTag || 'NEW'}</span>
             <span class="title-text">${sanitize(q.title)}</span>
           </div>
-          
           <div class="rightMeta custom-meta">
             <span class="meta-item item-vote">${total}回答</span>
             <span class="meta-item item-comment">${commentCount}コメント</span>
             <span class="meta-item item-view">${viewsCount}閲覧</span>
             <span class="postDate">${q.createdAt || ""}</span>
           </div>
-
         </div>
       `;
       fragment.appendChild(thread);
@@ -256,7 +244,6 @@ async function loadQuestions() {
     div.innerHTML = '<div style="text-align:center; padding:40px; color:#ff4d4d;">データの読み込みに失敗しました。</div>';
   }
 }
-
 
 function renderTopTags() {
   const tagArea = document.getElementById("tagArea");
@@ -292,6 +279,7 @@ function renderTopTags() {
   tagArea.appendChild(fragment);
 }
 
+// 💡 更新順（update）タブのactive制御に対応
 function changeSort(sort) {
   state.currentSort = sort;
 
@@ -362,7 +350,6 @@ async function loadCombinedQuestion() {
   }
 
   try {
-    // 並列リクエスト実行（最適化）
     const [viewRes, checkRes, questionRes] = await Promise.all([
       fetch("/view", {
         method: "POST",
@@ -507,7 +494,6 @@ function renderResultsScreen(div, q, id) {
   });
   if (cumulativePercent < 100) conicParts.push(`#e2e8f0 ${cumulativePercent}% 100%`);
 
-  // 💡 シェア用のURLと文言を生成
   const shareUrl = encodeURIComponent(window.location.href);
   const shareText = encodeURIComponent(`「${q.title}」のアンケート結果をチェック！ #みんQ`);
 
@@ -544,9 +530,6 @@ function renderResultsScreen(div, q, id) {
         </div>
 
         <h1 style="font-size: 13px; margin-top: 6px; color: #666; font-weight: bold;">回答結果</h1> </div>
-
-      <div class="resultGrid-top">
-        <div class="resultCard">
 
       <div class="resultGrid-top">
         <div class="resultCard">
@@ -719,7 +702,6 @@ function renderGenderStats(q) {
       row.className = "flipped-bar-row";
       row.style.cssText = "display: flex; align-items: center; gap: 12px; min-height: 18px; width: 100%; box-sizing: border-box;";
       
-      // 💡 【修正点】「text-align: left」で完璧な左揃えにし、幅を「min-width: 140px」に広げ、さらに「overflowやwhite-spaceの省略制限」を完全に撤廃。文字が長い場合は自動で改行して全文字を表示させます。
       row.innerHTML = `
         <div style="font-size: 13px; min-width: 140px; max-width: 200px; flex-shrink: 0; text-align: left; color: #475569; font-weight: 500; line-height: 1.2; padding-right: 4px; box-sizing: border-box;">${sanitize(optionText)}</div>
         <div style="flex: 1; height: 14px; background-color: #e2e8f0; border-radius: 999px; overflow: hidden; position: relative;">
@@ -784,7 +766,6 @@ function renderAgeStats(q) {
       row.className = "flipped-bar-row";
       row.style.cssText = "display: flex; align-items: center; gap: 12px; min-height: 18px; width: 100%; box-sizing: border-box;";
       
-      // 💡 【修正点】年代側も同様に、左揃え＆長いときは改行を許可して文字切れを完全に排除
       row.innerHTML = `
         <div style="font-size: 13px; min-width: 140px; max-width: 200px; flex-shrink: 0; text-align: left; color: #475569; font-weight: 500; line-height: 1.2; padding-right: 4px; box-sizing: border-box;">${sanitize(optionText)}</div>
         <div style="flex: 1; height: 14px; background-color: #e2e8f0; border-radius: 999px; overflow: hidden; position: relative;">

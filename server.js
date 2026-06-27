@@ -49,7 +49,7 @@ const nowJSTString = () => new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString
 
 const sendError = (res, message, status = 200) => res.status(status).json({ error: true, message });
 
-// 定期クリーンアップ（不具合を修正：IPキーを確実に削除）
+// 定期クリーンアップ
 setInterval(() => {
   const now = Date.now();
   
@@ -118,21 +118,29 @@ const normalizeQuestionData = (data) => ({
 // ルーティング
 // -----------------------------------------------------------------------------
 
-// 1. 質問一覧取得
+// 1. 質問一覧取得（更新順をデフォルトに修正）
 app.get("/questions", async (req, res) => {
   try {
     const page = Math.max(Number(req.query.page || 1), 1);
     const limit = 30;
     const keyword = String(req.query.search || "");
     const tag = String(req.query.tag || "");
-    const sort = String(req.query.sort || "new");
+    const sort = String(req.query.sort || "update"); // 💡 デフォルトを "update" に変更
 
     let query = firestore.collection(Q_COLL);
     const isFiltered = keyword || tag;
 
     if (!isFiltered) {
-      const sortFields = { view: "views", vote: "totalVotes", new: "createdAt" };
-      query = query.orderBy(sortFields[sort] || "createdAt", "desc");
+      // 💡 "update" の場合は新設の updatedAt でソート。過去データ用に "createdAt" もフォールバックとして対応
+      const sortFields = { 
+        update: "updatedAt", 
+        new: "createdAt", 
+        view: "views", 
+        vote: "totalVotes" 
+      };
+      const orderField = sortFields[sort] || "updatedAt";
+      query = query.orderBy(orderField, "desc");
+      
       if (page > 1) query = query.offset((page - 1) * limit);
       query = query.limit(limit);
     }
@@ -150,7 +158,8 @@ app.get("/questions", async (req, res) => {
         ...data,
         commentCount: commentCount || 0,
         totalVotes: data.totalVotes || 0,
-        views: data.views || 0
+        views: data.views || 0,
+        updatedAt: data.updatedAt || data.createdAt || "" // 💡 過去のデータ対策
       };
     }));
 
@@ -163,9 +172,16 @@ app.get("/questions", async (req, res) => {
     if (isFiltered) {
       if (keyword) questions = questions.filter(q => q.title.includes(keyword));
       
-      if (sort === "view") questions.sort((a, b) => (b.views || 0) - (a.views || 0));
-      else if (sort === "vote") questions.sort((a, b) => (b.totalVotes || 0) - (a.totalVotes || 0));
-      else questions.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+      if (sort === "view") {
+        questions.sort((a, b) => (b.views || 0) - (a.views || 0));
+      } else if (sort === "vote") {
+        questions.sort((a, b) => (b.totalVotes || 0) - (a.totalVotes || 0));
+      } else if (sort === "new") {
+        questions.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+      } else {
+        // 💡 サーバー側での更新順（デフォルト）ソート
+        questions.sort((a, b) => String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || "")));
+      }
 
       const totalPages = Math.ceil(questions.length / limit) || 1;
       return res.json({
@@ -187,7 +203,7 @@ app.get("/questions", async (req, res) => {
   }
 });
 
-// 2. 質問投稿（修正：連投エラー時はタイムスタンプを上書きしない）
+// 2. 質問投稿（updatedAt の初期化を追加）
 app.post("/questions", async (req, res) => {
   try {
     let { title, options, tags } = req.body;
@@ -211,12 +227,14 @@ app.post("/questions", async (req, res) => {
     }
     questionCooldown[ip] = now;
 
+    const timeStr = nowJSTString();
     const newQuestion = {
       title: escapeHTML(title),
       description: escapeHTML(description),
       options: options.map(o => escapeHTML(String(o).trim())),
       tags: Array.isArray(tags) ? tags.map(t => escapeHTML(String(t).trim())) : [],
-      createdAt: nowJSTString(),
+      createdAt: timeStr,
+      updatedAt: timeStr, // 💡 新規投稿時は作成日時を更新日時にセット
       views: 0,
       totalVotes: 0,
       commentCount: 0,
@@ -292,7 +310,7 @@ app.get("/check-vote/:id", async (req, res) => {
   }
 });
 
-// 6. 投票処理
+// 6. 投票処理（updatedAt の更新を追加）
 const handleVote = async (req, res) => {
   const id = req.params.id || req.body.id;
   const { index, age, gender } = req.body;
@@ -312,7 +330,12 @@ const handleVote = async (req, res) => {
       counts[`age_${selectedAge}`] = (counts[`age_${selectedAge}`] || 0) + 1;
       counts[`gender_${selectedGender}`] = (counts[`gender_${selectedGender}`] || 0) + 1;
 
-      transaction.update(questionRef, { totalVotes: (data.totalVotes || 0) + 1, counts });
+      // 💡 投票時に updatedAt を最新に更新
+      transaction.update(questionRef, { 
+        totalVotes: (data.totalVotes || 0) + 1, 
+        counts,
+        updatedAt: nowJSTString()
+      });
       transaction.set(firestore.collection(V_COLL).doc(), {
         questionId: id, optionIndex: Number(index), age: selectedAge, gender: selectedGender, ip: getIp(req), createdAt: new Date().toISOString()
       });
@@ -368,7 +391,7 @@ app.get("/stats/:id", async (req, res) => {
   }
 });
 
-// 8. コメント投稿（修正：連投エラー時はタイムスタンプを上書きしない）
+// 8. コメント投稿（updatedAt の更新を追加）
 const saveComment = async (req, res) => {
   try {
     const id = req.params.id || req.body.id;
@@ -386,10 +409,16 @@ const saveComment = async (req, res) => {
     }
     commentCooldown[ip] = now;
 
+    const timeStr = nowJSTString();
     await firestore.collection(C_COLL).add({
-      questionId: String(id), text: escapeHTML(text), age: age || UNANSWERED, gender: gender || UNANSWERED, createdAt: nowJSTString(), ip
+      questionId: String(id), text: escapeHTML(text), age: age || UNANSWERED, gender: gender || UNANSWERED, createdAt: timeStr, ip
     });
-    await firestore.collection(Q_COLL).doc(String(id)).update({ commentCount: FieldValue.increment(1) });
+    
+    // 💡 コメント追加時に commentCount と共に updatedAt も最新に更新
+    await firestore.collection(Q_COLL).doc(String(id)).update({ 
+      commentCount: FieldValue.increment(1),
+      updatedAt: timeStr
+    });
 
     res.json({ success: true });
   } catch (error) {
