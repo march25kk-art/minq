@@ -305,12 +305,30 @@ app.post("/view", async (req, res) => {
   }
 });
 
-// 5. 投票済みチェック（UTCタイムスタンプ完全同期版）
+// 5. 投票済みチェック（過去データ・新データ完全対応版）
 app.get("/check-vote/:id", async (req, res) => {
   try {
     const questionId = req.params.id;
     const ip = getIp(req);
 
+    // 1. 対象のアンケートデータを取得して「最終更新日時」を確認する
+    let questionRef = firestore.collection(Q_COLL).doc(String(questionId));
+    let qDoc = await questionRef.get();
+    if (!qDoc.exists && !isNaN(questionId)) {
+      questionRef = firestore.collection(Q_COLL).doc(String(Number(questionId)));
+      qDoc = await questionRef.get();
+    }
+
+    // アンケートが存在しない、または総投票数が0なら未投票(false)
+    if (!qDoc.exists || (qDoc.data().totalVotes || 0) === 0) {
+      return res.json({ voted: false });
+    }
+
+    const qData = qDoc.data();
+    // 💡 過去データ対策：updatedAt がなければ作成日時(createdAt)を基準にする
+    const lastUpdateTime = qData.updatedAt ? new Date(qData.updatedAt.replace(" ", "T") + "+09:00").getTime() : 0;
+
+    // 2. 投票ログ（votes）を検索
     const queries = [
       firestore.collection(V_COLL).where("questionId", "==", String(questionId)).get()
     ];
@@ -319,19 +337,16 @@ app.get("/check-vote/:id", async (req, res) => {
     }
 
     const snapshots = await Promise.all(queries);
-    
-    // 💡 完全にミリ秒（UTC）で統一。これより未来のログだけを二重投票チェック対象にする
-    // 2026年6月27日 22:30 JST は、UTCだと 13:30 です (1467034200000 ミリ秒)
-    const RESET_TIME_MS = 1467034200000;
 
+    // 💡 判定：自分のIPのログがあり、かつそれが「アンケートの最終更新日時」以降のものである場合のみ投票済みとする
     const isVoted = snapshots.some(snapshot => 
       snapshot.docs.some(doc => {
         const data = doc.data();
         if (data.ip !== ip) return false;
         
-        // ログの日時を確実にミリ秒に変換
         const logTime = data.createdAt ? new Date(data.createdAt).getTime() : 0;
-        return logTime > RESET_TIME_MS; // 今回のリセット日時以降の新しいログがあるか
+        // 最終更新より「後」に自分が投票したログが存在するかどうか
+        return logTime >= (lastUpdateTime - 2000); // 2秒の猶予を持たせる
       })
     );
 
@@ -342,7 +357,7 @@ app.get("/check-vote/:id", async (req, res) => {
   }
 });
 
-// 6. 投票処理（UTCタイムスタンプ完全同期版）
+// 6. 投票処理（過去データ・新データ完全対応版）
 const handleVote = async (req, res) => {
   const id = req.params.id || req.body.id;
   const { index, age, gender } = req.body;
@@ -353,6 +368,20 @@ const handleVote = async (req, res) => {
   const selectedGender = gender || UNANSWERED;
 
   try {
+    let questionRef = firestore.collection(Q_COLL).doc(String(id));
+    let qDoc = await questionRef.get();
+    let targetRef = questionRef;
+    
+    if (!qDoc.exists && !isNaN(id)) {
+      targetRef = firestore.collection(Q_COLL).doc(String(Number(id)));
+      qDoc = await targetRef.get();
+    }
+    if (!qDoc.exists) throw new Error("Document does not exist!");
+
+    const qData = qDoc.data();
+    const lastUpdateTime = qData.updatedAt ? new Date(qData.updatedAt.replace(" ", "T") + "+09:00").getTime() : 0;
+
+    // 重複チェック
     const queries = [
       firestore.collection(V_COLL).where("questionId", "==", String(id)).get()
     ];
@@ -361,35 +390,22 @@ const handleVote = async (req, res) => {
     }
 
     const snapshots = await Promise.all(queries);
-    const RESET_TIME_MS = 1467034200000;
-
     const hasVoted = snapshots.some(snapshot => 
       snapshot.docs.some(doc => {
         const data = doc.data();
         if (data.ip !== ip) return false;
         const logTime = data.createdAt ? new Date(data.createdAt).getTime() : 0;
-        return logTime > RESET_TIME_MS;
+        return logTime >= (lastUpdateTime - 2000);
       })
     );
       
-    // 💡 既に投票済みの場合は、フロントが「投票済み状態」を確実に覚えるように明示的に弾く
     if (hasVoted) {
       return res.status(400).json({ error: true, message: "既に投票済みです" });
     }
 
-    const questionRef = firestore.collection(Q_COLL).doc(String(id));
     await firestore.runTransaction(async (transaction) => {
-      let sfDoc = await transaction.get(questionRef);
-      let targetRef = questionRef;
-      
-      if (!sfDoc.exists && !isNaN(id)) {
-        targetRef = firestore.collection(Q_COLL).doc(String(Number(id)));
-        sfDoc = await transaction.get(targetRef);
-      }
-      
-      if (!sfDoc.exists) throw new Error("Document does not exist!");
-
-      const data = sfDoc.data();
+      const freshDoc = await transaction.get(targetRef);
+      const data = freshDoc.data();
       const counts = data.counts || {};
       
       counts[`age_${selectedAge}`] = (counts[`age_${selectedAge}`] || 0) + 1;
@@ -399,7 +415,7 @@ const handleVote = async (req, res) => {
       transaction.update(targetRef, { 
         totalVotes: (data.totalVotes || 0) + 1, 
         counts,
-        updatedAt: nowJSTString()
+        updatedAt: nowJSTString() // 💡 投票が成功すると updatedAt が新しくなるため、次回から二重投票が防げます
       });
 
       const voteLogRef = firestore.collection(V_COLL).doc();
@@ -409,7 +425,7 @@ const handleVote = async (req, res) => {
         age: selectedAge, 
         gender: selectedGender, 
         ip: ip, 
-        createdAt: new Date().toISOString() // 💡 UTC表記（ISO文字列）でクリーンに保存
+        createdAt: new Date().toISOString()
       });
     });
 
