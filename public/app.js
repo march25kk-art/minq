@@ -606,27 +606,62 @@ function renderResultsScreen(div, q, id) {
   renderAgeStats(q);
 }
 
+// 💡 決定版：連投バグと画面遷移のバグをその場で確実に仕留める投票ロジック
 async function voteAndReload(id) {
   const selected = document.querySelector('input[name="voteOption"]:checked');
   if (!selected) return alert("選択肢を選んでください");
 
   const ageEl = document.getElementById("age");
   const genderEl = document.getElementById("gender");
+  
+  // 🔴 連打・連投防止：通信が完了するまでボタンを無効化
+  const voteBtn = document.querySelector(".voteSubmitBtn");
+  if (voteBtn) voteBtn.disabled = true;
 
-  const res = await fetch("/vote", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      id,
-      index: Number(selected.value),
-      age: ageEl ? ageEl.value : "回答しない",
-      gender: genderEl ? genderEl.value : "回答しない"
-    })
-  });
+  try {
+    const res = await fetch("/vote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id,
+        index: Number(selected.value),
+        age: ageEl ? ageEl.value : "回答しない",
+        gender: genderEl ? genderEl.value : "回答しない"
+      })
+    });
 
-  const data = await res.json();
-  if (data.error) { alert(data.message); location.reload(); return; }
-  location.reload();
+    const data = await res.json();
+    
+    // 💡 改善①：バックエンドからエラー（既に投票済みなど）が返った場合は、リロードせずに警告を出す
+    if (data.error) {
+      alert(data.message || "投票に失敗しました");
+      
+      // 既に投票済みであれば、最新のデータをその場で引き直して結果画面に切り替える
+      const freshRes = await fetch(`/questions/${id}`);
+      const freshQ = await freshRes.json();
+      const div = document.getElementById("questionArea");
+      if (div && !freshQ.error) {
+        renderResultsScreen(div, freshQ, id);
+      }
+      return;
+    }
+
+    // 💡 改善②：成功時もページ全体をリロード(reload)せず、その場で結果画面に書き換える（これで無限ループを完全破壊）
+    const freshRes = await fetch(`/questions/${id}`);
+    const freshQ = await freshRes.json();
+    const div = document.getElementById("questionArea");
+    
+    if (div && !freshQ.error) {
+      renderResultsScreen(div, freshQ, id);
+    } else {
+      location.reload(); // 万が一のときのフォールバック
+    }
+
+  } catch (e) {
+    console.error("投票通信エラー:", e);
+    alert("通信に失敗しました。もう一度お試しください。");
+    if (voteBtn) voteBtn.disabled = false; // エラー時はボタンを元に戻す
+  }
 }
 
 async function addCommentAndReload(id) {
