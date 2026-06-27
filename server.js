@@ -9,7 +9,7 @@ const commentCooldown = {};
 
 // 💡 重複を排除し、すっきりさせました
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "march25kk";
-const ADMIN_IP = "::ffff:193.186.4.157"; 
+const ADMIN_IP = "210.203.236.72"; 
 const PORT = Number(process.env.PORT || 3000);
 
 const UNANSWERED = "回答しない";
