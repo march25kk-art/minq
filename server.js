@@ -10,6 +10,10 @@ const commentCooldown = {};
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "march25kk";
 const PORT = Number(process.env.PORT || 3000);
 
+// 自分だけ連投
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "march25kk";
+const ADMIN_IP = "193.186.4.157"; // 👈【重要】ここにあなたの現在のグローバルIPアドレスを入れます
+
 const UNANSWERED = "回答しない";
 const AGE_GROUPS = ["10代", "20代", "30代", "40代", "50代", "60代", "70代以上"];
 const LEGACY_AGE_GROUPS = ["10莉｣", "20莉｣", "30莉｣", "40莉｣", "50莉｣", "60莉｣", "70莉｣莉･荳・"];
@@ -370,11 +374,16 @@ app.post("/view", async (req, res) => {
   }
 });
 
-// 5. 投票済みチェック
+// 5. 投票済みチェック（修正後）
 app.get("/check-vote/:id", async (req, res) => {
   try {
     const questionId = req.params.id;
     const ip = typeof getIp === "function" ? getIp(req) : (req.ip || "unknown-ip");
+
+    // 💡 あなたのIPなら、Firestoreを見ずに「未投票」として返す
+    if (ip === ADMIN_IP) {
+      return res.json({ voted: false });
+    }
 
     const snapshot = await firestore.collection(V_COLL)
       .where("questionId", "==", questionId)
