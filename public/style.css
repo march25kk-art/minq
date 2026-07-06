@@ -945,34 +945,22 @@ header {
 /* ==========================================================================
    11. SNSシェアボタンの横並び崩れ防止修正
    ========================================================================== */
-/* 5つのSNSボタン（X, LINE, Facebook, Instagram, Threads）を囲む親要素 */
-#result button[onclick*="share"],
-#result button:contains("X"),
-#result div > button {
-  /* ※ボタンが連続して並んでいる親要素をターゲットにします */
-}
-
-/* 確実に対象を特定するため、ボタンが配置されているコンテナに効かせます */
-#result .resultHeader + div, 
-#result .resultQuestionTitle + div,
-#result div:has(button[onclick*="Twitter"]),
-#result div:has(button:nth-child(5)) {
+/* 5つのSNSボタンを囲む親要素のスタイルをスマホ画面向けに強制上書き */
+.share-buttons {
   display: flex !important;
   flex-wrap: nowrap !important;     /* 絶対に折り返さず1行に強制 */
   justify-content: space-between !important; /* 横いっぱいに均等配置 */
-  gap: 5px !important;              /* ボタン同士の隙間を狭く設定 */
+  gap: 4px !important;              /* ボタン同士の隙間を狭く設定 */
   width: 100% !important;
   box-sizing: border-box !important;
-  margin: 15px 0 !important;
 }
 
-/* ボタン単体の調整（スマホ画面の横幅に合わせて均等縮小） */
-#result div:has(button:nth-child(5)) button {
+/* ボタン（aタグ）自体のサイズ調整（スマホ画面の横幅に合わせて均等縮小） */
+.share-buttons a {
   flex: 1 !important;               /* 5つのボタンの横幅をすべて均等にする */
   min-width: 0 !important;          /* 縮小を許可 */
-  padding: 8px 2px !important;      /* 左右の余白を狭くして文字溢れを防止 */
-  font-size: 11px !important;       /* スマホ画面用に文字を少し小さく最適化 */
-  margin-top: 0 !important;         /* 上下のズレを防止 */
+  padding: 6px 2px !important;      /* 左右の余白を狭くして文字溢れを防止 */
+  font-size: 11px !important;       /* スマホ画面用に文字サイズを最適化 */
   white-space: nowrap !important;   /* ボタン内での意図しない改行を禁止 */
   text-align: center !important;
 }
