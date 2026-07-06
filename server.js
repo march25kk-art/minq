@@ -5,6 +5,23 @@ const { updateSitemap } = require('./generateSitemap');
 
 const app = express();
 app.use(express.json());
+
+// ==========================================
+// 【追加】古い詳細ページ（detail.html）から新ページ（/question）への301リダイレクト
+// ==========================================
+app.get('/detail.html', (req, res) => {
+  const id = req.query.id;
+  
+  if (id) {
+    // IDが存在する場合は、そのIDを維持して新しいURLへ「301（永久移動）」で転送
+    res.redirect(301, `/question?id=${encodeURIComponent(id)}`);
+  } else {
+    // 万が一IDがないアクセスだった場合はトップページへ転送
+    res.redirect(301, '/');
+  }
+});
+
+// 静的ファイルの設定（※必ずリダイレクト処理の下に配置すること）
 app.use(express.static("public", { extensions: ["html"] }));
 
 // ===== 定数・環境設定 =====
