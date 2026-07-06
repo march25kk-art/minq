@@ -7,21 +7,27 @@ const app = express();
 app.use(express.json());
 
 // ==========================================
-// 【追加】古い詳細ページ（detail.html）から新ページ（/question）への301リダイレクト
+// 1. 古い詳細ページ（detail.html）から新ページ（/question）への301リダイレクト
 // ==========================================
 app.get('/detail.html', (req, res) => {
   const id = req.query.id;
-  
   if (id) {
-    // IDが存在する場合は、そのIDを維持して新しいURLへ「301（永久移動）」で転送
     res.redirect(301, `/question?id=${encodeURIComponent(id)}`);
   } else {
-    // 万が一IDがないアクセスだった場合はトップページへ転送
     res.redirect(301, '/');
   }
 });
 
-// 静的ファイルの設定（※必ずリダイレクト処理の下に配置すること）
+// ==========================================
+// 2. 新しい詳細ページ（/question）へのアクセスを正しく処理する設定
+// ==========================================
+app.get('/question', (req, res) => {
+  // public フォルダ内にある詳細画面のHTMLファイル（question.html または detail.html）を確実に返す
+  // ※もしファイル名が「detail.html」のままなら、下の「question.html」を「detail.html」に書き換えてください
+  res.sendFile(__dirname + '/public/question.html');
+});
+
+// 静的ファイルの設定（※必ず上記2つのルーティングの下に配置）
 app.use(express.static("public", { extensions: ["html"] }));
 
 // ===== 定数・環境設定 =====
