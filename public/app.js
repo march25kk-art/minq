@@ -363,6 +363,40 @@ async function loadCombinedQuestion() {
     const checkData = await checkRes.json();
     const q = await questionRes.json();
 
+    // ===== SEO・タイトル更新 =====
+    document.title = `${q.title} | みんQ`;
+
+    const metaDesc = document.getElementById("metaDescription");
+    if (metaDesc) {
+      metaDesc.setAttribute(
+       "content",
+       q.description || `${q.title}のアンケートです。みんなの投票結果を見てみよう！`
+      );
+    }
+
+    const canonical = document.getElementById("canonical");
+    if (canonical) {
+      canonical.href = `${location.origin}/question?id=${id}`;
+    }
+
+    const ogTitle = document.getElementById("ogTitle");
+    if (ogTitle) {
+      ogTitle.setAttribute("content", q.title);
+    }
+
+    const ogDesc = document.getElementById("ogDescription");
+    if (ogDesc) {
+      ogDesc.setAttribute(
+        "content",
+        q.description || `${q.title}のアンケート`
+      );
+    }
+
+   const ogUrl = document.getElementById("ogUrl");
+   if (ogUrl) {
+     ogUrl.setAttribute("content", `${location.origin}/question?id=${id}`);
+    }
+
     if (q.error) {
       div.innerHTML = `<div class="detailCard"><p>${sanitize(q.message)}</p></div>`;
       return;
