@@ -2,6 +2,8 @@ const express = require("express");
 const { firestore } = require("./firebase");
 const { FieldValue } = require("firebase-admin/firestore");
 const { updateSitemap } = require('./generateSitemap');
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
 app.use(express.json());
@@ -21,10 +23,48 @@ app.get('/detail.html', (req, res) => {
 // ==========================================
 // 2. 新しい詳細ページ（/question）へのアクセスを正しく処理する設定
 // ==========================================
-app.get('/question', (req, res) => {
-  // public フォルダ内にある詳細画面のHTMLファイル（question.html または detail.html）を確実に返す
-  // ※もしファイル名が「detail.html」のままなら、下の「question.html」を「detail.html」に書き換えてください
-  res.sendFile(__dirname + '/public/question.html');
+app.get("/question", async (req, res) => {
+  try {
+    const id = String(req.query.id || "");
+
+    // idが無ければ通常のHTMLを返す
+    if (!id) {
+      return res.sendFile(path.join(__dirname, "public", "question.html"));
+    }
+
+    // Firestoreからアンケート取得
+    const doc = await firestore.collection(Q_COLL).doc(id).get();
+
+    if (!doc.exists) {
+      return res.sendFile(path.join(__dirname, "public", "question.html"));
+    }
+
+    const q = doc.data();
+
+    // question.htmlを読み込む
+    let html = fs.readFileSync(
+      path.join(__dirname, "public", "question.html"),
+      "utf8"
+    );
+
+    // タイトルを書き換える
+    html = html.replace(
+      "<title>みんQ - アンケート詳細</title>",
+      `<title>${q.title} | みんQ</title>`
+    );
+
+    // descriptionを書き換える
+    html = html.replace(
+      /<meta name="description" content="[^"]*">/,
+      `<meta name="description" content="${q.description || q.title}">`
+    );
+
+    res.send(html);
+
+  } catch (err) {
+    console.error(err);
+    res.sendFile(path.join(__dirname, "public", "question.html"));
+  }
 });
 
 // 静的ファイルの設定（※必ず上記2つのルーティングの下に配置）
