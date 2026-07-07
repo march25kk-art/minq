@@ -1,808 +1,703 @@
 /* ==========================================================================
-   1. 基本設定 & 共通スタイル
-   ========================================================================== */
+1. 基本設定 & 共通スタイル
+========================================================================== */
 body {
-  margin: 0;
-  font-family: sans-serif;
-  background: #f1f1f1;
-  scroll-padding-top: 50px; /* 💡 固定ヘッダーにコンテンツが被るのを防ぐ */
+margin: 0;
+font-family: sans-serif;
+background: #f1f1f1;
+scroll-padding-top: 50px; /* 💡 固定ヘッダーにコンテンツが被るのを防ぐ */
 }
-
 /* 💡 すべての画面のメインタイトルを24pxに統一 */
 h1 {
-  font-size: 24px !important;
+font-size: 24px !important;
 }
-
 input,
 textarea,
 select {
-  width: 100%;
-  margin-top: 10px;
-  padding: 14px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  box-sizing: border-box;
-  font-size: 16px;
+width: 100%;
+margin-top: 10px;
+padding: 14px;
+border-radius: 6px;
+border: 1px solid #ccc;
+box-sizing: border-box;
+font-size: 16px;
 }
-
 textarea {
-  height: 120px;
-  resize: none;
+height: 120px;
+resize: none;
 }
-
 button {
-  margin-top: 10px;
-  padding: 12px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+margin-top: 10px;
+padding: 12px;
+border: none;
+border-radius: 6px;
+cursor: pointer;
 }
-
 .layout {
-  max-width: 1200px;
-  margin: auto;
-  padding: 10px;
+max-width: 1200px;
+margin: auto;
+padding: 10px;
 }
-
 /* ==========================================================================
-   2. ヘッダー & ナビゲーション（全画面一律でサイズ固定＆追従化）
-   ========================================================================== */
+2. ヘッダー & ナビゲーション（全画面一律でサイズ固定＆追従化）
+========================================================================== */
 header {
-  background: #3a3a3a;
-  color: white;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 10px;
-  border-bottom: 1px solid #222;
-  
-  /* 固定追従設定 */
-  position: sticky;
-  top: 0;
-  z-index: 999;
-  
-  /* 帯の大きさを40pxに完全固定 */
-  height: 40px;
-  box-sizing: border-box;
-}
+background: #3a3a3a;
+color: white;
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 0 10px;
+border-bottom: 1px solid #222;
 
+/* 固定追従設定 */
+position: sticky;
+top: 0;
+z-index: 999;
+
+/* 帯の大きさを40pxに完全固定 */
+height: 40px;
+box-sizing: border-box;
+}
 .logo {
-  font-size: 18px;
-  font-weight: bold;
-  color: #fff;
-  cursor: pointer;
-  line-height: 40px;
+font-size: 18px;
+font-weight: bold;
+color: #fff;
+cursor: pointer;
+line-height: 40px;
 }
-
 .nav {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  height: 100%;
+display: flex;
+gap: 10px;
+align-items: center;
+height: 100%;
 }
-
 .nav input {
-  height: 24px;
-  font-size: 12px;
-  padding: 2px 6px;
-  width: 140px;
-  margin-top: 0;
+height: 24px;
+font-size: 12px;
+padding: 2px 6px;
+width: 140px;
+margin-top: 0;
 }
-
 .nav button {
-  background: #ddd;
-  color: #222;
-  border: 1px solid #999;
-  padding: 4px 8px;
-  border-radius: 0;
-  font-size: 12px;
-  cursor: pointer;
-  margin-top: 0;
+background: #ddd;
+color: #222;
+border: 1px solid #999;
+padding: 4px 8px;
+border-radius: 0;
+font-size: 12px;
+cursor: pointer;
+margin-top: 0;
 }
-
 /* ==========================================================================
-   3. カテゴリ・タグエリア
-   ========================================================================== */
+3. カテゴリ・タグエリア
+========================================================================== */
 .categoryBox {
-  background: white;
-  padding: 6px 10px;
-  border-radius: 8px;
-  margin: 8px auto;
-  max-width: 1200px;
+background: white;
+padding: 6px 10px;
+border-radius: 8px;
+margin: 8px auto;
+max-width: 1200px;
 }
-
 .categoryHeader {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+display: flex;
+align-items: center;
+gap: 8px;
+flex-wrap: wrap;
 }
-
 .categoryTitle {
-  font-size: 16px;
-  font-weight: bold;
-  margin: 0;
-  white-space: nowrap;
+font-size: 16px;
+font-weight: bold;
+margin: 0;
+white-space: nowrap;
 }
-
 #tagArea {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px;
+display: flex;
+align-items: center;
+flex-wrap: wrap;
+gap: 4px;
 }
-
 .category {
-  display: inline-block;
-  padding: 3px 8px;
-  margin: 2px;
-  background: #f1f1f1;
-  border: 1px solid #dcdcdc;
-  border-radius: 16px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: 0.2s;
+display: inline-block;
+padding: 3px 8px;
+margin: 2px;
+background: #f1f1f1;
+border: 1px solid #dcdcdc;
+border-radius: 16px;
+cursor: pointer;
+font-size: 12px;
+transition: 0.2s;
 }
-
 .category:hover {
-  background: #2563eb;
-  color: white;
-  border-color: #2563eb;
+background: #2563eb;
+color: white;
+border-color: #2563eb;
 }
-
 .tag {
-  background: #ddd;
-  display: inline-block;
-  padding: 5px 10px;
-  margin: 5px;
-  border-radius: 10px;
-  cursor: pointer;
+background: #ddd;
+display: inline-block;
+padding: 5px 10px;
+margin: 5px;
+border-radius: 10px;
+cursor: pointer;
 }
-
 .hotTag {
-  background: #ff6600;
-  color: white;
-  font-size: 10px;
-  padding: 1px 4px;
-  margin-right: 4px;
-  font-weight: bold;
+background: #ff6600;
+color: white;
+font-size: 10px;
+padding: 1px 4px;
+margin-right: 4px;
+font-weight: bold;
 }
-
 .moreBtn,
 .closeBtn {
-  all: unset;
-  color: #2563eb;
-  font-size: 12px;
-  cursor: pointer;
-  margin-left: 10px;
+all: unset;
+color: #2563eb;
+font-size: 12px;
+cursor: pointer;
+margin-left: 10px;
 }
-
 .moreBtn:hover,
 .closeBtn:hover {
-  text-decoration: underline;
+text-decoration: underline;
 }
-
 /* ==========================================================================
-   4. アンケート一覧（メイン画面）
-   ========================================================================== */
+4. アンケート一覧（メイン画面）
+========================================================================== */
 .sortMenu {
-  margin: 8px 0 12px;
-  font-size: 13px;
+margin: 8px 0 12px;
+font-size: 13px;
 }
-
 .sortMenu span {
-  cursor: pointer;
-  color: black;
+cursor: pointer;
+color: black;
 }
-
 .sortMenu span.active {
-  color: #007bff;
-  font-weight: bold;
+color: #007bff;
+font-weight: bold;
 }
-
 .thread {
-  background: white;
-  margin-bottom: 0;
-  padding: 6px 10px;
-  border-bottom: 1px solid #dcdcdc;
-  font-size: 13px;
-  cursor: pointer;
+background: white;
+margin-bottom: 0;
+padding: 6px 10px;
+border-bottom: 1px solid #dcdcdc;
+font-size: 13px;
+cursor: pointer;
 }
-
 .thread:hover {
-  background: #f7f7f7;
+background: #f7f7f7;
 }
-
 .threadRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+gap: 20px;
 }
-
 .leftTitle {
-  font-size: 14px;
-  font-weight: bold;
+font-size: 14px;
+font-weight: bold;
 }
-
 .rightMeta {
-  display: flex;
-  gap: 11px;
-  color: #888;
-  font-size: 14px;
+display: flex;
+gap: 11px;
+color: #888;
+font-size: 14px;
 }
-
 .pager {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  padding: 20px;
+display: flex;
+justify-content: center;
+gap: 10px;
+padding: 20px;
 }
-
 /* ==========================================================================
-   5. アンケート作成 & 詳細・パーツスタイル
-   ========================================================================== */
+5. アンケート作成 & 詳細・パーツスタイル
+========================================================================== */
 .createContainer,
 .detailContainer {
-  max-width: 700px;
-  margin: auto;
-  padding: 30px;
+max-width: 700px;
+margin: auto;
+padding: 30px;
 }
-
 .createCard,
 .detailCard {
-  background: #e9e9e9;
-  padding: 30px;
-  border-radius: 2px;
+background: #e9e9e9;
+padding: 30px;
+border-radius: 2px;
 }
-
 .optionRow {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
+display: flex;
+gap: 10px;
+margin-top: 10px;
 }
-
 .optionRow input {
-  flex: 1;
+flex: 1;
 }
-
 .optionCard {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 10px;
-  background: white;
-  border: 2px solid #ddd;
-  border-radius: 12px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: 0.2s;
+display: flex;
+align-items: center;
+gap: 15px;
+padding: 10px;
+background: white;
+border: 2px solid #ddd;
+border-radius: 12px;
+margin-bottom: 8px;
+cursor: pointer;
+transition: 0.2s;
 }
-
 .optionCard:hover {
-  border-color: #2563eb;
+border-color: #2563eb;
 }
-
 .optionCard input {
-  width: 16px;
-  height: 16px;
+width: 16px;
+height: 16px;
 }
-
 .optionText {
-  font-size: 16px;
-  font-weight: 500;
+font-size: 16px;
+font-weight: 500;
 }
-
 /* --- 年代・性別選択の横並びリッチデザイン --- */
 .voteInfoRow {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  margin: 24px 0;
-  background: #f9f9f9;
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  box-sizing: border-box;
+display: flex;
+justify-content: space-between;
+gap: 16px;
+margin: 24px 0;
+background: #f9f9f9;
+padding: 16px;
+border-radius: 12px;
+border: 1px solid #e5e7eb;
+box-sizing: border-box;
 }
-
 .voteInfoRow > div {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
+display: flex;
+align-items: center;
+gap: 8px;
+flex: 1;
 }
-
 .voteLabel {
-  font-weight: bold;
-  font-size: 14px;
-  color: #4b5563;
-  white-space: nowrap;
+font-weight: bold;
+font-size: 14px;
+color: #4b5563;
+white-space: nowrap;
 }
-
 .voteInfoRow select {
-  width: 100%;
-  margin-top: 0;
-  padding: 10px 14px;
-  font-size: 14px;
-  background-color: white;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  cursor: pointer;
-  color: #1f2937;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 16px;
-  padding-right: 36px;
-}
+width: 100%;
+margin-top: 0;
+padding: 10px 14px;
+font-size: 14px;
+background-color: white;
+border: 1px solid #d1d5db;
+border-radius: 8px;
+cursor: pointer;
+color: #1f2937;
+transition: border-color 0.2s, box-shadow 0.2s;
 
+appearance: none;
+-webkit-appearance: none;
+-moz-appearance: none;
+background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+background-repeat: no-repeat;
+background-position: right 12px center;
+background-size: 16px;
+padding-right: 36px;
+}
 .voteInfoRow select:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+outline: none;
+border-color: #2563eb;
+box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
-
 /* --- ボタンパーツ各種 --- */
 .subBtn { background: #eee; }
 .deleteBtn { width: 50px; background: #eee; }
 .voteBtn { width: 100%; background: #f3f3f3; text-align: left; }
 .submitBtn, .commentBtn { background: #666; color: white; }
-
 .voteSubmitBtn {
-  width: 220px;
-  height: 45px;
-  border: none;
-  border-radius: 12px;
-  background: #2563eb;
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  display: block;
-  margin: 0 auto;
+width: 220px;
+height: 45px;
+border: none;
+border-radius: 12px;
+background: #2563eb;
+color: white;
+font-size: 16px;
+font-weight: bold;
+cursor: pointer;
+display: block;
+margin: 0 auto;
 }
-
 .voteSubmitBtn:hover {
-  background: #1d4ed8;
+background: #1d4ed8;
 }
-
 /* --- 投票エリア・通報ボタン右寄せ --- */
 .voteArea {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
+display: flex;
+flex-direction: column;
+align-items: center;
+width: 100%;
 }
-
 .voteArea button[onclick^="reportQuestion"] {
-  align-self: flex-end;
-  width: auto;
-  padding: 6px 14px;
-  font-size: 13px;
-  border-radius: 6px;
-  background: #ff4444;
-  color: white;
-  margin-top: 10px;
+align-self: flex-end;
+width: auto;
+padding: 6px 14px;
+font-size: 13px;
+border-radius: 6px;
+background: #ff4444;
+color: white;
+margin-top: 10px;
 }
-
 /* ==========================================================================
-   6. 結果画面（ダッシュボード・チャート）
-   ========================================================================== */
+6. 結果画面（ダッシュボード・チャート）
+========================================================================== */
 .resultContainer {
-  max-width: 1200px;
-  margin: auto;
-  padding: 20px;
+max-width: 1200px;
+margin: auto;
+padding: 20px;
 }
-
 .resultDashboard {
-  max-width: 1200px;
-  margin: auto;
-  padding: 20px;
+max-width: 1200px;
+margin: auto;
+padding: 20px;
 }
-
 .resultHeader {
-  margin-bottom: 20px;
+margin-bottom: 20px;
 }
-
 .resultHeader h1 {
-  font-size: 18px;
-  font-weight: bold;
-  color: #1e293b;
-  margin: 0 0 5px 0;
+font-size: 18px;
+font-weight: bold;
+color: #1e293b;
+margin: 0 0 5px 0;
 }
-
 .resultQuestionTitle {
-  font-size: 24px;
-  font-weight: bold;
-  color: #334155;
-  line-height: 1.4;
-  margin: 10px 0 8px 0;
-  word-break: break-word;
+font-size: 24px;
+font-weight: bold;
+color: #334155;
+line-height: 1.4;
+margin: 10px 0 8px 0;
+word-break: break-word;
 }
-
 .resultMeta {
-  display: flex;
-  gap: 20px;
-  color: #666;
-  font-size: 14px;
+display: flex;
+gap: 20px;
+color: #666;
+font-size: 14px;
 }
-
 .resultGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 20px;
 }
-
 .resultCard {
-  background: white;
-  border-radius: 14px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+background: white;
+border-radius: 14px;
+padding: 24px;
+box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
-
 .resultCard h2 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  font-size: 24px;
+margin-top: 0;
+margin-bottom: 20px;
+font-size: 24px;
 }
-
 /* ドーナツ型円グラフ */
 .pieChart {
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
-  background: conic-gradient(#3b82f6 0% 45%, #ef4444 45% 80%, #aaa 80% 100%);
-  position: relative;
-  flex-shrink: 0;
+width: 220px;
+height: 220px;
+border-radius: 50%;
+background: conic-gradient(#3b82f6 0% 45%, #ef4444 45% 80%, #aaa 80% 100%);
+position: relative;
+flex-shrink: 0;
 }
-
 .pieChart::after {
-  content: "";
-  position: absolute;
-  width: 110px;
-  height: 110px;
-  background: white;
-  border-radius: 50%;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+content: "";
+position: absolute;
+width: 110px;
+height: 110px;
+background: white;
+border-radius: 50%;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
 }
-
 .overallWrap {
-  display: flex;
-  gap: 30px;
-  align-items: center;
+display: flex;
+gap: 30px;
+align-items: center;
 }
-
 .overallStats {
-  flex: 1;
+flex: 1;
 }
-
 .statRow {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 16px;
-  font-size: 16px;
+display: flex;
+justify-content: space-between;
+margin-top: 16px;
+font-size: 16px;
 }
-
 /* 棒グラフ・ゲージ */
 .bar {
-  height: 12px;
-  background: #eee;
-  border-radius: 999px;
-  overflow: hidden;
-  margin-top: 6px;
+height: 12px;
+background: #eee;
+border-radius: 999px;
+overflow: hidden;
+margin-top: 6px;
 }
-
 .fill {
-  height: 100%;
-  border-radius: 999px;
+height: 100%;
+border-radius: 999px;
 }
-
 .blue { background: #3b82f6; }
 .red { background: #ef4444; }
 .gray { background: #999; }
-
 /* ==========================================================================
-   7. レスポンシブ対応（スマホ表示用）
-   ========================================================================= */
+7. レスポンシブ対応（スマホ表示用）
+========================================================================== */
 @media (max-width: 768px) {
-  header {
-    /* 💡 スマホでも縦並びにせず横並びをキープして、40pxの帯サイズを完全に揃える */
-    flex-direction: row !important; 
-    justify-content: space-between;
-    align-items: center;
-    gap: 0;
-  }
-
-  .nav {
-    width: auto;
-    flex-wrap: nowrap;
-  }
-
-  .nav input {
-    width: 90px; /* スマホでは検索窓を少し縮めてはみ出しを防ぐ */
-  }
-
-  .threadRow {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
-  }
-
-  .rightMeta {
-    font-size: 12px;
-    gap: 8px;
-  }
-
-  .createContainer,
-  .detailContainer {
-    padding: 10px;
-  }
-
-  .createCard,
-  .detailCard,
-  .resultCard {
-    padding: 15px;
-  }
-
-  button {
-    font-size: 16px;
-  }
-
-  .resultGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .overallWrap {
-    flex-direction: column;
-  }
-
-  .pieChart {
-    width: 180px;
-    height: 180px;
-  }
+header {
+/* 💡 スマホでも縦並びにせず横並びをキープして、40pxの帯サイズを完全に揃える */
+flex-direction: row !important;
+justify-content: space-between;
+align-items: center;
+gap: 0;
 }
-
+.nav {
+width: auto;
+flex-wrap: nowrap;
+}
+.nav input {
+width: 90px; /* スマホでは検索窓を少し縮めてはみ出しを防ぐ */
+}
+.threadRow {
+flex-direction: column;
+align-items: flex-start;
+gap: 5px;
+}
+.rightMeta {
+font-size: 12px;
+gap: 8px;
+}
+.createContainer,
+.detailContainer {
+padding: 10px;
+}
+.createCard,
+.detailCard,
+.resultCard {
+padding: 15px;
+}
+button {
+font-size: 16px;
+}
+.resultGrid {
+grid-template-columns: 1fr;
+}
+.overallWrap {
+flex-direction: column;
+}
+.pieChart {
+width: 180px;
+height: 180px;
+}
+}
 @media (max-width: 480px) {
-  .voteInfoRow {
-    flex-direction: column;
-    gap: 12px;
-  }
-  .voteInfoRow > div {
-    width: 100%;
-  }
+.voteInfoRow {
+flex-direction: column;
+gap: 12px;
 }
-
+.voteInfoRow > div {
+width: 100%;
+}
+}
 /* ==========================================================================
-   8. アンケート作成ボタン (FAB)
-   ========================================================================== */
+8. アンケート作成ボタン (FAB)
+========================================================================== */
 .fab-btn {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
-  color: white;
-  border: none;
-  padding: 16px 32px;
-  border-radius: 50px;
-  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 15px;
-  font-weight: bold;
-  cursor: pointer;
-  z-index: 1000;
-  transition: all 0.3s ease;
+position: fixed;
+bottom: 30px;
+right: 30px;
+background: linear-gradient(135deg, #2563eb, #3b82f6);
+color: white;
+border: none;
+padding: 16px 32px;
+border-radius: 50px;
+box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+display: flex;
+align-items: center;
+gap: 8px;
+font-size: 15px;
+font-weight: bold;
+cursor: pointer;
+z-index: 1000;
+transition: all 0.3s ease;
 }
-
 .fab-btn:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 15px 25px rgba(37, 99, 235, 0.4);
-  background: linear-gradient(135deg, #1d4ed8, #2563eb);
+transform: translateY(-4px);
+box-shadow: 0 15px 25px rgba(37, 99, 235, 0.4);
+background: linear-gradient(135deg, #1d4ed8, #2563eb);
 }
-
 .fab-icon {
-  font-size: 20px;
-  line-height: 1;
+font-size: 20px;
+line-height: 1;
 }
-
 @media (max-width: 600px) {
-  .fab-btn {
-    padding: 16px;
-    border-radius: 50%;
-    bottom: 20px;
-    right: 20px;
-  }
-  .fab-text {
-    display: none;
-  }
+.fab-btn {
+padding: 16px;
+border-radius: 50%;
+bottom: 20px;
+right: 20px;
 }
-
+.fab-text {
+display: none;
+}
+}
 /* ==========================================================================
-   9. 軸反転対応：新・男女別＆年代別統合グラフ用スタイル
-   ========================================================================== */
+9. 軸反転対応：新・男女別＆年代別統合グラフ用スタイル
+========================================================================== */
 .axis-flipped-container {
-  width: 100%;
-  margin-top: 15px;
+width: 100%;
+margin-top: 15px;
 }
-
 .flipped-option-group {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #f1f5f9;
+display: flex;
+align-items: flex-start;
+margin-bottom: 25px;
+padding-bottom: 15px;
+border-bottom: 1px solid #f1f5f9;
 }
-
 .flipped-axis-label {
-  width: 110px;
-  font-size: 14px;
-  font-weight: bold;
-  color: #1e293b;
-  padding-right: 15px;
-  word-break: break-all;
-  line-height: 1.3;
+width: 110px;
+font-size: 14px;
+font-weight: bold;
+color: #1e293b;
+padding-right: 15px;
+word-break: break-all;
+line-height: 1.3;
 }
-
 .flipped-bars-stack {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+flex: 1;
+display: flex;
+flex-direction: column;
+gap: 8px;
 }
-
 .flipped-bar-row {
-  width: 100%;
+width: 100%;
 }
-
 .bar-single-wrap {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  height: 20px;
-  position: relative;
+display: flex;
+align-items: center;
+width: 100%;
+height: 20px;
+position: relative;
 }
-
 .bar-single-fill {
-  height: 100%;
-  border-radius: 10px;
-  transition: width 0.6s ease-out;
+height: 100%;
+border-radius: 10px;
+transition: width 0.6s ease-out;
 }
-
 .bar-percent-text {
-  font-size: 12px;
-  font-weight: bold;
-  color: #555;
-  margin-left: 12px;
-  white-space: nowrap;
+font-size: 12px;
+font-weight: bold;
+color: #555;
+margin-left: 12px;
+white-space: nowrap;
 }
-
 /* ✨ 男女別の重複しない専用カラー */
 .bar-single-fill.gender-navy    { background-color: #1e3a8a; }
 .bar-single-fill.gender-coral   { background-color: #f43f5e; }
-
 .legend-color.gender-navy-dot   { background-color: #1e3a8a; }
 .legend-color.gender-coral-dot  { background-color: #f43f5e; }
-
 /* コメント欄・その他調整 */
 .commentSection {
-  margin-top: 30px !important;
+margin-top: 30px !important;
 }
-
 .comment {
-  margin-top: 10px;
-  background: #f8fafc;
-  padding: 10px 12px;
-  border-radius: 6px;
-  border-left: 4px solid #cbd5e1;
+margin-top: 10px;
+background: #f8fafc;
+padding: 10px 12px;
+border-radius: 6px;
+border-left: 4px solid #cbd5e1;
 }
-
 .chart-legend, .chart-legend-grid {
-  display: flex;
-  gap: 15px;
-  justify-content: center;
-  margin-top: 15px;
-  padding-top: 10px;
-  border-top: 1px solid #f1f5f9;
+display: flex;
+gap: 15px;
+justify-content: center;
+margin-top: 15px;
+padding-top: 10px;
+border-top: 1px solid #f1f5f9;
 }
-
 .chart-legend-grid {
-  flex-wrap: wrap;
-  gap: 12px;
+flex-wrap: wrap;
+gap: 12px;
 }
-
 .legend-item {
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-  color: #4b5563;
+display: flex;
+align-items: center;
+font-size: 13px;
+color: #4b5563;
 }
-
 .legend-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  margin-right: 6px;
-  display: inline-block;
+width: 12px;
+height: 12px;
+border-radius: 50%;
+margin-right: 6px;
+display: inline-block;
 }
-
 /* ==========================================================================
-   【修正】全体と男女別を絶対に横並びにする設定
-   ========================================================================== */
+【修正】全体と男女別を絶対に横並びにする設定
+========================================================================== */
 .resultGrid-top {
-  display: flex !important;
-  gap: 20px;
-  margin-bottom: 20px;
-  width: 100%;
+display: flex !important;
+gap: 20px;
+margin-bottom: 20px;
+width: 100%;
 }
-
 .resultGrid-top .resultCard {
-  flex: 1;
-  min-width: 0;
+flex: 1;
+min-width: 0;
 }
-
 @media (max-width: 768px) {
-  .resultGrid-top {
-    flex-direction: column !important;
-  }
+.resultGrid-top {
+flex-direction: column !important;
 }
-
+}
 /* ページネーションのボタンが無効化されたときのデザイン */
 .pager button:disabled {
-  background-color: #cbd5e1;
-  color: #94a3b8;
-  cursor: not-allowed;
-  border-color: #cbd5e1;
+background-color: #cbd5e1;
+color: #94a3b8;
+cursor: not-allowed;
+border-color: #cbd5e1;
 }
-
 /* ==========================================================================
-   TOPボタンデザイン
-   ========================================================================== */
+10. TOPボタンデザイン
+========================================================================== */
 /* ヘッダーの中身を整える */
 header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center; /* ヘッダー内の全要素を縦中央に */
-  height: 40px;
+display: flex;
+justify-content: space-between;
+align-items: center; /* ヘッダー内の全要素を縦中央に */
+height: 40px;
 }
-
 /* ロゴコンテナの設定 */
 .logo-container {
-  display: flex;
-  align-items: center; /* 縦中央揃え */
-  gap: 10px;           /* ロゴとボタンの間隔 */
+display: flex;
+align-items: center; /* 縦中央揃え */
+gap: 10px;           /* ロゴとボタンの間隔 */
 }
-
 /* ロゴの余計な高さを打ち消す */
 .logo {
-  line-height: 40px;   /* ヘッダーの高さに合わせる */
-  height: 40px;
-  display: flex;
-  align-items: center; /* ロゴ内の文字も中央に */
+line-height: 40px;   /* ヘッダーの高さに合わせる */
+height: 40px;
+display: flex;
+align-items: center; /* ロゴ内の文字も中央に */
 }
-
 /* ボタンのデザイン（四角形固定） */
 #topBtn,
 .topBtn {
-  background: #ddd;
-  color: #222;
-  border: 1px solid #999;
-  padding: 4px 8px;
-  border-radius: 0;
-  font-size: 12px;
-  cursor: pointer;
-  height: 24px;
-  margin: 0;
+background: #ddd;
+color: #222;
+border: 1px solid #999;
+padding: 4px 8px;
+border-radius: 0;
+font-size: 12px;
+cursor: pointer;
+height: 24px;
+margin: 0;
 }
-
 /* style.css に追加 */
 .fill.blue { background-color: #3b82f6; }
 .fill.red { background-color: #ef4444; }
@@ -814,153 +709,130 @@ header {
 .fill.lime { background-color: #84cc16; }
 .fill.pink { background-color: #ec4899; }
 .fill.teal { background-color: #14b8a6; }
-
 /* ==========================================================================
-   10. 拡張・カラーパレット & グラフ調整
-   ========================================================================== */
+11. 拡張・カラーパレット & グラフ調整
+========================================================================== */
 /* app.jsの動的カラーに合わせ、円グラフのデフォルト背景をグレー（データ読み込み前）に */
 .pieChart {
-  background: #e2e8f0; 
+background: #e2e8f0;
 }
-
 /* 棒グラフの「fill」要素が、インラインスタイルの背景色を100%綺麗に反映するための土台設定 */
 .bar .fill {
-  height: 100%;
-  border-radius: 999px;
-  transition: width 0.6s ease-out; /* グラフが伸びるアニメーションを追加 */
+height: 100%;
+border-radius: 999px;
+transition: width 0.6s ease-out; /* グラフが伸びるアニメーションを追加 */
 }
-
 /* 男女別統計・年代別統計のテキストが、棒グラフのプレースホルダーと被らないよう最小幅を確保 */
 .bar-single-wrap {
-  background: #f1f5f9; /* 軸反転グラフの1行ごとの背景を薄いグレーに */
-  border-radius: 10px;
-  overflow: hidden;
+background: #f1f5f9; /* 軸反転グラフの1行ごとの背景を薄いグレーに */
+border-radius: 10px;
+overflow: hidden;
 }
-
 /* スマホ表示（横幅が狭い画面）で軸反転グラフのラベルとグラフが潰れるのを防止 */
 @media (max-width: 480px) {
-  .flipped-option-group {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .flipped-axis-label {
-    width: 100%;
-    padding-right: 0;
-    margin-bottom: 8px;
-    border-bottom: 1px dashed #cbd5e1;
-    padding-bottom: 4px;
-  }
+.flipped-option-group {
+flex-direction: column;
+align-items: stretch;
 }
-
+.flipped-axis-label {
+width: 100%;
+padding-right: 0;
+margin-bottom: 8px;
+border-bottom: 1px dashed #cbd5e1;
+padding-bottom: 4px;
+}
+}
 /* ===== パソコンとスマホのハイブリッド・最適化スタイル ===== */
-
 /* 1. 基本（画面が広いパソコン時）：Gridレイアウトで完璧に列幅を同期させます */
 .custom-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
+display: flex;
+justify-content: space-between;
+align-items: center;
+width: 100%;
 }
-
 .custom-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: 1;
-  min-width: 0;
-  text-align: left;
+display: flex;
+align-items: center;
+gap: 6px;
+flex: 1;
+min-width: 0;
+text-align: left;
 }
-
 .title-text {
-  font-weight: bold;
-  color: #333;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+font-weight: bold;
+color: #333;
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
 }
-
 .custom-meta {
-  display: grid;
-  grid-template-columns: minmax(45px, max-content) minmax(65px, max-content) minmax(45px, max-content) max-content;
-  gap: 10px;
-  align-items: center;
-  flex-shrink: 0;
-  font-size: 13px;
-  color: #666;
-  margin-left: 14px;
+display: grid;
+grid-template-columns: minmax(45px, max-content) minmax(65px, max-content) minmax(45px, max-content) max-content;
+gap: 10px;
+align-items: center;
+flex-shrink: 0;
+font-size: 13px;
+color: #666;
+margin-left: 14px;
 }
-
 .custom-meta .meta-item {
-  white-space: nowrap;
-  text-align: left;
+white-space: nowrap;
+text-align: left;
 }
-
 .custom-meta .postDate {
-  color: #999;
-  white-space: nowrap;
-  text-align: left;
+color: #999;
+white-space: nowrap;
+text-align: left;
 }
-
 /* 2. スマホ時（画面幅が 768px 以下の時）：Gridを完全破壊して綺麗な「2段組」にします */
 @media (max-width: 768px) {
-  .custom-row {
-    flex-direction: column;
-    align-items: flex-start; /* 左揃えに強制 */
-    gap: 4px;
-  }
-
-  .custom-title {
-    width: 100%;
-  }
-
-  .title-text {
-    white-space: normal;
-    word-break: break-all;
-  }
-
-  /* 💡 2段目の情報を右寄せ（右端ぴったり）に配置します */
-  .custom-meta {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end; /* 💡 右寄せにする */
-    gap: 8px;
-    width: 100%;               /* 💡 横幅いっぱいを確保して右寄せを有効にする */
-    margin-left: 0;            /* 💡 左余白をリセット */
-    box-sizing: border-box;
-    font-size: 12px;
-  }
-
-  .custom-meta .meta-item {
-    white-space: nowrap;
-  }
-
-  .custom-meta .postDate {
-    display: inline;
-    width: auto;
-    color: #999;
-    white-space: nowrap;
-  }
+.custom-row {
+flex-direction: column;
+align-items: flex-start; /* 左揃えに強制 */
+gap: 4px;
+}
+.custom-title {
+width: 100%;
+}
+.title-text {
+white-space: normal;
+word-break: break-all;
+}
+/* 💡 2段目の情報を右寄せ（右端ぴったり）に配置します */
+.custom-meta {
+display: flex;
+flex-wrap: wrap;
+justify-content: flex-end; /* 💡 右寄せにする */
+gap: 8px;
+width: 100%;               /* 💡 横幅いっぱいを確保して右寄せを有効にする */
+margin-left: 0;            /* 💡 左余白をリセット */
+box-sizing: border-box;
+font-size: 12px;
+}
+.custom-meta .meta-item {
+white-space: nowrap;
+}
+.custom-meta .postDate {
+display: inline;
+width: auto;
+color: #999;
+white-space: nowrap;
+}
 }
 
 /* ==========================================================================
-   11. SNSシェアボタンの横並び崩れ防止修正
-   ========================================================================== */
-/* 5つのSNSボタンを囲む親要素のスタイルをスマホ画面向けに強制上書き */
-.share-buttons {
-  display: flex !important;
-  flex-wrap: nowrap !important;     /* 絶対に折り返さず1行に強制 */
-  justify-content: space-between !important; /* 横いっぱいに均等配置 */
-  gap: 4px !important;              /* ボタン同士の隙間を狭く設定 */
-  width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-/* ボタン（aタグ）自体のサイズ調整（スマホ画面の横幅に合わせて均等縮小） */
-.share-buttons a {
-  flex: 1 !important;               /* 5つのボタンの横幅をすべて均等にする */
-  min-width: 0 !important;          /* 縮小を許可 */
-  padding: 6px 2px !important;      /* 左右の余白を狭くして文字溢れを防止 */
-  font-size: 11px !important;       /* スマホ画面用に文字サイズを最適化 */
-  white-space: nowrap !important;   /* ボタン内での意図しない改行を禁止 */
-  text-align: center !important;
+12. 【新設】新シェアボタン（URLコピー付き）の配置調整＆ツールチップ
+========================================================================== */
+/* 画面が非常に狭いスマホ（横幅576px以下）用の調整 */
+@media (max-width: 576px) {
+  /* タイトルとシェアボタンを縦並びにしてバランスをとる */
+  .resultDashboard div[style*="display: flex"] {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+  /* シェアボタンの箱を左寄せにする */
+  .share-buttons-wrap {
+    align-self: flex-start !important;
+  }
 }

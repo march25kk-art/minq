@@ -532,41 +532,47 @@ function renderResultsScreen(div, q, id) {
   const shareUrl = encodeURIComponent(window.location.href);
   const shareText = encodeURIComponent(`「${q.title}」のアンケート結果をチェック！ #みんQ`);
 
+  // 💡 [改良版] HTML構造の組み立て
   let html = `
     <div class="resultDashboard">
-      <div class="resultHeader">
-        <div class="resultQuestionTitle">${sanitize(q.title)}</div>
+      <div class="title-share-container" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; width: 100%; box-sizing: border-box; padding: 10px 4px;">
         
-        ${q.description ? `<p style="font-size: 14px; color: #666; margin: 12px 0; line-height: 1.5; text-align: left;">${sanitize(q.description)}</p>` : ''}
+        <div class="title-area" style="flex: 1; text-align: left;">
+          <div class="resultQuestionTitle" style="font-size: 24px; font-weight: bold; color: #212529; margin: 0 0 4px 0;">${sanitize(q.title)}</div>
+          ${q.description ? `<p style="font-size: 14px; color: #666; margin: 8px 0 0 0; line-height: 1.5;">${sanitize(q.description)}</p>` : ''}
+        </div>
         
-        <div class="share-buttons" style="display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; margin: 12px 0; padding: 0 4px; box-sizing: border-box; width: 100%;">
-          <a href="https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareText}" target="_blank" rel="noopener noreferrer" 
-             style="background: #000000; color: #fff; text-decoration: none; font-size: 11px; font-weight: bold; padding: 6px 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; width: 72px; box-sizing: border-box;">
-            X
+        <div class="share-buttons-wrap" style="display: flex; align-items: center; gap: 6px; background: #ffffff; padding: 6px 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); flex-shrink: 0;">
+          
+          <a href="https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareText}" target="_blank" rel="noopener noreferrer" class="share-btn" style="background: #000000; color: #fff; text-decoration: none; font-size: 11px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 6px; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
           </a>
           
-          <a href="https://social-plugins.line.me/lineit/share?url=${shareUrl}" target="_blank" rel="noopener noreferrer" 
-             style="background: #06C755; color: #fff; text-decoration: none; font-size: 11px; font-weight: bold; padding: 6px 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; width: 72px; box-sizing: border-box;">
+          <a href="https://social-plugins.line.me/lineit/share?url=${shareUrl}" target="_blank" rel="noopener noreferrer" class="share-btn" style="background: #06C755; color: #fff; text-decoration: none; font-size: 10px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 6px; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
             LINE
           </a>
 
-          <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" rel="noopener noreferrer" 
-             style="background: #1877F2; color: #fff; text-decoration: none; font-size: 11px; font-weight: bold; padding: 6px 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; width: 72px; box-sizing: border-box;">
-            Facebook
+          <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" rel="noopener noreferrer" class="share-btn" style="background: #1877F2; color: #fff; text-decoration: none; font-size: 13px; font-weight: bold; font-family: sans-serif; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 6px; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+            f
           </a>
 
-          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" 
-             style="background: linear-gradient(135deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D); color: #fff; text-decoration: none; font-size: 11px; font-weight: bold; padding: 6px 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; width: 72px; box-sizing: border-box;">
-            Instagram
+          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="share-btn" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: #fff; text-decoration: none; font-size: 9px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 6px; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+            Insta
           </a>
           
-          <a href="https://www.threads.net/intent/post?url=${shareUrl}&text=${shareText}" target="_blank" rel="noopener noreferrer" 
-             style="background: #000000; color: #fff; text-decoration: none; font-size: 11px; font-weight: bold; padding: 6px 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; width: 72px; box-sizing: border-box; border: 1px solid #333;">
-            Threads
+          <a href="https://www.threads.net/intent/post?url=${shareUrl}&text=${shareText}" target="_blank" rel="noopener noreferrer" class="share-btn" style="background: #000000; color: #fff; text-decoration: none; font-size: 11px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 6px; border: 1px solid #333; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+            Th
           </a>
-        </div>
 
-        <h1 style="font-size: 13px; margin-top: 6px; color: #666; font-weight: bold;">回答結果</h1> </div>
+          <button class="share-btn" onclick="copyUrlToClipboard()" style="background: #ffffff; color: #333; border: 1px solid #dee2e6; font-size: 14px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+            📋
+          </button>
+        </div>
+      </div>
+
+      <div class="resultHeader" style="margin-top: 10px;">
+        <h1 style="font-size: 13px; color: #666; font-weight: bold; text-align: left; margin: 0;">回答結果</h1>
+      </div>
 
       <div class="resultGrid-top">
         <div class="resultCard">
@@ -576,6 +582,7 @@ function renderResultsScreen(div, q, id) {
             <div class="overallStats" style="width:100%;">
   `;
 
+  // --- 以下は元のデータループ処理をそのまま維持 ---
   q.options.forEach((option, index) => {
     const stat = q.genderStats[index] || {};
     const percent = stat.rawPercent !== undefined ? stat.rawPercent : ((stat.male + stat.female) || 0);
@@ -641,6 +648,15 @@ function renderResultsScreen(div, q, id) {
   renderGenderStats(q);
   renderAgeStats(q);
 }
+
+// 💡 URLコピー用のグローバル関数を追加定義（重複を避けるためユニークな名前にしています）
+window.copyUrlToClipboard = function() {
+  navigator.clipboard.writeText(window.location.href).then(() => {
+    alert("URLをコピーしました！");
+  }).catch(err => {
+    console.error("コピー失敗: ", err);
+  });
+};
 
 // 💡 決定版：連投バグと画面遷移のバグをその場で確実に仕留める投票ロジック
 async function voteAndReload(id) {
