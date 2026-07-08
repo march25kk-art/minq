@@ -329,6 +329,185 @@ function updatePagerButtons() {
   if (nextBtn) nextBtn.disabled = state.page >= state.totalPages;
 }
 
+// ==========================================
+// 6. 詳細・結果 統合画面の制御 (💡 修正：画面遷移が絶対にバグらない安全設計に強化)
+// ==========================================
+async function loadCombinedQuestion() {
+  const div = document.getElementById("questionArea");
+  if (!div) return;
+
+  const id = new URLSearchParams(location.search).get("id");
+  if (!id) {
+    div.innerHTML = `<div class="detailCard"><p>不正なURLです</p></div>`;
+    return;
+  }
+
+  try {
+    try {
+      await fetch("/view", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id })
+      });
+    } catch (e) {
+      console.warn("View counter tracking failed, skipping...", e);
+    }
+
+    const [checkRes, questionRes] = await Promise.all([
+      fetch(`/check-vote/${id}`),
+      fetch(`/questions/${id}`)
+    ]);
+
+    const checkData = await checkRes.json();
+    const q = await questionRes.json();
+
+    // ===== SEO・タイトル更新 =====
+    document.title = `${q.title} | みんQ`;
+
+    const metaDesc = document.getElementById("metaDescription");
+    if (metaDesc) {
+      metaDesc.setAttribute(
+       "content",
+       q.description || `${q.title}のアンケートです。みんなの投票結果を見てみよう！`
+      );
+    }
+
+    const canonical = document.getElementById("canonical");
+    if (canonical) {
+      canonical.href = `${location.origin}/question?id=${id}`;
+    }
+
+    const ogTitle = document.getElementById("ogTitle");
+    if (ogTitle) {
+      ogTitle.setAttribute("content", q.title);
+    }
+
+    const ogDesc = document.getElementById("ogDescription");
+    if (ogDesc) {
+      ogDesc.setAttribute(
+        "content",
+        q.description || `${q.title}のアンケート`
+      );
+    }
+
+    const ogUrl = document.getElementById("ogUrl");
+    if (ogUrl) {
+      ogUrl.setAttribute("content", `${location.origin}/question?id=${id}`);
+    }
+
+    if (q.error) {
+      div.innerHTML = `<div class="detailCard"><p>${sanitize(q.message)}</p></div>`;
+      return;
+    }
+
+    cache.questionDetail[id] = q;
+
+    if (checkData && checkData.voted === true) {
+      renderResultsScreen(div, q, id);
+    } else {
+      renderVotingScreen(div, q, id);
+    }
+
+  } catch (err) {
+    console.error("Error loading question:", err);
+    div.innerHTML = `<div class="detailCard"><p>データの読み込みに失敗しました</p></div>`;
+  }
+}
+
+function renderVotingScreen(div, q, id) {
+  const fragment = document.createDocumentFragment();
+  const container = document.createElement("div");
+  container.className = "detailCard";
+  container.style.cssText = "max-width: 640px; margin: 40px auto 0 auto; padding: 24px; position: relative;";
+
+  const title = document.createElement("h1");
+  title.style.cssText = "font-size: 24px; font-weight: bold; color: #333; margin: 0 0 16px 0; text-align: left;";
+  title.textContent = sanitize(q.title);
+  container.appendChild(title);
+
+  if (q.description) {
+    const desc = document.createElement("p");
+    desc.style.cssText = "font-size: 14px; color: #666; margin-bottom: 16px; line-height: 1.5; text-align: left;";
+    desc.textContent = sanitize(q.description);
+    container.appendChild(desc);
+  }
+
+  const optionsArea = document.createElement("div");
+  optionsArea.className = "optionsArea";
+  optionsArea.style.marginBottom = "24px";
+  
+  const optionsFragment = document.createDocumentFragment();
+  q.options.forEach((option, index) => {
+    const optionText = typeof option === "string" ? option : (option.text || "");
+    const label = document.createElement("label");
+    label.className = "optionCard";
+    label.style.cssText = "display: flex; align-items: center; background: #fff; padding: 10px 20px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: background 0.2s;";
+    
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = "voteOption";
+    input.value = String(index);
+    input.style.cssText = "margin-right: 14px; width: 18px; height: 18px; cursor: pointer;";
+    label.appendChild(input);
+    
+    const span = document.createElement("span");
+    span.className = "optionText";
+    span.style.cssText = "font-size: 16px; color: #333; font-weight: bold;";
+    span.textContent = sanitize(optionText);
+    label.appendChild(span);
+    
+    optionsFragment.appendChild(label);
+  });
+  optionsArea.appendChild(optionsFragment);
+  container.appendChild(optionsArea);
+
+  const voteInfo = document.createElement("div");
+  voteInfo.className = "voteInfoRow";
+  voteInfo.style.cssText = "display: flex; gap: 16px; background: #f8fafc; padding: 10px 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #edf2f7; align-items: center;";
+  voteInfo.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+      <span class="voteLabel" style="font-size: 14px; color: #4a5568; font-weight: bold; white-space: nowrap;">年代</span>
+      <select id="age" style="flex: 1; padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fff; color: #333; cursor: pointer;">
+        ${AGE_GROUPS.map(age => `<option>${age}</option>`).join("")}
+      </select>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+      <span class="voteLabel" style="font-size: 14px; color: #4a5568; font-weight: bold; white-space: nowrap;">性別</span>
+      <select id="gender" style="flex: 1; padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fff; color: #333; cursor: pointer;">
+        ${GENDERS.map(gender => `<option>${gender}</option>`).join("")}
+      </select>
+    </div>
+  `;
+  container.appendChild(voteInfo);
+
+  const voteArea = document.createElement("div");
+  voteArea.className = "voteArea";
+  voteArea.style.cssText = "text-align: center; margin-bottom: 20px;";
+  
+  const voteBtn = document.createElement("button");
+  voteBtn.className = "voteSubmitBtn";
+  voteBtn.type = "button";
+  voteBtn.style.cssText = "background: #2563eb; color: #fff; font-size: 16px; font-weight: bold; padding: 8px 0; border: none; border-radius: 12px; cursor: pointer; width: 210px;";
+  voteBtn.textContent = "投票する";
+  voteBtn.onclick = () => voteAndReload(q.id);
+  voteArea.appendChild(voteBtn);
+  container.appendChild(voteArea);
+
+  const reportArea = document.createElement("div");
+  reportArea.style.cssText = "position: absolute; right: 24px; bottom: 0;";
+  const reportBtn = document.createElement("button");
+  reportBtn.type = "button";
+  reportBtn.style.cssText = "background: #ef4444; color: #fff; font-size: 12px; font-weight: bold; padding: 5px 14px; border: none; border-radius: 5px; cursor: pointer;";
+  reportBtn.textContent = "通報";
+  reportBtn.onclick = () => reportQuestion(q.id);
+  reportArea.appendChild(reportBtn);
+  container.appendChild(reportArea);
+
+  fragment.appendChild(container);
+  div.innerHTML = "";
+  div.appendChild(fragment);
+}
+
 function renderResultsScreen(div, q, id) {
   const colors = CHART_COLORS;
   let conicParts = [];
@@ -350,7 +529,6 @@ function renderResultsScreen(div, q, id) {
   const shareUrl = encodeURIComponent(window.location.href);
   const shareText = encodeURIComponent(`「${q.title}」のアンケート結果をチェック！ #みんQ`);
 
-  // 💡 【バグ修正】スマホ・PC共通で絶対に縦並び崩れせず、常に「右寄せ」を死守するヘッダー構造
   let html = `
     <div class="resultDashboard">
       <div class="title-share-container-final" style="display: flex !important; justify-content: space-between !important; align-items: flex-start !important; gap: 12px !important; width: 100% !important; box-sizing: border-box !important; padding: 10px 4px !important; flex-direction: row !important;">
@@ -365,16 +543,11 @@ function renderResultsScreen(div, q, id) {
           <a href="https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareText}" target="_blank" rel="noopener noreferrer" style="background: #000000; color: #fff; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
             <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
           </a>
-          
-          <a href="https://social-plugins.line.me/lineit/share?url=${shareUrl}" target="_blank" rel="noopener noreferrer" style="background: #06C755; color: #fff; text-decoration: none; font-size: 8px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">LINE</a>
-
-          <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" rel="noopener noreferrer" style="background: #1877F2; color: #fff; text-decoration: none; font-size: 11px; font-weight: bold; font-family: sans-serif; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">f</a>
-
-          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: #fff; text-decoration: none; font-size: 8px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">Insta</a>
-          
-          <a href="https://www.threads.net/intent/post?url=${shareUrl}&text=${shareText}" target="_blank" rel="noopener noreferrer" style="background: #000000; color: #fff; text-decoration: none; font-size: 9px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; border: 1px solid #333; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">Th</a>
-
-          <button onclick="copyUrlToClipboard()" style="background: #ffffff; color: #333; border: 1px solid #dee2e6; font-size: 11px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; cursor: pointer; transition: opacity 0.2s; padding: 0; margin: 0;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">📋</button>
+          <a href="https://social-plugins.line.me/lineit/share?url=${shareUrl}" target="_blank" rel="noopener noreferrer" style="background: #06C755; color: #fff; text-decoration: none; font-size: 8px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px;">LINE</a>
+          <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" rel="noopener noreferrer" style="background: #1877F2; color: #fff; text-decoration: none; font-size: 11px; font-weight: bold; font-family: sans-serif; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px;">f</a>
+          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: #fff; text-decoration: none; font-size: 8px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px;">Insta</a>
+          <a href="https://www.threads.net/intent/post?url=${shareUrl}&text=${shareText}" target="_blank" rel="noopener noreferrer" style="background: #000000; color: #fff; text-decoration: none; font-size: 9px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; border: 1px solid #333;">Th</a>
+          <button onclick="copyUrlToClipboard()" style="background: #ffffff; color: #333; border: 1px solid #dee2e6; font-size: 11px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; cursor: pointer; padding: 0; margin: 0;">📋</button>
         </div>
       </div>
 
@@ -456,7 +629,6 @@ function renderResultsScreen(div, q, id) {
   renderAgeStats(q);
 }
 
-// 💡 URLコピー用のグローバル関数を追加定義
 window.copyUrlToClipboard = function() {
   navigator.clipboard.writeText(window.location.href).then(() => {
     alert("URLをコピーしました！");
@@ -465,7 +637,6 @@ window.copyUrlToClipboard = function() {
   });
 };
 
-// 💡 決定版：連投バグと画面遷移のバグをその場で確実に仕留める投票ロジック
 async function voteAndReload(id) {
   const selected = document.querySelector('input[name="voteOption"]:checked');
   if (!selected) return alert("選択肢を選んでください");
@@ -544,7 +715,6 @@ async function reportQuestion(id) {
   alert(data.error ? data.message : "通報しました");
 }
 
-// 💡 【グラフ消失バグ完全修正】スマホGrid圧迫に絶対に負けず、太く横いっぱいにゲージが伸びる性別統計
 function renderGenderStats(q) {
   const genderDiv = document.getElementById("genderStats");
   if (!genderDiv || !q.genderStats) return;
@@ -608,7 +778,6 @@ function renderGenderStats(q) {
   genderDiv.appendChild(container);
 }
 
-// 💡 【グラフ極小化バグ完全修正】スマホGrid圧迫に絶対に負けず、太く横いっぱいにゲージが伸びる年代統計
 function renderAgeStats(q) {
   const ageDiv = document.getElementById("ageStats");
   if (!ageDiv || !q.ageStats) return;
@@ -656,7 +825,7 @@ function renderAgeStats(q) {
         <div style="font-size: 13px; color: #475569; font-weight: 500; margin-bottom: 4px; word-break: break-word;">${sanitize(optionText)}</div>
         <div style="display: flex !important; align-items: center !important; width: 100% !important; gap: 10px !important; flex-direction: row !important; justify-content: space-between !important;">
           <div class="bar-single-wrap" style="flex: 1 !important; width: 100% !important; height: 16px !important; background: #e2e8f0 !important; border-radius: 8px !important; overflow: hidden !important; position: relative !important;">
-            <div class="bar-single-fill" style="width: ${percent}% !important; height: 100% !important; background-color: ${color} !important; border-radius: 8px !important; flex-shrink: 0 !important;"></div>
+            <div class="bar-single-fill" style="width: ${percent}%; height: 100%; background-color: ${color}; border-radius: 8px;"></div>
           </div>
           <span style="font-size: 12px !important; font-weight: bold !important; color: #1e293b !important; width: 35px !important; text-align: right !important; flex-shrink: 0 !important; display: inline-block !important; white-space: nowrap !important;">${percent}%</span>
         </div>
