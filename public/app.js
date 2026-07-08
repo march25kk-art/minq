@@ -532,14 +532,12 @@ function renderResultsScreen(div, q, id) {
   let html = `
     <div class="resultDashboard">
       <div class="title-share-container-final" style="display: flex !important; justify-content: space-between !important; align-items: flex-start !important; gap: 12px !important; width: 100% !important; box-sizing: border-box !important; padding: 10px 4px !important; flex-direction: row !important;">
-        
         <div class="title-area" style="flex: 1 !important; text-align: left !important; min-width: 0 !important;">
           <div class="resultQuestionTitle" style="font-size: 24px; font-weight: bold; color: #212529; margin: 0 0 4px 0; line-height: 1.4; word-break: break-word;">${sanitize(q.title)}</div>
           ${q.description ? `<p style="font-size: 14px; color: #666; margin: 8px 0 0 0; line-height: 1.5; word-break: break-word;">${sanitize(q.description)}</p>` : ''}
         </div>
-        
         <div class="share-buttons-wrap-final" style="display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; gap: 4px !important; background: #ffffff !important; padding: 4px 6px !important; border-radius: 6px !important; box-shadow: 0 2px 6px rgba(0,0,0,0.06) !important; flex-shrink: 0 !important; margin-left: auto !important; width: auto !important;">
-          <a href="https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareText}" target="_blank" rel="noopener noreferrer" style="background: #000000; color: #fff; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+          <a href="https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareText}" target="_blank" rel="noopener noreferrer" style="background: #000000; color: #fff; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; transition: opacity 0.2s;">
             <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
           </a>
           <a href="https://social-plugins.line.me/lineit/share?url=${shareUrl}" target="_blank" rel="noopener noreferrer" style="background: #06C755; color: #fff; text-decoration: none; font-size: 8px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px;">LINE</a>
@@ -559,10 +557,10 @@ function renderResultsScreen(div, q, id) {
           <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 12px; color: #111;">全体の回答</h2>
           <div class="overallWrap">
             <div class="pieChart" style="background: conic-gradient(${conicParts.join(", ")});"></div>
-            <div class="overallStats" style="width:100%; display: flex; flex-direction: column; gap: 10px;">
+            <div class="overallStats" style="width:100%; display: flex !important; flex-direction: column !important; gap: 8px !important;">
   `;
 
-  // 💡 【全体グラフ】 隙間詰め可変レイアウト
+  // 💡 全体の回答：スマホ最適化レイアウト
   q.options.forEach((option, index) => {
     const stat = q.genderStats[index] || {};
     const percent = stat.rawPercent !== undefined ? stat.rawPercent : ((stat.male + stat.female) || 0);
@@ -570,12 +568,12 @@ function renderResultsScreen(div, q, id) {
     const optionText = typeof option === "string" ? option : (option.text || "");
 
     html += `
-      <div class="graph-row-set" style="display: flex !important; align-items: center !important; width: 100% !important; gap: 10px !important; text-align: left !important; margin-bottom: 6px !important;">
-        <span style="font-size: 13px; color: #333; font-weight: 500; word-break: break-word; line-height: 1.2; max-width: 250px !important; min-width: 50px !important; flex-shrink: 0 !important; display: inline-block !important;">${sanitize(optionText)}</span>
-        <div class="bar" style="flex: 1 !important; height: 14px !important; background-color: #e2e8f0 !important; border-radius: 8px !important; overflow: hidden !important; position: relative !important; margin: 0 !important;">
-          <div class="fill" style="width: ${percent}% !important; background-color: ${color} !important; height: 100% !important; border-radius: 8px !important; transition: width 0.3s ease;"></div>
+      <div class="graph-row-set-fixed" style="display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; width: 100% !important; gap: 10px !important; text-align: left !important;">
+        <span style="font-size: 13px !important; color: #333 !important; font-weight: 500 !important; word-break: break-all !important; line-height: 1.2 !important; flex: 0 0 65px !important; width: 65px !important; display: inline-block !important;">${sanitize(optionText)}</span>
+        <div style="flex: 1 !important; height: 14px !important; background-color: #e2e8f0 !important; border-radius: 8px !important; overflow: hidden !important; position: relative !important; min-width: 30px !important;">
+          <div style="width: ${percent}% !important; background-color: ${color} !important; height: 100% !important; border-radius: 8px !important;"></div>
         </div>
-        <strong style="width: 42px !important; font-size: 13px; color: #1e293b; font-weight: bold; text-align: right; flex-shrink: 0 !important; display: inline-block !important;">${percent}%</strong>
+        <strong style="flex: 0 0 40px !important; width: 40px !important; font-size: 13px !important; color: #1e293b !important; font-weight: bold !important; text-align: right !important; display: inline-block !important; white-space: nowrap !important;">${percent}%</strong>
       </div>
     `;
   });
@@ -715,7 +713,7 @@ async function reportQuestion(id) {
   alert(data.error ? data.message : "通報しました");
 }
 
-// 💡 【性別グラフ】 隙間詰め可変レイアウト
+// 💡 性別ごとの割合：スマホ最適化レイアウト
 function renderGenderStats(q) {
   const genderDiv = document.getElementById("genderStats");
   if (!genderDiv || !q.genderStats) return;
@@ -736,7 +734,7 @@ function renderGenderStats(q) {
 
     const group = document.createElement("div");
     group.className = "flipped-option-group";
-    group.style.cssText = "display: block !important; width: 100% !important; margin-bottom: 24px !important; background: #f8fafc; padding: 12px 16px; border-radius: 12px; border: 1px solid #edf2f7; box-sizing: border-box;";
+    group.style.cssText = "display: block !important; width: 100% !important; margin-bottom: 20px !important; background: #f8fafc; padding: 12px 16px; border-radius: 12px; border: 1px solid #edf2f7; box-sizing: border-box;";
 
     const label = document.createElement("div");
     label.style.cssText = "font-weight: bold; font-size: 15px; color: #1e293b; margin-bottom: 12px !important; text-align: left !important;";
@@ -746,22 +744,22 @@ function renderGenderStats(q) {
     const stack = document.createElement("div");
     stack.style.cssText = "width: 100% !important; display: flex !important; flex-direction: column !important; gap: 10px !important;";
 
-    q.options.forEach((option, index) => {
+    q.options.forEach((index_opt, index) => {
       const data = q.genderStats[index] || { male: 0, female: 0 };
       const rawVal = data[genderObj.key] || 0;
       const percent = genderTotalRaw > 0 ? Math.round((rawVal * 100) / genderTotalRaw) : 0;
       const color = colors[index % colors.length];
-      const optionText = typeof option === "string" ? option : (option.text || "");
+      const optionText = typeof index_opt === "string" ? index_opt : (index_opt.text || "");
       
       const row = document.createElement("div");
-      row.style.cssText = "display: flex !important; align-items: center !important; width: 100% !important; gap: 10px !important; text-align: left !important;";
+      row.style.cssText = "display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; width: 100% !important; gap: 10px !important; text-align: left !important;";
       
       row.innerHTML = `
-        <div style="font-size: 13px; color: #475569; font-weight: 500; word-break: break-word; line-height: 1.2; max-width: 250px !important; min-width: 50px !important; flex-shrink: 0 !important; display: inline-block !important;">${sanitize(optionText)}</div>
-        <div class="bar-single-wrap" style="flex: 1 !important; height: 14px !important; background: #e2e8f0 !important; border-radius: 8px !important; overflow: hidden !important; position: relative !important;">
+        <div style="font-size: 13px !important; color: #475569 !important; font-weight: 500 !important; word-break: break-all !important; line-height: 1.2 !important; flex: 0 0 65px !important; width: 65px !important; display: inline-block !important;">${sanitize(optionText)}</div>
+        <div class="bar-single-wrap" style="flex: 1 !important; height: 14px !important; background: #e2e8f0 !important; border-radius: 8px !important; overflow: hidden !important; position: relative !important; min-width: 30px !important; margin: 0 !important;">
           <div class="bar-single-fill" style="width: ${percent}% !important; height: 100% !important; background-color: ${color} !important; border-radius: 8px !important;"></div>
         </div>
-        <span style="width: 42px !important; font-size: 12px !important; font-weight: bold !important; color: #1e293b !important; text-align: right !important; flex-shrink: 0 !important; display: inline-block !important;">${percent}%</span>
+        <span style="flex: 0 0 40px !important; width: 40px !important; font-size: 12px !important; font-weight: bold !important; color: #1e293b !important; text-align: right !important; display: inline-block !important; white-space: nowrap !important;">${percent}%</span>
       `;
       stack.appendChild(row);
     });
@@ -774,7 +772,7 @@ function renderGenderStats(q) {
   genderDiv.appendChild(container);
 }
 
-// 💡 【年代グラフ】 隙間詰め可変レイアウト
+// 💡 年代ごとの割合：スマホ最適化レイアウト
 function renderAgeStats(q) {
   const ageDiv = document.getElementById("ageStats");
   if (!ageDiv || !q.ageStats) return;
@@ -813,14 +811,14 @@ function renderAgeStats(q) {
       const optionText = typeof option === "string" ? option : (option.text || "");
       
       const row = document.createElement("div");
-      row.style.cssText = "display: flex !important; align-items: center !important; width: 100% !important; gap: 10px !important; text-align: left !important;";
+      row.style.cssText = "display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; width: 100% !important; gap: 10px !important; text-align: left !important;";
       
       row.innerHTML = `
-        <div style="font-size: 13px; color: #475569; font-weight: 500; word-break: break-word; line-height: 1.2; max-width: 250px !important; min-width: 50px !important; flex-shrink: 0 !important; display: inline-block !important;">${sanitize(optionText)}</div>
-        <div class="bar-single-wrap" style="flex: 1 !important; height: 14px !important; background: #e2e8f0 !important; border-radius: 8px !important; overflow: hidden !important; position: relative !important;">
+        <div style="font-size: 13px !important; color: #475569 !important; font-weight: 500 !important; word-break: break-all !important; line-height: 1.2 !important; flex: 0 0 65px !important; width: 65px !important; display: inline-block !important;">${sanitize(optionText)}</div>
+        <div class="bar-single-wrap" style="flex: 1 !important; height: 14px !important; background: #e2e8f0 !important; border-radius: 8px !important; overflow: hidden !important; position: relative !important; min-width: 30px !important; margin: 0 !important;">
           <div class="bar-single-fill" style="width: ${percent}%; height: 100%; background-color: ${color}; border-radius: 8px;"></div>
         </div>
-        <span style="width: 42px !important; font-size: 12px !important; font-weight: bold !important; color: #1e293b !important; text-align: right !important; flex-shrink: 0 !important; display: inline-block !important;">${percent}%</span>
+        <span style="flex: 0 0 40px !important; width: 40px !important; font-size: 12px !important; font-weight: bold !important; color: #1e293b !important; text-align: right !important; display: inline-block !important; white-space: nowrap !important;">${percent}%</span>
       `;
       stack.appendChild(row);
     });
