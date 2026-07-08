@@ -329,9 +329,6 @@ function updatePagerButtons() {
   if (nextBtn) nextBtn.disabled = state.page >= state.totalPages;
 }
 
-// ==========================================
-// 6. 詳細・結果 統合画面の制御 (💡 修正：画面遷移が絶対にバグらない安全設計に強化)
-// ==========================================
 function renderResultsScreen(div, q, id) {
   const colors = CHART_COLORS;
   let conicParts = [];
