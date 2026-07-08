@@ -532,10 +532,10 @@ function renderResultsScreen(div, q, id) {
   const shareUrl = encodeURIComponent(window.location.href);
   const shareText = encodeURIComponent(`「${q.title}」のアンケート結果をチェック！ #みんQ`);
 
-  // 💡 1. シェアボタンを確実に「右寄せ」にするための親コンテナ設定（CSSの縦並び化を完全ブロック）
+  // 💡 シェアボタンを確実に右寄せ（justify-content: space-between）にする、崩れないヘッダー
   let html = `
     <div class="resultDashboard">
-      <div class="title-share-container-final" style="display: flex !important; justify-content: space-between !important; align-items: flex-start !important; gap: 16px !important; width: 100% !important; box-sizing: border-box !important; padding: 10px 4px !important; flex-direction: row !important;">
+      <div class="title-share-container-final" style="display: flex !important; justify-content: space-between !important; align-items: flex-start !important; gap: 12px !important; width: 100% !important; box-sizing: border-box !important; padding: 10px 4px !important; flex-direction: row !important;">
         
         <div class="title-area" style="flex: 1 !important; text-align: left !important; min-width: 0 !important;">
           <div class="resultQuestionTitle" style="font-size: 24px; font-weight: bold; color: #212529; margin: 0 0 4px 0; line-height: 1.4; word-break: break-word;">${sanitize(q.title)}</div>
@@ -572,7 +572,6 @@ function renderResultsScreen(div, q, id) {
             <div class="overallStats" style="width:100%;">
   `;
 
-  // --- 全体の回答のデータループ処理 ---
   q.options.forEach((option, index) => {
     const stat = q.genderStats[index] || {};
     const percent = stat.rawPercent !== undefined ? stat.rawPercent : ((stat.male + stat.female) || 0);
@@ -594,15 +593,15 @@ function renderResultsScreen(div, q, id) {
             </div>
           </div>
         </div>
-        <div class="resultCard" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
+        <div class="resultCard">
           <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 12px; color: #111;">性別ごとの割合</h2>
-          <div id="genderStats" style="display: block !important; width: 100% !important;"></div>
+          <div id="genderStats"></div>
         </div>
       </div>
 
-      <div class="resultCard margin-top-20" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
+      <div class="resultCard margin-top-20">
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 12px; color: #111;">年代ごとの割合</h2>
-        <div id="ageStats" style="display: block !important; width: 100% !important;"></div>
+        <div id="ageStats"></div>
       </div>
 
       <div class="resultCard margin-top-20 commentSection">
@@ -635,8 +634,6 @@ function renderResultsScreen(div, q, id) {
   `;
 
   div.innerHTML = html;
-
-  // 下位関数の描画を安全に呼び出す
   renderGenderStats(q);
   renderAgeStats(q);
 }
@@ -734,73 +731,7 @@ async function reportQuestion(id) {
   alert(data.error ? data.message : "通報しました");
 }
 
-function renderGenderStats(q) {
-  const genderDiv = document.getElementById("genderStats");
-  if (!genderDiv || !q.genderStats) return;
-  
-  const colors = CHART_COLORS;
-  const fragment = document.createDocumentFragment();
-  const container = document.createElement("div");
-  container.className = "axis-flipped-container";
-  container.style.cssText = "display: flex; flex-direction: column; gap: 16px; width: 100%; box-sizing: border-box;";
-
-  const genders = [
-    { key: "male", label: "男性" },
-    { key: "female", label: "女性" }
-  ];
-
-  genders.forEach((genderObj) => {
-    let genderTotalRaw = 0;
-    q.options.forEach((_, index) => {
-      const data = q.genderStats[index] || { male: 0, female: 0 };
-      genderTotalRaw += (data[genderObj.key] || 0);
-    });
-
-    const group = document.createElement("div");
-    group.className = "flipped-gender-group";
-    group.style.cssText = "display: flex; flex-direction: column; align-items: flex-start; width: 100%; background: #f8fafc; padding: 12px 16px; border-radius: 12px; border: 1px solid #edf2f7; box-sizing: border-box;";
-
-    const label = document.createElement("div");
-    label.className = "flipped-axis-label";
-    label.style.cssText = "font-weight: bold; font-size: 16px; margin-bottom: 8px; color: #1e293b; width: 100%; text-align: left; box-sizing: border-box;";
-    label.textContent = genderObj.label;
-    group.appendChild(label);
-
-    const stack = document.createElement("div");
-    stack.className = "flipped-bars-stack";
-    stack.style.cssText = "display: flex; flex-direction: column; gap: 4px; width: 100%; box-sizing: border-box;";
-
-    q.options.forEach((option, index) => {
-      const data = q.genderStats[index] || { male: 0, female: 0 };
-      const rawVal = data[genderObj.key] || 0;
-      const percent = genderTotalRaw > 0 ? Math.round((rawVal * 100) / genderTotalRaw) : 0;
-      
-      const color = colors[index % colors.length];
-      const optionText = typeof option === "string" ? option : (option.text || "");
-      
-      const row = document.createElement("div");
-      row.className = "flipped-bar-row";
-      row.style.cssText = "display: flex; align-items: center; gap: 12px; min-height: 18px; width: 100%; box-sizing: border-box;";
-      
-      row.innerHTML = `
-        <div style="font-size: 13px; min-width: 140px; max-width: 200px; flex-shrink: 0; text-align: left; color: #475569; font-weight: 500; line-height: 1.2; padding-right: 4px; box-sizing: border-box;">${sanitize(optionText)}</div>
-        <div style="flex: 1; height: 14px; background-color: #e2e8f0; border-radius: 999px; overflow: hidden; position: relative;">
-          <div style="width: ${percent}%; height: 100%; background-color: ${color}; border-radius: 999px; transition: width 0.3s ease;"></div>
-        </div>
-        <div style="font-size: 13px; width: 45px; flex-shrink: 0; text-align: right; font-weight: bold; color: #1e293b;">${percent}%</div>
-      `;
-      stack.appendChild(row);
-    });
-
-    group.appendChild(stack);
-    container.appendChild(group);
-  });
-
-  fragment.appendChild(container);
-  genderDiv.innerHTML = "";
-  genderDiv.appendChild(fragment);
-}
-
+// 💡 完全にバグを取り去った年代統計
 function renderAgeStats(q) {
   const ageDiv = document.getElementById("ageStats");
   if (!ageDiv || !q.ageStats) return;
@@ -808,10 +739,9 @@ function renderAgeStats(q) {
   const colors = CHART_COLORS;
   const ages = AGE_GROUPS.filter(age => age !== "回答しない");
   
-  const fragment = document.createDocumentFragment();
   const container = document.createElement("div");
-  container.className = "axis-flipped-container"; // CSSの設定と完全同期 [cite: 548]
-  container.style.cssText = "display: flex; flex-direction: column; gap: 16px; width: 100%; box-sizing: border-box;";
+  container.className = "axis-flipped-container";
+  container.style.cssText = "width: 100% !important; display: block !important;";
 
   ages.forEach((age) => {
     let ageTotalRaw = 0;
@@ -821,34 +751,37 @@ function renderAgeStats(q) {
     });
 
     const group = document.createElement("div");
-    group.className = "flipped-option-group"; // CSSの設定と完全同期（スマホでの1列化に対応） [cite: 552, 729, 730, 731]
-    group.style.cssText = "display: flex; background: #f8fafc; padding: 12px 16px; border-radius: 12px; border: 1px solid #edf2f7; box-sizing: border-box; margin-bottom: 16px;";
+    group.className = "flipped-option-group";
+    group.style.cssText = "display: block !important; width: 100% !important; margin-bottom: 20px !important;";
 
     const label = document.createElement("div");
-    label.className = "flipped-axis-label"; // CSSの設定と完全同期 [cite: 559]
+    label.className = "flipped-axis-label";
+    label.style.cssText = "width: 100% !important; font-weight: bold; font-size: 15px; color: #1e293b; margin-bottom: 8px !important; text-align: left !important;";
     label.textContent = age;
     group.appendChild(label);
 
     const stack = document.createElement("div");
-    stack.className = "flipped-bars-stack"; // CSSの設定と完全同期 [cite: 568]
+    stack.className = "flipped-bars-stack";
+    stack.style.cssText = "width: 100% !important; display: block !important;";
 
     q.options.forEach((option, optionIndex) => {
       const optionAgeData = q.ageStats[optionIndex] || {};
       const rawVal = optionAgeData[age] || 0;
       const percent = ageTotalRaw > 0 ? Math.round((rawVal * 100) / ageTotalRaw) : 0;
-      
       const color = colors[optionIndex % colors.length];
       const optionText = typeof option === "string" ? option : (option.text || "");
       
       const row = document.createElement("div");
-      row.className = "flipped-bar-row"; // CSSの設定と完全同期 [cite: 574]
-      row.style.marginBottom = "8px";
+      row.className = "flipped-bar-row";
+      row.style.cssText = "width: 100% !important; margin-bottom: 12px !important; text-align: left !important;";
       
       row.innerHTML = `
-        <div style="font-size: 13px; text-align: left; color: #475569; font-weight: 500; margin-bottom: 2px;">${sanitize(optionText)}</div>
-        <div class="bar-single-wrap" style="display: flex; align-items: center; width: 100%; height: 16px; position: relative; background: #e2e8f0; border-radius: 8px; overflow: hidden;">
-          <div class="bar-single-fill" style="width: ${percent}%; height: 100%; background-color: ${color}; border-radius: 8px; transition: width 0.3s ease;"></div>
-          <span class="bar-percent-text" style="position: absolute; right: 8px; font-size: 11px; font-weight: bold; color: #1e293b; line-height: 16px;">${percent}%</span>
+        <div style="font-size: 13px; color: #475569; font-weight: 500; margin-bottom: 4px; word-break: break-word;">${sanitize(optionText)}</div>
+        <div style="display: flex !important; align-items: center !important; width: 100% !important; gap: 10px !important;">
+          <div class="bar-single-wrap" style="flex: 1 !important; width: 100% !important; height: 16px !important; background: #e2e8f0 !important; border-radius: 8px !important; overflow: hidden !important; position: relative !important;">
+            <div class="bar-single-fill" style="width: ${percent}%; height: 100%; background-color: ${color}; border-radius: 8px;"></div>
+          </div>
+          <span style="font-size: 12px !important; font-weight: bold !important; color: #1e293b !important; width: 35px !important; text-align: right !important; flex-shrink: 0 !important; display: inline-block !important;">${percent}%</span>
         </div>
       `;
       stack.appendChild(row);
@@ -858,9 +791,8 @@ function renderAgeStats(q) {
     container.appendChild(group);
   });
 
-  fragment.appendChild(container);
   ageDiv.innerHTML = "";
-  ageDiv.appendChild(fragment);
+  ageDiv.appendChild(container);
 }
 
 function showAllTags() {
