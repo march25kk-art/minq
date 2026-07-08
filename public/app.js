@@ -560,7 +560,7 @@ function renderResultsScreen(div, q, id) {
             <div class="overallStats" style="width:100%; display: flex !important; flex-direction: column !important; gap: 8px !important;">
   `;
 
-  // 💡 全体の回答：スマホ最適化レイアウト
+  // 💡 全体の回答：項目名の幅を80pxに拡張し、改行を絶対禁止に
   q.options.forEach((option, index) => {
     const stat = q.genderStats[index] || {};
     const percent = stat.rawPercent !== undefined ? stat.rawPercent : ((stat.male + stat.female) || 0);
@@ -569,10 +569,13 @@ function renderResultsScreen(div, q, id) {
 
     html += `
       <div class="graph-row-set-fixed" style="display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; width: 100% !important; gap: 10px !important; text-align: left !important;">
-        <span style="font-size: 13px !important; color: #333 !important; font-weight: 500 !important; word-break: break-all !important; line-height: 1.2 !important; flex: 0 0 65px !important; width: 65px !important; display: inline-block !important;">${sanitize(optionText)}</span>
+        <!-- ①項目名：幅を80pxに広げ、white-space: nowrap で改行を絶対に阻止。文字が溢れたら自動で「...」にする親切設計 -->
+        <span style="font-size: 13px !important; color: #333 !important; font-weight: 500 !important; flex: 0 0 80px !important; width: 80px !important; display: inline-block !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;" title="${sanitize(optionText)}">${sanitize(optionText)}</span>
+        <!-- ②グラフバー -->
         <div style="flex: 1 !important; height: 14px !important; background-color: #e2e8f0 !important; border-radius: 8px !important; overflow: hidden !important; position: relative !important; min-width: 30px !important;">
           <div style="width: ${percent}% !important; background-color: ${color} !important; height: 100% !important; border-radius: 8px !important;"></div>
         </div>
+        <!-- ③割合％ -->
         <strong style="flex: 0 0 40px !important; width: 40px !important; font-size: 13px !important; color: #1e293b !important; font-weight: bold !important; text-align: right !important; display: inline-block !important; white-space: nowrap !important;">${percent}%</strong>
       </div>
     `;
@@ -713,7 +716,7 @@ async function reportQuestion(id) {
   alert(data.error ? data.message : "通報しました");
 }
 
-// 💡 性別ごとの割合：スマホ最適化レイアウト
+// 💡 性別ごとの割合：項目名の幅を80pxに拡張し、改行を絶対禁止に
 function renderGenderStats(q) {
   const genderDiv = document.getElementById("genderStats");
   if (!genderDiv || !q.genderStats) return;
@@ -755,10 +758,13 @@ function renderGenderStats(q) {
       row.style.cssText = "display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; width: 100% !important; gap: 10px !important; text-align: left !important;";
       
       row.innerHTML = `
-        <div style="font-size: 13px !important; color: #475569 !important; font-weight: 500 !important; word-break: break-all !important; line-height: 1.2 !important; flex: 0 0 65px !important; width: 65px !important; display: inline-block !important;">${sanitize(optionText)}</div>
+        <!-- ①項目名 -->
+        <div style="font-size: 13px !important; color: #475569 !important; font-weight: 500 !important; flex: 0 0 80px !important; width: 80px !important; display: inline-block !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;" title="${sanitize(optionText)}">${sanitize(optionText)}</div>
+        <!-- ②グラフバー -->
         <div class="bar-single-wrap" style="flex: 1 !important; height: 14px !important; background: #e2e8f0 !important; border-radius: 8px !important; overflow: hidden !important; position: relative !important; min-width: 30px !important; margin: 0 !important;">
           <div class="bar-single-fill" style="width: ${percent}% !important; height: 100% !important; background-color: ${color} !important; border-radius: 8px !important;"></div>
         </div>
+        <!-- ③割合％ -->
         <span style="flex: 0 0 40px !important; width: 40px !important; font-size: 12px !important; font-weight: bold !important; color: #1e293b !important; text-align: right !important; display: inline-block !important; white-space: nowrap !important;">${percent}%</span>
       `;
       stack.appendChild(row);
@@ -772,7 +778,7 @@ function renderGenderStats(q) {
   genderDiv.appendChild(container);
 }
 
-// 💡 年代ごとの割合：スマホ最適化レイアウト
+// 💡 年代ごとの割合：項目名の幅を80pxに拡張し、改行を絶対禁止に
 function renderAgeStats(q) {
   const ageDiv = document.getElementById("ageStats");
   if (!ageDiv || !q.ageStats) return;
@@ -814,10 +820,13 @@ function renderAgeStats(q) {
       row.style.cssText = "display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; width: 100% !important; gap: 10px !important; text-align: left !important;";
       
       row.innerHTML = `
-        <div style="font-size: 13px !important; color: #475569 !important; font-weight: 500 !important; word-break: break-all !important; line-height: 1.2 !important; flex: 0 0 65px !important; width: 65px !important; display: inline-block !important;">${sanitize(optionText)}</div>
+        <!-- ①項目名 -->
+        <div style="font-size: 13px !important; color: #475569 !important; font-weight: 500 !important; flex: 0 0 80px !important; width: 80px !important; display: inline-block !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;" title="${sanitize(optionText)}">${sanitize(optionText)}</div>
+        <!-- ②グラフバー -->
         <div class="bar-single-wrap" style="flex: 1 !important; height: 14px !important; background: #e2e8f0 !important; border-radius: 8px !important; overflow: hidden !important; position: relative !important; min-width: 30px !important; margin: 0 !important;">
           <div class="bar-single-fill" style="width: ${percent}%; height: 100%; background-color: ${color}; border-radius: 8px;"></div>
         </div>
+        <!-- ③割合％ -->
         <span style="flex: 0 0 40px !important; width: 40px !important; font-size: 12px !important; font-weight: bold !important; color: #1e293b !important; text-align: right !important; display: inline-block !important; white-space: nowrap !important;">${percent}%</span>
       `;
       stack.appendChild(row);
