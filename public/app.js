@@ -532,40 +532,39 @@ function renderResultsScreen(div, q, id) {
   const shareUrl = encodeURIComponent(window.location.href);
   const shareText = encodeURIComponent(`「${q.title}」のアンケート結果をチェック！ #みんQ`);
 
-  // 💡 [改良版] HTML構造の組み立て
-  // 💡 [サイズ調整版] 一回り小さくしたHTML構造の組み立て
+  // 💡 スマホでも絶対に縦崩れしない防御インラインCSS付きのHTML組み立て
   let html = `
     <div class="resultDashboard">
-      <div class="title-share-container" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; width: 100%; box-sizing: border-box; padding: 10px 4px;">
+      <div class="title-share-container-fixed" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; width: 100%; box-sizing: border-box; padding: 10px 4px;">
         
         <div class="title-area" style="flex: 1; text-align: left;">
-          <div class="resultQuestionTitle" style="font-size: 24px; font-weight: bold; color: #212529; margin: 0 0 4px 0;">${sanitize(q.title)}</div>
+          <div class="resultQuestionTitle" style="font-size: 24px; font-weight: bold; color: #212529; margin: 0 0 4px 0; line-height: 1.4;">${sanitize(q.title)}</div>
           ${q.description ? `<p style="font-size: 14px; color: #666; margin: 8px 0 0 0; line-height: 1.5;">${sanitize(q.description)}</p>` : ''}
         </div>
         
-        <div class="share-buttons-wrap" style="display: flex; align-items: center; gap: 4px; background: #ffffff; padding: 4px 6px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); flex-shrink: 0;">
+        <div class="share-buttons-wrap-fixed" style="display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: flex-start !important; gap: 4px !important; background: #ffffff !important; padding: 4px 6px !important; border-radius: 6px !important; box-shadow: 0 2px 6px rgba(0,0,0,0.06) !important; flex-shrink: 0 !important; width: auto !important; box-sizing: border-box !important;">
           
-          <a href="https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareText}" target="_blank" rel="noopener noreferrer" class="share-btn" style="background: #000000; color: #fff; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+          <a href="https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareText}" target="_blank" rel="noopener noreferrer" style="background: #000000; color: #fff; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
             <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
           </a>
           
-          <a href="https://social-plugins.line.me/lineit/share?url=${shareUrl}" target="_blank" rel="noopener noreferrer" class="share-btn" style="background: #06C755; color: #fff; text-decoration: none; font-size: 8px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+          <a href="https://social-plugins.line.me/lineit/share?url=${shareUrl}" target="_blank" rel="noopener noreferrer" style="background: #06C755; color: #fff; text-decoration: none; font-size: 8px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
             LINE
           </a>
 
-          <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" rel="noopener noreferrer" class="share-btn" style="background: #1877F2; color: #fff; text-decoration: none; font-size: 11px; font-weight: bold; font-family: sans-serif; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+          <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" rel="noopener noreferrer" style="background: #1877F2; color: #fff; text-decoration: none; font-size: 11px; font-weight: bold; font-family: sans-serif; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
             f
           </a>
 
-          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="share-btn" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: #fff; text-decoration: none; font-size: 8px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: #fff; text-decoration: none; font-size: 8px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
             Insta
           </a>
           
-          <a href="https://www.threads.net/intent/post?url=${shareUrl}&text=${shareText}" target="_blank" rel="noopener noreferrer" class="share-btn" style="background: #000000; color: #fff; text-decoration: none; font-size: 9px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; border: 1px solid #333; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+          <a href="https://www.threads.net/intent/post?url=${shareUrl}&text=${shareText}" target="_blank" rel="noopener noreferrer" style="background: #000000; color: #fff; text-decoration: none; font-size: 9px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; border: 1px solid #333; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
             Th
           </a>
 
-          <button class="share-btn" onclick="copyUrlToClipboard()" style="background: #ffffff; color: #333; border: 1px solid #dee2e6; font-size: 11px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+          <button onclick="copyUrlToClipboard()" style="background: #ffffff; color: #333; border: 1px solid #dee2e6; font-size: 11px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; cursor: pointer; transition: opacity 0.2s; padding: 0; margin: 0;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
             📋
           </button>
         </div>
@@ -583,7 +582,7 @@ function renderResultsScreen(div, q, id) {
             <div class="overallStats" style="width:100%;">
   `;
 
-  // --- 以下は元のデータループ処理をそのまま維持 ---
+  // --- 全体の回答のデータループ処理 ---
   q.options.forEach((option, index) => {
     const stat = q.genderStats[index] || {};
     const percent = stat.rawPercent !== undefined ? stat.rawPercent : ((stat.male + stat.female) || 0);
@@ -618,7 +617,7 @@ function renderResultsScreen(div, q, id) {
 
       <div class="resultCard margin-top-20 commentSection">
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 12px; color: #111;">コメント一覧</h2>
-        <textarea id="commentText" placeholder="意見を入力..." style="width:100%; height:70px; padding:10px; border-radius:8px; font-size:13px; border:1px solid #ccc; box-sizing:border-box; resize:none;"></textarea>
+        <textarea id="commentText" placeholder="意見を入力..." style="width:100%; height:70px; padding:10px; border-radius:8px; font-size:13px; border:1px solid #ccc; box-sizing:border-box; resize:none; margin-top:10px;"></textarea>
         <div style="text-align:center;">
           <button onclick="addCommentAndReload('${q.id}')" style="width:150px; height:42px; display:block; margin:12px auto; border:none; border-radius:8px; background:#2563eb; color:white; font-size:14px; font-weight:bold; cursor:pointer;" type="button">コメント投稿</button>
         </div>
@@ -646,6 +645,8 @@ function renderResultsScreen(div, q, id) {
   `;
 
   div.innerHTML = html;
+
+  // 💡 バグっていた下位関数の描画処理を実行
   renderGenderStats(q);
   renderAgeStats(q);
 }
@@ -819,7 +820,7 @@ function renderAgeStats(q) {
   
   const fragment = document.createDocumentFragment();
   const container = document.createElement("div");
-  container.className = "axis-flipped-container";
+  container.className = "axis-flipped-container"; // CSSの設定と完全同期 [cite: 548]
   container.style.cssText = "display: flex; flex-direction: column; gap: 16px; width: 100%; box-sizing: border-box;";
 
   ages.forEach((age) => {
@@ -830,18 +831,16 @@ function renderAgeStats(q) {
     });
 
     const group = document.createElement("div");
-    group.className = "flipped-age-group";
-    group.style.cssText = "display: flex; flex-direction: column; align-items: flex-start; width: 100%; background: #f8fafc; padding: 12px 16px; border-radius: 12px; border: 1px solid #edf2f7; box-sizing: border-box;";
+    group.className = "flipped-option-group"; // CSSの設定と完全同期（スマホでの1列化に対応） [cite: 552, 729, 730, 731]
+    group.style.cssText = "display: flex; background: #f8fafc; padding: 12px 16px; border-radius: 12px; border: 1px solid #edf2f7; box-sizing: border-box; margin-bottom: 16px;";
 
     const label = document.createElement("div");
-    label.className = "flipped-axis-label";
-    label.style.cssText = "font-weight: bold; font-size: 16px; margin-bottom: 8px; color: #1e293b; width: 100%; text-align: left; box-sizing: border-box;";
+    label.className = "flipped-axis-label"; // CSSの設定と完全同期 [cite: 559]
     label.textContent = age;
     group.appendChild(label);
 
     const stack = document.createElement("div");
-    stack.className = "flipped-bars-stack";
-    stack.style.cssText = "display: flex; flex-direction: column; gap: 4px; width: 100%; box-sizing: border-box;";
+    stack.className = "flipped-bars-stack"; // CSSの設定と完全同期 [cite: 568]
 
     q.options.forEach((option, optionIndex) => {
       const optionAgeData = q.ageStats[optionIndex] || {};
@@ -852,15 +851,15 @@ function renderAgeStats(q) {
       const optionText = typeof option === "string" ? option : (option.text || "");
       
       const row = document.createElement("div");
-      row.className = "flipped-bar-row";
-      row.style.cssText = "display: flex; align-items: center; gap: 12px; min-height: 18px; width: 100%; box-sizing: border-box;";
+      row.className = "flipped-bar-row"; // CSSの設定と完全同期 [cite: 574]
+      row.style.marginBottom = "8px";
       
       row.innerHTML = `
-        <div style="font-size: 13px; min-width: 140px; max-width: 200px; flex-shrink: 0; text-align: left; color: #475569; font-weight: 500; line-height: 1.2; padding-right: 4px; box-sizing: border-box;">${sanitize(optionText)}</div>
-        <div style="flex: 1; height: 14px; background-color: #e2e8f0; border-radius: 999px; overflow: hidden; position: relative;">
-          <div style="width: ${percent}%; height: 100%; background-color: ${color}; border-radius: 999px; transition: width 0.3s ease;"></div>
+        <div style="font-size: 13px; text-align: left; color: #475569; font-weight: 500; margin-bottom: 2px;">${sanitize(optionText)}</div>
+        <div class="bar-single-wrap" style="display: flex; align-items: center; width: 100%; height: 16px; position: relative; background: #e2e8f0; border-radius: 8px; overflow: hidden;">
+          <div class="bar-single-fill" style="width: ${percent}%; height: 100%; background-color: ${color}; border-radius: 8px; transition: width 0.3s ease;"></div>
+          <span class="bar-percent-text" style="position: absolute; right: 8px; font-size: 11px; font-weight: bold; color: #1e293b; line-height: 16px;">${percent}%</span>
         </div>
-        <div style="font-size: 13px; width: 45px; flex-shrink: 0; text-align: right; font-weight: bold; color: #1e293b;">${percent}%</div>
       `;
       stack.appendChild(row);
     });
