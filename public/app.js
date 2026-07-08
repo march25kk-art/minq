@@ -529,19 +529,18 @@ function renderResultsScreen(div, q, id) {
   const shareUrl = encodeURIComponent(window.location.href);
   const shareText = encodeURIComponent(`「${q.title}」のアンケート結果をチェック！ #みんQ`);
 
-  // 💡 【大改造】シェアボタンを「回答結果」の横へ引っ越し、説明文を幅いっぱいに解放！
   let html = `
     <div class="resultDashboard">
       
       <div class="title-area" style="width: 100% !important; text-align: left !important; margin-bottom: 20px !important;">
-        <div class="resultQuestionTitle" style="font-size: 24px; font-weight: bold; color: #212529; margin: 0 0 8px 0; line-height: 1.4; word-break: break-word;">${sanitize(q.title)}</div>
+        <div class="resultQuestionTitle" style="font-size: 24px; font-weight: bold; color: #212529; margin: 0 0 4px 0; line-height: 1.4; word-break: break-word;">${sanitize(q.title)}</div>
         ${q.description ? `<p style="font-size: 14px; color: #666; margin: 8px 0 0 0; line-height: 1.6; word-break: break-word; width: 100% !important;">${sanitize(q.description)}</p>` : ''}
       </div>
 
-      <div class="result-header-share-wrap" style="display: flex !important; justify-content: space-between !important; align-items: center !important; width: 100% !important; box-sizing: border-box !important; margin: 20px 0 10px 0; padding: 0 4px !important;">
-        <h1 style="font-size: 14px; color: #666; font-weight: bold; text-align: left; margin: 0; white-space: nowrap !important;">回答結果</h1>
+      <div class="result-header-share-wrap" style="display: flex !important; justify-content: space-between !important; align-items: center !important; width: 100% !important; box-sizing: border-box !important; margin: 24px 0 14px 0; padding: 0 4px !important; flex-direction: row !important; flex-wrap: nowrap !important;">
+        <span style="font-size: 14px !important; color: #666 !important; font-weight: bold !important; text-align: left !important; margin: 0 !important; white-space: nowrap !important; display: inline-block !important;">回答結果</span>
         
-        <div class="share-buttons-wrap-final" style="display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; gap: 4px !important; background: #ffffff !important; padding: 4px 6px !important; border-radius: 6px !important; box-shadow: 0 2px 6px rgba(0,0,0,0.06) !important; flex-shrink: 0 !important; width: auto !important; margin: 0 !important;">
+        <div class="share-buttons-wrap-final" style="display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; gap: 4px !important; background: #ffffff !important; padding: 4px 6px !important; border-radius: 6px !important; box-shadow: 0 2px 6px rgba(0,0,0,0.06) !important; flex-shrink: 0 !important; width: auto !important; margin: 0 !important; margin-left: auto !important;">
           <a href="https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareText}" target="_blank" rel="noopener noreferrer" style="background: #000000; color: #fff; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 4px; transition: opacity 0.2s;">
             <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
           </a>
@@ -558,10 +557,10 @@ function renderResultsScreen(div, q, id) {
           <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 12px; color: #111;">全体の回答</h2>
           <div class="overallWrap">
             <div class="pieChart" style="background: conic-gradient(${conicParts.join(", ")});"></div>
-            <div class="overallStats" style="width:100%; display: flex; flex-direction: column; gap: 12px;">
+            <div class="overallStats" style="width:100%; display: flex !important; flex-direction: column !important; gap: 8px !important;">
   `;
 
-  // --- 全体の回答のデータループ処理（ここは変更なし） ---
+  // 💡 【全体グラフ】 既存CSS（.bar）に邪魔されないよう独立した独自クラス（.bar-total-wrap）に変更
   q.options.forEach((option, index) => {
     const stat = q.genderStats[index] || {};
     const percent = stat.rawPercent !== undefined ? stat.rawPercent : ((stat.male + stat.female) || 0);
@@ -569,12 +568,12 @@ function renderResultsScreen(div, q, id) {
     const optionText = typeof option === "string" ? option : (option.text || "");
 
     html += `
-      <div class="graph-row-set" style="display: flex !important; align-items: center !important; width: 100% !important; gap: 12px !important; text-align: left !important;">
-        <span style="width: 35% !important; font-size: 13px; color: #333; font-weight: 500; word-break: break-word; line-height: 1.2;">${sanitize(optionText)}</span>
-        <div class="bar" style="flex: 1 !important; height: 14px !important; background-color: #e2e8f0 !important; border-radius: 8px !important; overflow: hidden !important; position: relative !important; margin: 0 !important;">
-          <div class="fill" style="width: ${percent}% !important; background-color: ${color} !important; height: 100% !important; border-radius: 8px !important; transition: width 0.3s ease;"></div>
+      <div class="graph-row-set-fixed" style="display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; width: 100% !important; gap: 10px !important; text-align: left !important;">
+        <span style="font-size: 13px !important; color: #333 !important; font-weight: 500 !important; flex: 0 0 80px !important; width: 80px !important; display: inline-block !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;" title="${sanitize(optionText)}">${sanitize(optionText)}</span>
+        <div class="bar-total-wrap" style="flex: 1 !important; height: 14px !important; background-color: #e2e8f0 !important; border-radius: 8px !important; overflow: hidden !important; position: relative !important; min-width: 30px !important; margin: 0 !important;">
+          <div style="width: ${percent}% !important; background-color: ${color} !important; height: 100% !important; border-radius: 8px !important;"></div>
         </div>
-        <strong style="width: 42px !important; font-size: 13px; color: #1e293b; font-weight: bold; text-align: right; flex-shrink: 0 !important; display: inline-block !important;">${percent}%</strong>
+        <strong style="flex: 0 0 40px !important; width: 40px !important; font-size: 13px !important; color: #1e293b !important; font-weight: bold !important; text-align: right !important; display: inline-block !important; white-space: nowrap !important;">${percent}%</strong>
       </div>
     `;
   });
