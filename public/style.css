@@ -188,7 +188,6 @@ header:not(.site-header) {
   background: linear-gradient(180deg, #13a05a, #067d43);
 }
 
-.menu-btn,
 .topBtn {
   width: 42px;
   height: 42px;
@@ -273,7 +272,7 @@ main {
 
 .section-head h2 {
   margin: 0;
-  font-size: 18px !important;
+  font-size: 16px !important;
 }
 
 .text-btn,
@@ -282,6 +281,7 @@ main {
   border: 0;
   background: transparent;
   color: #666c73;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -309,6 +309,7 @@ main {
   color: #24272c;
   background: #fff;
   box-shadow: 0 6px 16px rgba(24, 39, 31, 0.04);
+  font-size: 14px;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -341,7 +342,7 @@ main {
   background: transparent;
   color: #30343a;
   font-weight: 800;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .sortMenu button.active { color: var(--green); }
@@ -362,7 +363,7 @@ main {
   border-radius: 5px;
   color: #fff;
   background: #ff4b44;
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .question-list {
@@ -411,7 +412,7 @@ main {
   display: block;
   overflow: hidden;
   color: #24272c;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 900;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -431,14 +432,14 @@ main {
   align-items: center;
   gap: 18px;
   color: #7a8088;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
 }
 
 .postDate {
   color: #838891;
-  font-size: 16px;
+  font-size: 13px;
   white-space: nowrap;
 }
 
@@ -1094,8 +1095,6 @@ select:focus {
 
   .search-box { width: 100%; }
   .header-create { display: none; }
-  .menu-btn { display: none; }
-
   .hero-section {
     margin-top: 16px;
     padding: 26px 20px;
