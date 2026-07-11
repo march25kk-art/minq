@@ -13,7 +13,6 @@ const TAGS = [
 
 const AGE_GROUPS = ["回答しない", "10代", "20代", "30代", "40代", "50代", "60代", "70代以上"];
 const GENDERS = ["回答しない", "男性", "女性"];
-const ICONS = ["☀", "◎", "▣", "◇", "★", "☕", "●", "▰", "♣", "♪"];
 const CHART_COLORS = ["#12a05a", "#4d9de0", "#f2b705", "#ef6f6c", "#8a63d2", "#f28c28", "#15b8a6", "#e85d99"];
 
 const state = {
@@ -23,7 +22,8 @@ const state = {
   currentTag: "",
   currentSort: "update",
   options: ["", ""],
-  latestQuestions: []
+  latestQuestions: [],
+  showAllTags: false
 };
 
 function sanitize(value) {
@@ -46,16 +46,10 @@ function createQueryParams(params) {
   return new URLSearchParams(params).toString();
 }
 
-function getHotTag(q) {
-  const created = q.createdAt ? new Date(String(q.createdAt).replace(/-/g, "/")) : null;
-  if (!created || Number.isNaN(created.getTime())) return "NEW";
-  return Date.now() - created.getTime() < 3 * 24 * 60 * 60 * 1000 ? "NEW" : "";
-}
-
 window.addEventListener("DOMContentLoaded", () => {
   const questionsDiv = document.getElementById("questions");
   if (questionsDiv) {
-    renderTopTags();
+    renderTopTags(false);
     loadQuestions();
   }
 
@@ -74,7 +68,10 @@ function renderTopTags(all = false) {
   const tagArea = document.getElementById("tagArea");
   if (!tagArea) return;
 
+  state.showAllTags = all;
+  tagArea.classList.toggle("expanded", all);
   tagArea.innerHTML = "";
+
   (all ? TAGS : TAGS.slice(0, 7)).forEach(tag => {
     const button = document.createElement("button");
     button.type = "button";
@@ -92,10 +89,17 @@ function renderTopTags(all = false) {
     clear.onclick = clearTag;
     tagArea.appendChild(clear);
   }
+
+  const toggleBtn = document.getElementById("toggleTagsBtn");
+  if (toggleBtn) toggleBtn.textContent = all ? "閉じる" : "すべて見る ›";
 }
 
 function showAllTags() {
   renderTopTags(true);
+}
+
+function toggleAllTags() {
+  renderTopTags(!state.showAllTags);
 }
 
 async function loadQuestions() {
@@ -124,7 +128,7 @@ async function loadQuestions() {
     }
 
     div.innerHTML = "";
-    state.latestQuestions.forEach((q, index) => div.appendChild(createQuestionCard(q, index)));
+    state.latestQuestions.forEach(q => div.appendChild(createQuestionCard(q)));
     renderPopularQuestions(state.latestQuestions);
 
     const pageText = document.getElementById("pageText");
@@ -136,27 +140,21 @@ async function loadQuestions() {
   }
 }
 
-function createQuestionCard(q, index) {
+function createQuestionCard(q) {
   const total = Number(q.totalVotes || 0);
   const comments = Number(q.commentCount || (Array.isArray(q.comments) ? q.comments.length : 0));
   const views = Number(q.views || 0);
-  const hot = getHotTag(q);
   const card = document.createElement("article");
   card.className = "thread";
   card.onclick = () => openDetail(q.id);
   card.innerHTML = `
-    <span class="hotTag" style="${hot ? "" : "visibility:hidden"}">${hot || "NEW"}</span>
-    <span class="question-icon">${ICONS[index % ICONS.length]}</span>
-    <div class="question-main">
-      <span class="title-text">${sanitize(plain(q.title))}</span>
-      <div class="question-meta">
-        <span>${total}回答</span>
-        <span>${comments}コメント</span>
-        <span>${views}閲覧</span>
-      </div>
+    <span class="title-text">${sanitize(plain(q.title))}</span>
+    <div class="thread-meta-line">
+      <span>${total}回答</span>
+      <span>${comments}コメント</span>
+      <span>${views}閲覧</span>
+      <time class="postDate">${sanitize(q.updatedAt || q.createdAt || "")}</time>
     </div>
-    <time class="postDate">${sanitize(q.updatedAt || q.createdAt || "")}</time>
-    <span class="kebab">⋮</span>
   `;
   return card;
 }
@@ -204,14 +202,14 @@ function searchQuestions() {
 function searchTag(tag) {
   state.currentTag = tag;
   state.page = 1;
-  renderTopTags();
+  renderTopTags(state.showAllTags);
   loadQuestions();
 }
 
 function clearTag() {
   state.currentTag = "";
   state.page = 1;
-  renderTopTags();
+  renderTopTags(state.showAllTags);
   loadQuestions();
 }
 

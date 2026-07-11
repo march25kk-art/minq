@@ -42,17 +42,33 @@
       </div>
 
       <div class="hero-illustration" aria-hidden="true">
-        <div class="person-card card-green"><span class="avatar girl"></span><span class="bubble">?</span></div>
-        <div class="person-card card-yellow"><span class="avatar boy"></span><span class="bubble">...</span></div>
-        <div class="person-card card-blue"><span class="bubble chart">▥</span><span class="avatar point"></span></div>
-        <div class="person-card card-pink"><span class="avatar wave"></span><span class="bubble check">✓</span></div>
+        <div class="chat-card card-green">
+          <span class="profile-dot"></span>
+          <span class="chat-lines"></span>
+          <span class="bubble">?</span>
+        </div>
+        <div class="chat-card card-yellow">
+          <span class="profile-dot"></span>
+          <span class="chat-lines"></span>
+          <span class="bubble">...</span>
+        </div>
+        <div class="chat-card card-blue">
+          <span class="profile-dot"></span>
+          <span class="chat-lines"></span>
+          <span class="bubble chart">▥</span>
+        </div>
+        <div class="chat-card card-pink">
+          <span class="profile-dot"></span>
+          <span class="chat-lines"></span>
+          <span class="bubble check">✓</span>
+        </div>
       </div>
     </section>
 
     <section class="category-section">
       <div class="section-head">
         <h2>カテゴリ</h2>
-        <button class="text-btn" type="button" onclick="showAllTags()">すべて見る ›</button>
+        <button id="toggleTagsBtn" class="text-btn" type="button" onclick="toggleAllTags()">すべて見る ›</button>
       </div>
       <div id="tagArea" class="category-row"></div>
     </section>
@@ -62,8 +78,8 @@
         <div class="sortMenu">
           <button id="sort-update" class="active" type="button" onclick="changeSort('update')">おすすめ</button>
           <button id="sort-new" type="button" onclick="changeSort('new')">新着順 <span>NEW</span></button>
+          <button id="sort-vote" type="button" onclick="changeSort('vote')">回答順</button>
           <button id="sort-view" type="button" onclick="changeSort('view')">人気順</button>
-          <button id="sort-vote" type="button" onclick="changeSort('vote')">回答数順</button>
         </div>
         <div id="questions" class="question-list">
           <div class="loading-state">アンケートを読み込み中...</div>
