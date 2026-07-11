@@ -3,49 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title id="pageTitle">みんQ</title>
-
-  <meta
-    id="metaDescription"
-    name="description"
-    content="みんなでアンケートに投票しよう！">
-
+  <title>みんQ - アンケート詳細</title>
+  <meta id="metaDescription" name="description" content="みんQでアンケートに投票しよう。">
   <link rel="canonical" id="canonical" href="">
-
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="icon" href="/apple-touch-icon.png">
-
   <meta property="og:title" id="ogTitle" content="みんQ">
-  <meta property="og:description" id="ogDescription" content="みんなでアンケートに投票しよう！">
+  <meta property="og:description" id="ogDescription" content="みんQでアンケートに投票しよう。">
   <meta property="og:type" content="website">
   <meta property="og:url" id="ogUrl" content="">
-
   <link rel="stylesheet" href="style.css">
 </head>
-<body style="margin: 0; padding: 0;"> <header style="margin-top: 0 !important;">
+<body>
+  <header>
     <div class="logo-container">
-      <a class="logo" href="index.html" style="text-decoration: none !important; color: inherit;">みんQ</a>
-      <button class="topBtn" type="button" onclick="location.href='index.html'">TOP</button>
+      <a class="logo" href="/">みんQ</a>
+      <button class="topBtn" type="button" onclick="location.href='/'">⌂</button>
     </div>
     <div class="nav">
-      <button onclick="location.href='create.html'" type="button">作成</button>
+      <button class="primary-btn" onclick="location.href='create.html'" type="button">＋ 質問を作成する</button>
     </div>
   </header>
 
   <main class="layout" id="questionArea">
-    <div style="text-align: center; padding: 40px; color: #666;">
-      データを読み込み中...
-    </div>
+    <div class="loading-state">データを読み込み中...</div>
   </main>
 
   <script src="app.js"></script>
   <script>
-    // 💡 ページが開かれたら、自動的に新しい統合読み込み関数を実行する
     window.addEventListener("DOMContentLoaded", () => {
       loadCombinedQuestion();
     });
   </script>
-
 </body>
 </html>

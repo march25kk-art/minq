@@ -3,40 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>アンケート作成 - みんQ</title>
+  <title>質問を作成 - みんQ</title>
   <link rel="stylesheet" href="style.css">
-  
   <script src="app.js" defer></script>
 </head>
 <body>
-
   <header>
     <div class="logo-container">
-      <div class="logo" onclick="location.href='index.html'" role="button" tabindex="0" style="text-decoration: none !important; cursor: pointer;">
-        みんQ
-      </div>
-      <button class="topBtn" type="button" onclick="location.href='index.html'">TOP</button>
+      <a class="logo" href="/">みんQ</a>
+      <button class="topBtn" type="button" onclick="location.href='/'">⌂</button>
     </div>
   </header>
 
   <main class="createContainer">
     <form class="createCard" onsubmit="return false;">
-      <h1 class="createTitle">アンケートを作成する</h1>
-
+      <h1 class="createTitle">質問を作成する</h1>
       <input id="title" placeholder="タイトル（必須）">
       <textarea id="description" placeholder="説明（任意）"></textarea>
       <select id="tags"></select>
-
       <div id="options"></div>
-
-      <button type="button" class="subBtn" onclick="addOption()">
-        選択肢を追加
-      </button>
-      <button type="button" class="submitBtn" onclick="postQuestion()" style="display: block; width: 200px; height: 44px; background-color: #1e3a8a !important; color: #ffffff !important; border: none !important; border-radius: 6px; font-weight: bold; font-size: 15px; cursor: pointer; margin: 24px auto 0 auto; text-align: center; line-height: 44px; padding: 0;">
-        アンケートを投稿する
-      </button>
+      <button type="button" class="subBtn" onclick="addOption()">選択肢を追加</button>
+      <button type="button" class="submitBtn" onclick="postQuestion()">アンケートを投稿する</button>
     </form>
   </main>
-
-  </body>
+</body>
 </html>

@@ -1,84 +1,107 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="icon" href="/apple-touch-icon.png">
-
-  <meta name="description" content="普段の疑問をアンケートで投票＆回答。性別や年代別のリアルな割合・集計結果や、みんなのリアルなコメントが見られるアンケート共有サイトです。">
-
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>みんQ - みんなのアンケートコミュニティ</title>
-
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FWPQD3EYNB"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-FWPQD3EYNB');
-  </script>
-
+  <meta name="description" content="みんQは、気になることを質問したり、みんなの意見をシェアできるアンケートコミュニティです。">
+  <title>みんQ - みんなでつくるアンケートコミュニティ</title>
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-
   <script src="app.js" defer></script>
-
-  <meta name="google-site-verification" content="xPNvunaeRAdX17J3P3BY6rnzkZHc1Y2qnFwgOFUm-Sg" />
 </head>
-
 <body>
-
-  <header>
-    <div class="logo-container">
-      <a class="logo" href="index.html" style="text-decoration: none; color: inherit;">
-        みんQ
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/">
+        <span class="brand-main">みん<span>Q</span></span>
+        <span class="brand-copy">みんなでつくるアンケートコミュニティ</span>
       </a>
-      <button class="topBtn" type="button" onclick="location.href='index.html'">TOP</button>
-    </div>
 
-    <div class="nav">
-      <input id="searchInput" placeholder="検索" onkeydown="if(event.key==='Enter') searchQuestions()">
-
-      <button onclick="searchQuestions()" type="button">
-        検索
-      </button>
-
-      <button onclick="location.href='create.html'" type="button">
-        作成
-      </button>
+      <div class="header-actions">
+        <label class="search-box" aria-label="キーワードで検索">
+          <input id="searchInput" type="search" placeholder="キーワードで検索" onkeydown="if(event.key==='Enter') searchQuestions()">
+          <button type="button" onclick="searchQuestions()" aria-label="検索">⌕</button>
+        </label>
+        <button class="primary-btn header-create" type="button" onclick="location.href='create.html'">
+          <span>＋</span>質問を作成する
+        </button>
+        <button class="menu-btn" type="button" aria-label="メニュー">☰</button>
+      </div>
     </div>
   </header>
 
-  <div class="categoryBox">
-    <div class="categoryHeader">
-      <span class="categoryTitle">カテゴリ</span>
-      <div id="tagArea"></div>
-    </div>
-  </div>
-
-  <main class="layout">
-    <div class="sortMenu">
-      <span id="sort-update" class="active" onclick="changeSort('update')">更新順</span>
-      /
-      <span id="sort-new" onclick="changeSort('new')">新着順</span>
-      /
-      <span id="sort-view" onclick="changeSort('view')">閲覧順</span>
-      /
-      <span id="sort-vote" onclick="changeSort('vote')">回答順</span>
-    </div>
-
-    <div id="questions">
-      <div style="text-align: center; padding: 100px 40px; color: #666; font-size: 14px; min-height: 80vh; box-sizing: border-box;">
-        アンケートを読み込み中...
+  <main>
+    <section class="hero-section">
+      <div class="hero-copy">
+        <h1>みんなの意見で、<br>毎日がもっと<span>おもしろくなる。</span></h1>
+        <p>みんQは、気になることを質問したり、みんなの意見をシェアできる場所です。</p>
+        <button class="primary-btn hero-btn" type="button" onclick="location.href='create.html'">
+          質問を作成してみる <span>＋</span>
+        </button>
       </div>
-    </div>
+
+      <div class="hero-illustration" aria-hidden="true">
+        <div class="person-card card-green"><span class="avatar girl"></span><span class="bubble">?</span></div>
+        <div class="person-card card-yellow"><span class="avatar boy"></span><span class="bubble">…</span></div>
+        <div class="person-card card-blue"><span class="bubble chart">▥</span><span class="avatar point"></span></div>
+        <div class="person-card card-pink"><span class="avatar wave"></span><span class="bubble check">✓</span></div>
+      </div>
+    </section>
+
+    <section class="category-section">
+      <div class="section-head">
+        <h2>カテゴリ</h2>
+        <button class="text-btn" type="button" onclick="showAllTags()">すべて見る ›</button>
+      </div>
+      <div id="tagArea" class="category-row"></div>
+    </section>
+
+    <section class="content-grid">
+      <div class="main-column">
+        <div class="sortMenu">
+          <button id="sort-update" class="active" type="button" onclick="changeSort('update')">おすすめ</button>
+          <button id="sort-new" type="button" onclick="changeSort('new')">新着順 <span>NEW</span></button>
+          <button id="sort-view" type="button" onclick="changeSort('view')">人気順</button>
+          <button id="sort-vote" type="button" onclick="changeSort('vote')">回答数順</button>
+        </div>
+        <div id="questions" class="question-list">
+          <div class="loading-state">アンケートを読み込み中...</div>
+        </div>
+        <nav class="pager" aria-label="ページ移動">
+          <button id="prevBtn" onclick="prevPage()" type="button" disabled>前へ</button>
+          <span id="pageText">1 / 1 ページ</span>
+          <button id="nextBtn" onclick="nextPage()" type="button" disabled>次へ</button>
+        </nav>
+      </div>
+
+      <aside class="sidebar">
+        <section class="side-card ranking-card">
+          <h2>⌁ いま人気の質問</h2>
+          <div id="popularQuestions" class="ranking-list"></div>
+        </section>
+        <section class="side-card create-nudge">
+          <h2>あなたの気になること、<br>みんなに聞いてみよう!</h2>
+          <p>質問を作成すると、みんなの意見が集まります。</p>
+          <button class="primary-btn" type="button" onclick="location.href='create.html'">＋ 質問を作成する</button>
+        </section>
+        <section class="side-card about-card">
+          <h2>みんQについて</h2>
+          <p>みんQは、誰でも気軽に質問し、みんなで答えあえるアンケートコミュニティです。</p>
+          <a href="create.html">もっと詳しく ›</a>
+        </section>
+      </aside>
+    </section>
   </main>
 
-  <nav class="pager" aria-label="ページ移動">
-    <button id="prevBtn" onclick="prevPage()" type="button" disabled>前へ</button>
-    <span id="pageText">1 / 1 ページ</span>
-    <button id="nextBtn" onclick="nextPage()" type="button" disabled>次へ</button>
-  </nav>
-
-  </body>
+  <footer class="site-footer">
+    <nav>
+      <a href="#">利用規約</a>
+      <a href="#">プライバシーポリシー</a>
+      <a href="#">運営者情報</a>
+      <a href="#">お問い合わせ</a>
+    </nav>
+    <span>© 2026 みんQ</span>
+  </footer>
+</body>
 </html>

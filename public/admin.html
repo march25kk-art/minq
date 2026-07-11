@@ -7,24 +7,20 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
   <header>
-    <div class="logo">管理画面</div>
+    <div class="logo-container">
+      <a class="logo" href="/">みんQ 管理</a>
+    </div>
   </header>
 
   <main class="createContainer">
-    <input
-      type="password"
-      id="password"
-      placeholder="管理パスワード"
-      onkeydown="if(event.key==='Enter') loadAdmin()"
-    >
-    <button type="button" class="submitBtn" onclick="loadAdmin()">表示</button>
-
-    <div id="adminQuestions"></div>
+    <div class="createCard">
+      <input type="password" id="password" placeholder="管理パスワード" onkeydown="if(event.key==='Enter') loadAdmin()">
+      <button type="button" class="submitBtn" onclick="loadAdmin()">表示</button>
+      <div id="adminQuestions" style="margin-top:24px;"></div>
+    </div>
   </main>
 
   <script src="app.js"></script>
-
 </body>
 </html>
