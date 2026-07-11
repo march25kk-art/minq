@@ -1,19 +1,19 @@
 const TAGS = [
-  { name: "ニュース", icon: "▤" },
+  { name: "ニュース", icon: "□" },
   { name: "政治", icon: "▦" },
   { name: "投資", icon: "↗" },
   { name: "恋愛", icon: "♥" },
   { name: "仕事", icon: "▣" },
-  { name: "ゲーム", icon: "⌘" },
+  { name: "ゲーム", icon: "◆" },
   { name: "食べ物", icon: "▥" },
   { name: "生活", icon: "⌂" },
-  { name: "AI", icon: "◈" },
+  { name: "AI", icon: "◇" },
   { name: "趣味", icon: "✦" }
 ];
 
 const AGE_GROUPS = ["回答しない", "10代", "20代", "30代", "40代", "50代", "60代", "70代以上"];
 const GENDERS = ["回答しない", "男性", "女性"];
-const ICONS = ["🌤", "👶", "💼", "🤖", "🐉", "☕", "👥", "🛒", "🌳", "🚬", "🎮", "🍜"];
+const ICONS = ["☀", "◎", "▣", "◇", "★", "☕", "●", "▰", "♣", "♪"];
 const CHART_COLORS = ["#12a05a", "#4d9de0", "#f2b705", "#ef6f6c", "#8a63d2", "#f28c28", "#15b8a6", "#e85d99"];
 
 const state = {
@@ -36,6 +36,10 @@ function plain(value) {
   const div = document.createElement("div");
   div.innerHTML = value == null ? "" : String(value);
   return div.textContent || div.innerText || "";
+}
+
+function optionText(option) {
+  return plain(typeof option === "string" ? option : option?.text || "");
 }
 
 function createQueryParams(params) {
@@ -70,10 +74,8 @@ function renderTopTags(all = false) {
   const tagArea = document.getElementById("tagArea");
   if (!tagArea) return;
 
-  const tags = all ? TAGS : TAGS.slice(0, 7);
   tagArea.innerHTML = "";
-
-  tags.forEach(tag => {
+  (all ? TAGS : TAGS.slice(0, 7)).forEach(tag => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = `category${state.currentTag === tag.name ? " active" : ""}`;
@@ -102,13 +104,12 @@ async function loadQuestions() {
 
   div.innerHTML = '<div class="loading-state">アンケートを読み込み中...</div>';
   try {
-    const params = {
+    const res = await fetch(`/questions?${createQueryParams({
       page: String(state.page),
       search: state.currentSearch,
       tag: state.currentTag,
       sort: state.currentSort
-    };
-    const res = await fetch(`/questions?${createQueryParams(params)}`);
+    })}`);
     const data = await res.json();
     if (data.error) throw new Error(data.message || "load failed");
 
@@ -139,11 +140,10 @@ function createQuestionCard(q, index) {
   const total = Number(q.totalVotes || 0);
   const comments = Number(q.commentCount || (Array.isArray(q.comments) ? q.comments.length : 0));
   const views = Number(q.views || 0);
+  const hot = getHotTag(q);
   const card = document.createElement("article");
   card.className = "thread";
   card.onclick = () => openDetail(q.id);
-
-  const hot = getHotTag(q);
   card.innerHTML = `
     <span class="hotTag" style="${hot ? "" : "visibility:hidden"}">${hot || "NEW"}</span>
     <span class="question-icon">${ICONS[index % ICONS.length]}</span>
@@ -165,10 +165,7 @@ function renderPopularQuestions(list) {
   const target = document.getElementById("popularQuestions");
   if (!target) return;
 
-  const ranked = [...list]
-    .sort((a, b) => Number(b.views || 0) - Number(a.views || 0))
-    .slice(0, 5);
-
+  const ranked = [...list].sort((a, b) => Number(b.views || 0) - Number(a.views || 0)).slice(0, 5);
   target.innerHTML = ranked.length ? "" : '<div class="empty-state" style="padding:20px 0;">まだ質問がありません。</div>';
   ranked.forEach((q, index) => {
     const row = document.createElement("button");
@@ -342,7 +339,7 @@ function renderVotingScreen(div, q, id) {
         ${(q.options || []).map((option, index) => `
           <label class="optionCard">
             <input type="radio" name="voteOption" value="${index}">
-            <span class="optionText">${sanitize(plain(typeof option === "string" ? option : option.text))}</span>
+            <span class="optionText">${sanitize(optionText(option))}</span>
           </label>
         `).join("")}
       </div>
@@ -356,14 +353,83 @@ function renderVotingScreen(div, q, id) {
   `;
 }
 
+function statPercent(value) {
+  const num = Number(value || 0);
+  if (!Number.isFinite(num)) return 0;
+  return Math.max(0, Math.min(100, Math.round(num)));
+}
+
+function renderOptionBars(options, q) {
+  return options.map((option, index) => {
+    const percent = statPercent(q.genderStats?.[index]?.rawPercent);
+    return `
+      <div class="stat-row">
+        <div class="stat-label">
+          <span class="legend-dot" style="background:${CHART_COLORS[index % CHART_COLORS.length]}"></span>
+          <strong>${sanitize(optionText(option))}</strong>
+          <span>${percent}%</span>
+        </div>
+        <div class="bar"><div class="fill" style="width:${percent}%;background:${CHART_COLORS[index % CHART_COLORS.length]}"></div></div>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderGenderBreakdown(options, q) {
+  const genders = [
+    { key: "male", label: "男性" },
+    { key: "female", label: "女性" }
+  ];
+
+  return genders.map(gender => `
+    <div class="breakdown-group">
+      <h3>${gender.label}</h3>
+      ${options.map((option, index) => {
+        const percent = statPercent(q.genderStats?.[index]?.[gender.key]);
+        return `
+          <div class="stat-row compact">
+            <div class="stat-label">
+              <strong>${sanitize(optionText(option))}</strong>
+              <span>${percent}%</span>
+            </div>
+            <div class="bar"><div class="fill" style="width:${percent}%;background:${CHART_COLORS[index % CHART_COLORS.length]}"></div></div>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `).join("");
+}
+
+function renderAgeBreakdown(options, q) {
+  const ages = AGE_GROUPS.filter(age => age !== "回答しない");
+  return ages.map(age => `
+    <div class="breakdown-group">
+      <h3>${age}</h3>
+      ${options.map((option, index) => {
+        const percent = statPercent(q.ageStats?.[index]?.[age]);
+        return `
+          <div class="stat-row compact">
+            <div class="stat-label">
+              <strong>${sanitize(optionText(option))}</strong>
+              <span>${percent}%</span>
+            </div>
+            <div class="bar"><div class="fill" style="width:${percent}%;background:${CHART_COLORS[index % CHART_COLORS.length]}"></div></div>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `).join("");
+}
+
 function renderResultsScreen(div, q, id) {
   const total = Number(q.totalVotes || 0);
   const options = q.options || [];
+  let cursor = 0;
   const conic = options.map((_, index) => {
-    const stat = q.genderStats?.[index];
-    const percent = stat?.rawPercent || 0;
-    const prev = options.slice(0, index).reduce((sum, __, i) => sum + (q.genderStats?.[i]?.rawPercent || 0), 0);
-    return `${CHART_COLORS[index % CHART_COLORS.length]} ${prev}% ${prev + percent}%`;
+    const percent = statPercent(q.genderStats?.[index]?.rawPercent);
+    const part = `${CHART_COLORS[index % CHART_COLORS.length]} ${cursor}% ${cursor + percent}%`;
+    cursor += percent;
+    return part;
   }).join(", ") || "#e5ece8 0% 100%";
 
   div.innerHTML = `
@@ -372,29 +438,37 @@ function renderResultsScreen(div, q, id) {
       ${q.description ? `<p>${sanitize(plain(q.description))}</p>` : ""}
       <p class="question-meta"><span>${total}回答</span><span>${Number(q.commentCount || 0)}コメント</span><span>${Number(q.views || 0)}閲覧</span></p>
     </section>
+
     <section class="resultGrid-top" style="margin-top:20px;">
       <div class="resultCard">
         <h2>全体の回答</h2>
-        <div class="pieChart" style="background: conic-gradient(${conic});"></div>
-        <div style="margin-top:20px;">
-          ${options.map((option, index) => {
-            const percent = q.genderStats?.[index]?.rawPercent || 0;
-            return `<div style="margin-top:12px;"><strong>${sanitize(plain(typeof option === "string" ? option : option.text))}</strong><div class="bar"><div class="fill" style="width:${percent}%;background:${CHART_COLORS[index % CHART_COLORS.length]}"></div></div><span>${percent}%</span></div>`;
-          }).join("")}
+        <div class="overallWrap">
+          <div class="pieChart" style="background: conic-gradient(${conic});"></div>
+          <div class="overallStats">${renderOptionBars(options, q)}</div>
         </div>
       </div>
       <div class="resultCard">
-        <h2>コメント</h2>
-        <textarea id="commentText" placeholder="意見を入力..."></textarea>
-        <button class="commentBtn" type="button" onclick="addCommentAndReload('${sanitize(id)}')" style="margin-top:12px;">コメント投稿</button>
-        <div id="commentList">
-          ${(q.comments || []).map((comment, index) => `
-            <div class="comment">
-              <div style="color:#777;font-size:12px;">No.${index + 1} ${sanitize(comment.createdAt || "")}</div>
-              <div>${sanitize(plain(comment.text))}</div>
-            </div>
-          `).join("")}
-        </div>
+        <h2>性別ごとの割合</h2>
+        ${renderGenderBreakdown(options, q)}
+      </div>
+    </section>
+
+    <section class="resultCard result-wide-card">
+      <h2>年代別の割合</h2>
+      <div class="age-grid">${renderAgeBreakdown(options, q)}</div>
+    </section>
+
+    <section class="resultCard result-wide-card">
+      <h2>コメント</h2>
+      <textarea id="commentText" placeholder="意見を入力..."></textarea>
+      <button class="commentBtn" type="button" onclick="addCommentAndReload('${sanitize(id)}')" style="margin-top:12px;">コメント投稿</button>
+      <div id="commentList">
+        ${(q.comments || []).map((comment, index) => `
+          <div class="comment">
+            <div style="color:#777;font-size:12px;">No.${index + 1} ${sanitize(comment.createdAt || "")}</div>
+            <div>${sanitize(plain(comment.text))}</div>
+          </div>
+        `).join("")}
       </div>
     </section>
   `;
