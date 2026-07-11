@@ -79,6 +79,43 @@ header:not(.site-header) {
   white-space: nowrap;
 }
 
+.site-logo {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  color: var(--green);
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -4px;
+  white-space: nowrap;
+}
+
+.site-logo span {
+  position: relative;
+  z-index: 1;
+  display: block;
+  transform: rotate(-2deg);
+}
+
+.site-logo b {
+  width: 48px;
+  height: 48px;
+  margin-left: 3px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(135deg, #f5cb3e 5%, #98bd44 48%, #159855 100%);
+  box-shadow: inset -3px -4px 8px rgba(0, 100, 55, 0.1);
+  font-size: 31px;
+  font-weight: 900;
+  font-style: normal;
+  letter-spacing: -2px;
+}
+
+.site-logo:hover { opacity: 0.88; }
+
 .header-actions,
 .nav {
   display: flex;
@@ -1051,6 +1088,9 @@ select:focus {
     width: 100%;
     gap: 10px;
   }
+
+  .site-logo { font-size: 34px; }
+  .site-logo b { width: 42px; height: 42px; font-size: 27px; }
 
   .search-box { width: 100%; }
   .header-create { display: none; }
