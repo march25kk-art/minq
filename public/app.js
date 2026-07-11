@@ -8,7 +8,7 @@ const TAGS = [
   "デザイン", "アダルト", "暇つぶし", "ギャンブル", "ストレス", "その他"
 ];
 
-const AGE_GROUPS = ["回答しない", "10代", "20代", "30代", "40代", "50代", "60代", "70代以上"];
+const AGE_GROUPS = ["回答しない", "10代", "20代", "30代", "40代", "50代", "60代以上"];
 const GENDERS = ["回答しない", "男性", "女性"];
 const CHART_COLORS = ["#12a05a", "#4d9de0", "#f2b705", "#ef6f6c", "#8a63d2", "#f28c28", "#15b8a6", "#e85d99"];
 
@@ -46,7 +46,7 @@ function createQueryParams(params) {
 window.addEventListener("DOMContentLoaded", () => {
   const questionsDiv = document.getElementById("questions");
   if (questionsDiv) {
-    renderTopTags(true);
+    renderTopTags(false);
     loadQuestions();
   }
 
@@ -88,7 +88,7 @@ function renderTopTags(all = false) {
   }
 
   const toggleBtn = document.getElementById("toggleTagsBtn");
-  if (toggleBtn) toggleBtn.textContent = all ? "閉じる" : "すべて見る ›";
+  if (toggleBtn) toggleBtn.textContent = all ? "閉じる" : "もっと見る ›";
 }
 
 function showAllTags() {

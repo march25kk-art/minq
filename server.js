@@ -75,8 +75,10 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "march25kk";
 const PORT = Number(process.env.PORT || 3000);
 
 const UNANSWERED = "回答しない";
-const AGE_GROUPS = ["10代", "20代", "30代", "40代", "50代", "60代", "70代以上"];
-const LEGACY_AGE_GROUPS = ["10莉｣", "20莉｣", "30莉｣", "40莉｣", "50莉｣", "60莉｣", "70莉｣莉･荳・"];
+const AGE_GROUPS = ["10代", "20代", "30代", "40代", "50代", "60代以上"];
+const LEGACY_AGE_GROUPS = ["10莉｣", "20莉｣", "30莉｣", "40莉｣", "50莉｣", "60莉｣莉･荳・"];
+const SENIOR_AGE_ALIASES = ["60代以上", "60代", "70代以上", "60莉｣莉･荳・", "60莉｣", "70莉｣莉･荳・"];
+const normalizeAge = age => SENIOR_AGE_ALIASES.includes(age) ? "60代以上" : age;
 const GENDER_ALIASES = {
   male: ["男性", "逕ｷ諤ｧ"],
   female: ["女性", "螂ｳ諤ｧ"]
@@ -161,7 +163,11 @@ const calculateStats = (votes, options = []) => {
 
     AGE_GROUPS.filter(age => age !== "回答しない").forEach((age, ageIdx) => {
       const legacyAge = LEGACY_AGE_GROUPS[ageIdx];
-      const count = optVotes.filter(v => v && (v.age === age || (legacyAge && v.age === legacyAge))).length;
+      const count = optVotes.filter(v => {
+        if (!v) return false;
+        if (age === "60代以上") return SENIOR_AGE_ALIASES.includes(v.age);
+        return v.age === age || (legacyAge && v.age === legacyAge);
+      }).length;
       row[age] = totalAge > 0 ? Math.round((count * 100) / totalAge) : 0;
     });
     return row;
@@ -405,7 +411,7 @@ const handleVote = async (req, res) => {
   if (id == null || index == null) return sendError(res, "不完全なデータです", 400);
 
   const ip = getIp(req);
-  const selectedAge = age || UNANSWERED;
+  const selectedAge = normalizeAge(age || UNANSWERED);
   const selectedGender = gender || UNANSWERED;
 
   try {
@@ -502,7 +508,7 @@ app.get("/stats/:id", async (req, res) => {
 
     votesSnapshot.forEach(doc => {
       const d = doc.data();
-      const ageKey = `${d.age || UNANSWERED}_${d.optionIndex}`;
+      const ageKey = `${normalizeAge(d.age || UNANSWERED)}_${d.optionIndex}`;
       const genKey = `${d.gender || UNANSWERED}_${d.optionIndex}`;
       ageStats[ageKey] = (ageStats[ageKey] || 0) + 1;
       genderStats[genKey] = (genderStats[genKey] || 0) + 1;
