@@ -354,17 +354,19 @@ function statPercent(value) {
   return Math.max(0, Math.min(100, Math.round(num)));
 }
 
-function renderOptionBars(options, q) {
+function renderOptionBars(options, q, total = 0) {
   return options.map((option, index) => {
     const percent = statPercent(q.genderStats?.[index]?.rawPercent);
+    const votes = Math.round(total * percent / 100);
     return `
-      <div class="stat-row">
+      <div class="stat-row result-option-row">
         <div class="stat-label">
-          <span class="legend-dot" style="background:${CHART_COLORS[index % CHART_COLORS.length]}"></span>
+          <span class="result-rank">${index + 1}</span>
           <strong>${sanitize(optionText(option))}</strong>
-          <span>${percent}%</span>
+          <span class="result-percent">${percent}%</span>
         </div>
         <div class="bar"><div class="fill" style="width:${percent}%;background:${CHART_COLORS[index % CHART_COLORS.length]}"></div></div>
+        <div class="result-votes">${votes}票</div>
       </div>
     `;
   }).join("");
@@ -377,8 +379,8 @@ function renderGenderBreakdown(options, q) {
   ];
 
   return genders.map(gender => `
-    <div class="breakdown-group">
-      <h3>${gender.label}</h3>
+    <div class="breakdown-group gender-${gender.key}">
+      <h3><span class="gender-mark">${gender.key === "male" ? "♂" : "♀"}</span>${gender.label}の回答</h3>
       ${options.map((option, index) => {
         const percent = statPercent(q.genderStats?.[index]?.[gender.key]);
         return `
@@ -419,52 +421,61 @@ function renderAgeBreakdown(options, q) {
 function renderResultsScreen(div, q, id) {
   const total = Number(q.totalVotes || 0);
   const options = q.options || [];
-  let cursor = 0;
-  const conic = options.map((_, index) => {
-    const percent = statPercent(q.genderStats?.[index]?.rawPercent);
-    const part = `${CHART_COLORS[index % CHART_COLORS.length]} ${cursor}% ${cursor + percent}%`;
-    cursor += percent;
-    return part;
-  }).join(", ") || "#e5ece8 0% 100%";
+  const topIndex = options.reduce((best, _, index) =>
+    statPercent(q.genderStats?.[index]?.rawPercent) > statPercent(q.genderStats?.[best]?.rawPercent) ? index : best, 0);
+  const topOption = options[topIndex] ? optionText(options[topIndex]) : "まだ回答がありません";
+  const topPercent = options[topIndex] ? statPercent(q.genderStats?.[topIndex]?.rawPercent) : 0;
+  div.classList.add("results-dashboard");
 
   div.innerHTML = `
-    <section class="detailCard">
-      <h1 class="createTitle">${sanitize(plain(q.title))}</h1>
+    <section class="detailCard result-question-card">
+      <div class="result-title-row">
+        <span class="result-question-icon">Q</span>
+        <h1 class="createTitle">${sanitize(plain(q.title))}</h1>
+      </div>
       ${q.description ? `<p>${sanitize(plain(q.description))}</p>` : ""}
-      <p class="question-meta"><span>${total}回答</span><span>${Number(q.commentCount || 0)}コメント</span><span>${Number(q.views || 0)}閲覧</span></p>
+      <p class="question-meta result-meta"><span>● ${total}回答</span><span>◇ ${Number(q.commentCount || 0)}コメント</span><span>◉ ${Number(q.views || 0)}閲覧</span></p>
     </section>
 
-    <section class="resultGrid-top" style="margin-top:20px;">
-      <div class="resultCard">
-        <h2>全体の回答</h2>
-        <div class="overallWrap">
-          <div class="pieChart" style="background: conic-gradient(${conic});"></div>
-          <div class="overallStats">${renderOptionBars(options, q)}</div>
+    <section class="resultGrid-top result-summary-grid">
+      <div class="resultCard overall-result-card">
+        <div class="result-card-heading">
+          <h2>全体の回答結果</h2>
+          <span class="result-total">総投票数：${total}票</span>
         </div>
+        <div class="overallStats">${renderOptionBars(options, q, total)}</div>
+        <div class="result-insight"><span>💡</span><p><strong>みんなの回答</strong><br>「${sanitize(topOption)}」が${topPercent}%で、もっとも多く選ばれています。</p></div>
       </div>
-      <div class="resultCard">
-        <h2>性別ごとの割合</h2>
-        ${renderGenderBreakdown(options, q)}
+      <div class="resultCard gender-summary-card">
+        <h2>男女別の回答</h2>
+        <div class="gender-summary-list">${renderGenderBreakdown(options, q)}</div>
       </div>
     </section>
 
     <section class="resultCard result-wide-card">
-      <h2>年代別の割合</h2>
-      <div class="age-grid">${renderAgeBreakdown(options, q)}</div>
+      <h2>年代別の回答内訳</h2>
+      <div class="age-grid result-age-grid">${renderAgeBreakdown(options, q)}</div>
     </section>
 
-    <section class="resultCard result-wide-card">
-      <h2>コメント</h2>
-      <textarea id="commentText" placeholder="意見を入力..."></textarea>
-      <button class="commentBtn" type="button" onclick="addCommentAndReload('${sanitize(id)}')" style="margin-top:12px;">コメント投稿</button>
-      <div id="commentList">
+    <section class="resultCard result-wide-card comments-card">
+      <div class="result-card-heading"><h2>みんなのコメント</h2><span class="result-total">${Number(q.commentCount || 0)}件</span></div>
+      <div class="comment-compose">
+        <textarea id="commentText" placeholder="あなたの意見を入力してください"></textarea>
+        <button class="commentBtn" type="button" onclick="addCommentAndReload('${sanitize(id)}')">投稿する</button>
+      </div>
+      <div id="commentList" class="result-comment-list">
         ${(q.comments || []).map((comment, index) => `
           <div class="comment">
-            <div style="color:#777;font-size:12px;">No.${index + 1} ${sanitize(comment.createdAt || "")}</div>
-            <div>${sanitize(plain(comment.text))}</div>
+            <span class="comment-avatar">${index + 1}</span>
+            <div><div class="comment-author">みんQユーザー <span>${sanitize(comment.createdAt || "")}</span></div><p>${sanitize(plain(comment.text))}</p></div>
           </div>
-        `).join("")}
+        `).join("") || '<p class="empty-comments">まだコメントはありません。最初の意見を投稿してみましょう。</p>'}
       </div>
+    </section>
+
+    <section class="result-answer-cta">
+      <div><strong>あなたも質問を作ってみませんか？</strong><p>みんなの考えを知ることで、新しい発見があるかもしれません。</p></div>
+      <button class="primary-btn" type="button" onclick="location.href='create.html'">質問を作成する <span>›</span></button>
     </section>
   `;
 }
