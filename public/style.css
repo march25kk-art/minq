@@ -201,10 +201,6 @@ main {
   position: relative;
   z-index: 1;
   width: 100%;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 20px 48px;
 }
 
 .hero-copy h1 {
@@ -213,11 +209,12 @@ main {
   font-size: 37px !important;
   line-height: 1.45;
   font-weight: 900;
+  white-space: nowrap;
 }
 
 .hero-copy h1 span { color: var(--green); }
 .hero-copy p {
-  max-width: 500px;
+  max-width: none;
   margin: 0;
   font-size: 17px;
   font-weight: 600;
@@ -226,9 +223,7 @@ main {
 
 .hero-btn {
   min-width: 270px;
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  align-self: center;
+  margin-top: 28px;
 }
 
 .category-section { padding: 28px 0 30px; }
@@ -266,12 +261,12 @@ main {
 }
 
 .category {
-  min-width: 112px;
-  height: 56px;
+  min-width: 0;
+  height: 42px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  padding: 0 18px;
   border: 1px solid var(--line);
   border-radius: 28px;
   color: #24272c;
@@ -812,8 +807,6 @@ select:focus {
   .brand-copy { display: none; }
   .content-grid { grid-template-columns: 1fr; }
   .sidebar { padding-top: 0; }
-  .hero-copy { grid-template-columns: 1fr; }
-  .hero-btn { grid-column: auto; grid-row: auto; justify-self: start; }
 }
 
 @media (max-width: 760px) {
@@ -850,6 +843,7 @@ select:focus {
 
   .hero-section::after { right: -55px; bottom: -55px; }
   .hero-copy h1 { font-size: 28px !important; }
+  .hero-copy h1 { white-space: normal; }
   .hero-copy p { font-size: 15px; }
   .hero-btn { width: 100%; min-width: 0; }
   .category-row { gap: 10px; }

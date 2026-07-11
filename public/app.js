@@ -1,14 +1,11 @@
 const TAGS = [
-  { name: "ニュース", icon: "□" },
-  { name: "政治", icon: "▦" },
-  { name: "投資", icon: "↗" },
-  { name: "恋愛", icon: "♥" },
-  { name: "仕事", icon: "▣" },
-  { name: "ゲーム", icon: "◆" },
-  { name: "食べ物", icon: "▥" },
-  { name: "生活", icon: "⌂" },
-  { name: "AI", icon: "◇" },
-  { name: "趣味", icon: "✦" }
+  "ニュース", "政治", "投資", "お金", "仕事", "恋愛", "ゲーム", "食べ物", "生活", "勉強",
+  "音楽", "趣味", "自転車・バイク", "美容・コスメ", "科学", "動物", "ペット", "季節",
+  "AI", "環境", "法律", "相談", "歴史", "本・読書", "映画", "ドラマ", "アニメ", "料理", "心理",
+  "日常", "旅行", "教育", "海外", "社会", "悩み", "子育て・育児", "飲食店",
+  "医療", "健康", "ダイエット", "住まい・不動産", "人間関係", "酒", "ファッション",
+  "ビジネス", "テクノロジー", "スポーツ", "エンタメ", "アート", "おもちゃ",
+  "デザイン", "アダルト", "暇つぶし", "ギャンブル", "ストレス", "その他"
 ];
 
 const AGE_GROUPS = ["回答しない", "10代", "20代", "30代", "40代", "50代", "60代", "70代以上"];
@@ -49,7 +46,7 @@ function createQueryParams(params) {
 window.addEventListener("DOMContentLoaded", () => {
   const questionsDiv = document.getElementById("questions");
   if (questionsDiv) {
-    renderTopTags(false);
+    renderTopTags(true);
     loadQuestions();
   }
 
@@ -59,7 +56,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const tagSelect = document.getElementById("tags");
     if (tagSelect && tagSelect.children.length === 0) {
       tagSelect.appendChild(new Option("カテゴリを選択してください（任意）", ""));
-      TAGS.forEach(tag => tagSelect.appendChild(new Option(tag.name, tag.name)));
+      TAGS.forEach(tag => tagSelect.appendChild(new Option(tag, tag)));
     }
   }
 });
@@ -75,9 +72,9 @@ function renderTopTags(all = false) {
   (all ? TAGS : TAGS.slice(0, 7)).forEach(tag => {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `category${state.currentTag === tag.name ? " active" : ""}`;
-    button.innerHTML = `<span>${tag.icon}</span>${sanitize(tag.name)}`;
-    button.onclick = () => searchTag(tag.name);
+    button.className = `category${state.currentTag === tag ? " active" : ""}`;
+    button.textContent = tag;
+    button.onclick = () => searchTag(tag);
     tagArea.appendChild(button);
   });
 
