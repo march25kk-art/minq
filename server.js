@@ -87,6 +87,7 @@ app.get("/question", async (req, res) => {
       return `<li>${escapeSeoHTML(optionValue)}</li>`;
     }).join("");
     const initialContent = `
+      <div class="loading-state">データを読み込み中...</div>
       <section class="detailCard seo-question-content">
         <h1 class="createTitle">${safeTitle}</h1>
         ${description && description !== title ? `<p>${safeDescription}</p>` : ""}

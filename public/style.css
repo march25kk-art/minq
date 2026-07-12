@@ -514,6 +514,9 @@ main {
   text-align: center;
 }
 
+/* サーバーが返すSEO用本文は、実画面の読み込み中には表示しない */
+.seo-question-content { display: none; }
+
 .pager {
   display: flex;
   align-items: center;
