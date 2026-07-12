@@ -4,6 +4,7 @@ const { FieldValue } = require("firebase-admin/firestore");
 const { updateSitemap } = require('./generateSitemap');
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 const app = express();
 app.use(express.json({ limit: "32kb" }));
@@ -127,6 +128,11 @@ const getIp = (req) => {
   const forwarded = req.headers["x-forwarded-for"];
   return Array.isArray(forwarded) ? forwarded[0] : String(forwarded || req.socket.remoteAddress).split(",")[0].trim();
 };
+
+const voteDocumentId = (questionId, ip) => crypto
+  .createHash("sha256")
+  .update(`${String(questionId)}\u0000${String(ip)}`)
+  .digest("hex");
 
 const nowJSTString = () => new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().replace("T", " ").substring(0, 19);
 
@@ -510,7 +516,7 @@ app.get("/check-vote/:id", async (req, res) => {
     const isVoted = snapshots.some(snapshot => 
       snapshot.docs.some(doc => {
         const data = doc.data();
-        return data.ip === ip && data.status === "reset2026";
+        return data.ip === ip;
       })
     );
 
@@ -548,7 +554,7 @@ const handleVote = async (req, res) => {
     const hasVoted = snapshots.some(snapshot => 
       snapshot.docs.some(doc => {
         const data = doc.data();
-        return data.ip === ip && data.status === "reset2026";
+        return data.ip === ip;
       })
     );
       
@@ -557,7 +563,8 @@ const handleVote = async (req, res) => {
     }
 
     const questionRef = firestore.collection(Q_COLL).doc(id);
-    await firestore.runTransaction(async (transaction) => {
+    const voteLogRef = firestore.collection(V_COLL).doc(voteDocumentId(id, ip));
+    const didVote = await firestore.runTransaction(async (transaction) => {
       let sfDoc = await transaction.get(questionRef);
       let targetRef = questionRef;
       
@@ -567,6 +574,9 @@ const handleVote = async (req, res) => {
       }
       
       if (!sfDoc.exists) throw new Error("Document does not exist!");
+
+      const existingVote = await transaction.get(voteLogRef);
+      if (existingVote.exists) return false;
 
       const data = sfDoc.data();
       const counts = data.counts || {};
@@ -582,7 +592,6 @@ const handleVote = async (req, res) => {
         updatedAt: nowJSTString()
       });
 
-      const voteLogRef = firestore.collection(V_COLL).doc();
       transaction.set(voteLogRef, {
         questionId: id, 
         optionIndex: Number(index), 
@@ -592,7 +601,13 @@ const handleVote = async (req, res) => {
         status: "reset2026", // 💡 これから投票するログにはこの目印を付け、2回目をブロックします
         createdAt: new Date().toISOString()
       });
+
+      return true;
     });
+
+    if (!didVote) {
+      return res.status(400).json({ error: true, message: "既に投票済みです" });
+    }
 
     CACHE_STATS.delete(id);
     invalidateListCache();
