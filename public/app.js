@@ -242,6 +242,7 @@ function renderOptions() {
 
     const input = document.createElement("input");
     input.value = value;
+    input.maxLength = 200;
     input.placeholder = `選択肢 ${index + 1}`;
     input.addEventListener("input", e => {
       state.options[index] = e.target.value;
@@ -316,7 +317,20 @@ async function loadCombinedQuestion() {
     const q = await questionRes.json();
     if (q.error) throw new Error(q.message || "not found");
 
-    document.title = `${plain(q.title)} | みんQ`;
+    const pageTitle = `${plain(q.title)} | みんQ`;
+    const pageDescription = plain(q.description || q.title).slice(0, 120);
+    const canonicalUrl = `${location.origin}/question?id=${encodeURIComponent(id)}`;
+    document.title = pageTitle;
+    const metaDescription = document.getElementById("metaDescription");
+    const canonical = document.getElementById("canonical");
+    const ogTitle = document.getElementById("ogTitle");
+    const ogDescription = document.getElementById("ogDescription");
+    const ogUrl = document.getElementById("ogUrl");
+    if (metaDescription) metaDescription.content = pageDescription;
+    if (canonical) canonical.href = canonicalUrl;
+    if (ogTitle) ogTitle.content = pageTitle;
+    if (ogDescription) ogDescription.content = pageDescription;
+    if (ogUrl) ogUrl.content = canonicalUrl;
     if (check.voted) renderResultsScreen(div, q, id);
     else renderVotingScreen(div, q, id);
   } catch (err) {
@@ -342,6 +356,7 @@ function renderVotingScreen(div, q, id) {
         <label><span class="voteLabel">年代</span><select id="age">${AGE_GROUPS.map(age => `<option>${age}</option>`).join("")}</select></label>
         <label><span class="voteLabel">性別</span><select id="gender">${GENDERS.map(g => `<option>${g}</option>`).join("")}</select></label>
       </div>
+      <p class="vote-result-note"><span>✓</span>回答すると、みんなの回答結果をすぐに見ることができます。</p>
       <button class="voteSubmitBtn" type="button" onclick="voteAndReload('${sanitize(id)}')">投票する</button>
       <button class="subBtn" type="button" onclick="reportQuestion('${sanitize(id)}')" style="margin-top:16px;">通報</button>
     </section>

@@ -11,15 +11,15 @@
   <header>
     <div class="logo-container">
       <a class="site-logo" href="/" aria-label="みんQ ホーム"><span>みん</span><b>Q</b></a>
-      <button class="topBtn" type="button" onclick="location.href='/'">⌂</button>
+      <a class="home-link" href="/"><span>⌂</span>ホーム</a>
     </div>
   </header>
 
   <main class="createContainer">
     <form class="createCard" onsubmit="return false;">
       <h1 class="createTitle">質問を作成する</h1>
-      <input id="title" placeholder="タイトル（必須）">
-      <textarea id="description" placeholder="説明（任意）"></textarea>
+      <input id="title" maxlength="120" placeholder="タイトル（必須）">
+      <textarea id="description" maxlength="1000" placeholder="説明（任意）"></textarea>
       <select id="tags"></select>
       <div id="options"></div>
       <button type="button" class="subBtn" onclick="addOption()">選択肢を追加</button>

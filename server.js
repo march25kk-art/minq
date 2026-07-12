@@ -6,7 +6,7 @@ const fs = require("fs");
 const path = require("path");
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: "32kb" }));
 
 // ==========================================
 // 1. 古い詳細ページ（detail.html）から新ページ（/question）への301リダイレクト
@@ -53,11 +53,17 @@ app.get("/question", async (req, res) => {
       `<title>${q.title} | みんQ</title>`
     );
 
-    // descriptionを書き換える
+    // description・canonical・OG情報を書き換える
+    const description = q.description || q.title;
+    const canonicalUrl = `https://minnano-question.com/question?id=${encodeURIComponent(id)}`;
     html = html.replace(
-      /<meta name="description" content="[^"]*">/,
-      `<meta name="description" content="${q.description || q.title}">`
+      /<meta id="metaDescription" name="description" content="[^"]*">/,
+      `<meta id="metaDescription" name="description" content="${description}">`
     );
+    html = html.replace('<link rel="canonical" id="canonical" href="">', `<link rel="canonical" id="canonical" href="${canonicalUrl}">`);
+    html = html.replace('<meta property="og:title" id="ogTitle" content="みんQ">', `<meta property="og:title" id="ogTitle" content="${q.title} | みんQ">`);
+    html = html.replace('<meta property="og:description" id="ogDescription" content="みんQでアンケートに投票しよう。">', `<meta property="og:description" id="ogDescription" content="${description}">`);
+    html = html.replace('<meta property="og:url" id="ogUrl" content="">', `<meta property="og:url" id="ogUrl" content="${canonicalUrl}">`);
 
     res.send(html);
 
@@ -99,6 +105,8 @@ const VOTES_STATS_LIMIT = 5000;
 
 const questionCooldown = {};
 const commentCooldown = {};
+const actionAttempts = new Map();
+const recentSubmissions = new Map();
 
 // ===== ユーティリティ関数 =====
 const escapeHTML = (str = "") => String(str)
@@ -114,6 +122,31 @@ const nowJSTString = () => new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString
 
 const sendError = (res, message, status = 200) => res.status(status).json({ error: true, message });
 
+const allowAction = (ip, action, maxAttempts, windowMs) => {
+  const key = `${action}:${ip}`;
+  const cutoff = Date.now() - windowMs;
+  const attempts = (actionAttempts.get(key) || []).filter(time => time > cutoff);
+  if (attempts.length >= maxAttempts) return false;
+  attempts.push(Date.now());
+  actionAttempts.set(key, attempts);
+  return true;
+};
+
+const submissionKey = (ip, type, content) => {
+  const normalized = String(content).replace(/\s+/g, " ").trim().toLowerCase();
+  return `${type}:${ip}:${normalized}`;
+};
+
+const isDuplicateSubmission = (ip, type, content, windowMs = 10 * 60 * 1000) => {
+  const key = submissionKey(ip, type, content);
+  const previous = recentSubmissions.get(key) || 0;
+  return Date.now() - previous < windowMs;
+};
+
+const rememberSubmission = (ip, type, content) => {
+  recentSubmissions.set(submissionKey(ip, type, content), Date.now());
+};
+
 // 定期クリーンアップ
 setInterval(() => {
   const now = Date.now();
@@ -125,6 +158,16 @@ setInterval(() => {
   Object.keys(commentCooldown).forEach(ip => {
     if (now - commentCooldown[ip] > 60000) delete commentCooldown[ip];
   });
+
+  for (const [key, attempts] of actionAttempts.entries()) {
+    const active = attempts.filter(time => now - time < 10 * 60 * 1000);
+    if (active.length) actionAttempts.set(key, active);
+    else actionAttempts.delete(key);
+  }
+
+  for (const [key, time] of recentSubmissions.entries()) {
+    if (now - time > 10 * 60 * 1000) recentSubmissions.delete(key);
+  }
 
   for (const [key, val] of CACHE_STATS.entries()) {
     if (now - val.timestamp > CACHE_TTL) CACHE_STATS.delete(key);
@@ -289,6 +332,11 @@ app.post("/questions", async (req, res) => {
     if (!title || !options || !Array.isArray(options) || options.length < 2) {
       return sendError(res, "タイトルと2つ以上の選択肢が必要です");
     }
+    if (title.length > 120) return sendError(res, "タイトルは120文字以内で入力してください");
+    if (description.length > 1000) return sendError(res, "説明は1000文字以内で入力してください");
+    if (options.length > 10 || options.some(option => String(option).trim().length > 200)) {
+      return sendError(res, "選択肢は10件以内・各200文字以内で入力してください");
+    }
 
     const hasNgWord = NG_WORDS.some(word => 
       title.includes(word) || description.includes(word) || options.some(o => String(o).includes(word))
@@ -297,9 +345,16 @@ app.post("/questions", async (req, res) => {
 
     const ip = getIp(req);
     const now = Date.now();
+
+    if (!allowAction(ip, "question", 3, 10 * 60 * 1000)) {
+      return sendError(res, "投稿回数が多すぎます。しばらく待ってからお試しください", 429);
+    }
+    if (isDuplicateSubmission(ip, "question", `${title}|${description}|${options.join("|")}`)) {
+      return sendError(res, "同じ内容の質問は続けて投稿できません");
+    }
     
-    if (questionCooldown[ip] && now - questionCooldown[ip] < 30000) {
-      return sendError(res, "連続投稿は30秒待ってください");
+    if (questionCooldown[ip] && now - questionCooldown[ip] < 60000) {
+      return sendError(res, "連続投稿は60秒待ってください");
     }
     questionCooldown[ip] = now;
 
@@ -319,6 +374,7 @@ app.post("/questions", async (req, res) => {
     };
 
     const docRef = await firestore.collection(Q_COLL).add(newQuestion);
+    rememberSubmission(ip, "question", `${title}|${description}|${options.join("|")}`);
     try {
       if (typeof updateSitemap === 'function') updateSitemap({ id: docRef.id, ...newQuestion });
     } catch (e) {
@@ -411,6 +467,9 @@ const handleVote = async (req, res) => {
   if (id == null || index == null) return sendError(res, "不完全なデータです", 400);
 
   const ip = getIp(req);
+  if (!allowAction(ip, "vote", 20, 10 * 60 * 1000)) {
+    return sendError(res, "短時間の投票回数が多すぎます。しばらく待ってからお試しください", 429);
+  }
   const selectedAge = normalizeAge(age || UNANSWERED);
   const selectedGender = gender || UNANSWERED;
 
@@ -533,15 +592,23 @@ const saveComment = async (req, res) => {
     name = String(name || "").trim();
 
     if (!text) return sendError(res, "コメントを入力してください");
+    if (text.length > 1000) return sendError(res, "コメントは1000文字以内で入力してください");
     if (name.length > 30) return sendError(res, "名前は30文字以内で入力してください");
     if (NG_WORDS.some(word => text.includes(word))) return sendError(res, "使用できない言葉が含まれています");
     if (name && NG_WORDS.some(word => name.includes(word))) return sendError(res, "名前に使用できない言葉が含まれています");
 
     const ip = getIp(req);
     const now = Date.now();
+
+    if (!allowAction(ip, "comment", 5, 10 * 60 * 1000)) {
+      return sendError(res, "コメントの投稿回数が多すぎます。しばらく待ってからお試しください", 429);
+    }
+    if (isDuplicateSubmission(ip, "comment", `${id}|${text}`)) {
+      return sendError(res, "同じ内容のコメントは続けて投稿できません");
+    }
     
-    if (commentCooldown[ip] && now - commentCooldown[ip] < 5000) {
-      return sendError(res, "5秒待ってから投稿してください");
+    if (commentCooldown[ip] && now - commentCooldown[ip] < 15000) {
+      return sendError(res, "15秒待ってから投稿してください");
     }
     commentCooldown[ip] = now;
 
@@ -549,6 +616,7 @@ const saveComment = async (req, res) => {
     await firestore.collection(C_COLL).add({
       questionId: String(id), text: escapeHTML(text), name: name ? escapeHTML(name) : "", age: age || UNANSWERED, gender: gender || UNANSWERED, createdAt: timeStr, ip
     });
+    rememberSubmission(ip, "comment", `${id}|${text}`);
     
     await firestore.collection(Q_COLL).doc(String(id)).update({ 
       commentCount: FieldValue.increment(1),
