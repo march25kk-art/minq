@@ -465,13 +465,19 @@ main {
 
 .thread-meta-line {
   display: grid;
-  grid-template-columns: max-content max-content max-content max-content;
+  grid-template-columns: 5em 7em 5em 13.5em;
   align-items: center;
   gap: 18px;
   color: #7a8088;
   font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.thread-meta-line > span {
+  justify-self: end;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .postDate {
@@ -1263,7 +1269,7 @@ select:focus {
   .title-text { white-space: nowrap; font-size: 15px; }
   .question-meta { flex-wrap: nowrap; gap: 10px; font-size: 12px; white-space: nowrap; }
   .thread-meta-line {
-    grid-template-columns: repeat(3, max-content) minmax(0, 1fr);
+    grid-template-columns: 4.5em 6em 4.5em minmax(0, 1fr);
     gap: 8px;
     min-width: 0;
     font-size: 11px;
