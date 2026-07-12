@@ -9,6 +9,22 @@ const crypto = require("crypto");
 const app = express();
 app.use(express.json({ limit: "32kb" }));
 
+const decodeStoredText = (value = "") => String(value)
+  .replace(/&amp;/g, "&")
+  .replace(/&lt;/g, "<")
+  .replace(/&gt;/g, ">")
+  .replace(/&quot;/g, '"')
+  .replace(/&#039;/g, "'")
+  .replace(/<[^>]*>/g, "")
+  .trim();
+
+const escapeSeoHTML = (value = "") => decodeStoredText(value)
+  .replace(/&/g, "&amp;")
+  .replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;")
+  .replace(/'/g, "&#039;");
+
 // ==========================================
 // 1. 古い詳細ページ（detail.html）から新ページ（/question）への301リダイレクト
 // ==========================================
@@ -30,14 +46,14 @@ app.get("/question", async (req, res) => {
 
     // idが無ければ通常のHTMLを返す
     if (!id) {
-      return res.sendFile(path.join(__dirname, "public", "question.html"));
+      return res.redirect(302, "/");
     }
 
     // Firestoreからアンケート取得
     const doc = await firestore.collection(Q_COLL).doc(id).get();
 
     if (!doc.exists) {
-      return res.sendFile(path.join(__dirname, "public", "question.html"));
+      return res.status(404).sendFile(path.join(__dirname, "public", "question.html"));
     }
 
     const q = doc.data();
@@ -48,29 +64,44 @@ app.get("/question", async (req, res) => {
       "utf8"
     );
 
-    // タイトルを書き換える
-    html = html.replace(
-      "<title>みんQ - アンケート詳細</title>",
-      `<title>${q.title} | みんQ</title>`
-    );
+    const title = decodeStoredText(q.title);
+    const description = decodeStoredText(q.description || q.title).slice(0, 160);
+    const safeTitle = escapeSeoHTML(title);
+    const safeDescription = escapeSeoHTML(description);
+
+    html = html.replace(/<title>[^<]*<\/title>/, `<title>${safeTitle} | みんQ</title>`);
 
     // description・canonical・OG情報を書き換える
-    const description = q.description || q.title;
     const canonicalUrl = `https://minnano-question.com/question?id=${encodeURIComponent(id)}`;
     html = html.replace(
       /<meta id="metaDescription" name="description" content="[^"]*">/,
-      `<meta id="metaDescription" name="description" content="${description}">`
+      `<meta id="metaDescription" name="description" content="${safeDescription}">`
     );
     html = html.replace('<link rel="canonical" id="canonical" href="">', `<link rel="canonical" id="canonical" href="${canonicalUrl}">`);
-    html = html.replace('<meta property="og:title" id="ogTitle" content="みんQ">', `<meta property="og:title" id="ogTitle" content="${q.title} | みんQ">`);
-    html = html.replace('<meta property="og:description" id="ogDescription" content="みんQでアンケートに投票しよう。">', `<meta property="og:description" id="ogDescription" content="${description}">`);
-    html = html.replace('<meta property="og:url" id="ogUrl" content="">', `<meta property="og:url" id="ogUrl" content="${canonicalUrl}">`);
+    html = html.replace(/<meta property="og:title" id="ogTitle" content="[^"]*">/, `<meta property="og:title" id="ogTitle" content="${safeTitle} | みんQ">`);
+    html = html.replace(/<meta property="og:description" id="ogDescription" content="[^"]*">/, `<meta property="og:description" id="ogDescription" content="${safeDescription}">`);
+    html = html.replace(/<meta property="og:url" id="ogUrl" content="[^"]*">/, `<meta property="og:url" id="ogUrl" content="${canonicalUrl}">`);
+
+    const optionItems = (Array.isArray(q.options) ? q.options : []).map(option => {
+      const optionValue = typeof option === "string" ? option : option?.text || "";
+      return `<li>${escapeSeoHTML(optionValue)}</li>`;
+    }).join("");
+    const initialContent = `
+      <section class="detailCard seo-question-content">
+        <h1 class="createTitle">${safeTitle}</h1>
+        ${description && description !== title ? `<p>${safeDescription}</p>` : ""}
+        ${optionItems ? `<h2>回答の選択肢</h2><ul>${optionItems}</ul>` : ""}
+      </section>`;
+    html = html.replace(
+      /<main class="layout" id="questionArea">[\s\S]*?<\/main>/,
+      `<main class="layout" id="questionArea">${initialContent}</main>`
+    );
 
     res.send(html);
 
   } catch (err) {
     console.error(err);
-    res.sendFile(path.join(__dirname, "public", "question.html"));
+    res.status(500).sendFile(path.join(__dirname, "public", "question.html"));
   }
 });
 

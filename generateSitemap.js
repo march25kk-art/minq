@@ -9,11 +9,15 @@ async function updateSitemap() {
     // 💡 Firestoreのquestionsコレクションからすべてのドキュメントを取得
     const snapshot = await firestore.collection("questions").get();
     
-    const sitemap = new SitemapStream({ hostname: 'http://minnano-question.com' });
+    const sitemap = new SitemapStream({ hostname: 'https://minnano-question.com' });
 
     snapshot.forEach(doc => {
       // doc.id（Firestoreの文字列ID）を使ってURLを生成
-      sitemap.write({ url: `/detail.html?id=${doc.id}`, changefreq: 'daily', priority: 0.7 });
+      sitemap.write({
+        url: `/question?id=${encodeURIComponent(doc.id)}`,
+        changefreq: 'daily',
+        priority: 0.7
+      });
     });
     sitemap.end();
 
