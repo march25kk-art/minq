@@ -230,6 +230,7 @@ function clearTag() {
 function nextPage() {
   if (state.page < state.totalPages) {
     state.page += 1;
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
     loadQuestions();
   }
 }
@@ -237,6 +238,7 @@ function nextPage() {
 function prevPage() {
   if (state.page > 1) {
     state.page -= 1;
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
     loadQuestions();
   }
 }
