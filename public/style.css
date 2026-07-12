@@ -465,9 +465,9 @@ main {
 
 .thread-meta-line {
   display: grid;
-  grid-template-columns: 5em 7em 5em 13.5em;
+  grid-template-columns: 4.5em 6em 4.5em 13.5em;
   align-items: center;
-  gap: 18px;
+  gap: 10px;
   color: #7a8088;
   font-size: 13px;
   font-weight: 700;
