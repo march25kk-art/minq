@@ -506,6 +506,10 @@ function renderAgeBreakdown(options, q) {
 function renderResultsScreen(div, q, id) {
   const total = Number(q.totalVotes || 0);
   const options = q.options || [];
+  const shareUrl = window.location.href;
+  const shareText = `「${plain(q.title)}」のアンケート結果をチェック！ #みんQ`;
+  const encodedShareUrl = encodeURIComponent(shareUrl);
+  const encodedShareText = encodeURIComponent(shareText);
   const topIndex = options.reduce((best, _, index) =>
     statPercent(q.genderStats?.[index]?.rawPercent) > statPercent(q.genderStats?.[best]?.rawPercent) ? index : best, 0);
   const topOption = options[topIndex] ? optionText(options[topIndex]) : "まだ回答がありません";
@@ -520,6 +524,22 @@ function renderResultsScreen(div, q, id) {
       </div>
       ${q.description ? `<p>${sanitize(plain(q.description))}</p>` : ""}
       <p class="question-meta result-meta"><span>● ${total}回答</span><span>◇ ${Number(q.commentCount || 0)}コメント</span><span>◉ ${Number(q.views || 0)}閲覧</span></p>
+      <div class="result-share-panel" data-share-url="${sanitize(shareUrl)}" data-share-text="${sanitize(shareText)}">
+        <div class="result-share-copy"><span class="result-share-spark">✦</span><div><strong>この結果をシェア</strong><small>みんなの意見を友だちにも</small></div></div>
+        <div class="result-share-actions">
+          <a class="result-share-btn share-x" href="https://twitter.com/intent/tweet?url=${encodedShareUrl}&text=${encodedShareText}" target="_blank" rel="noopener noreferrer" aria-label="Xでシェア">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.451-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"/></svg><span>X</span>
+          </a>
+          <button class="result-share-btn share-instagram" type="button" onclick="shareResultToInstagram(this)" aria-label="Instagram用にコピー">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Zm10.5 1.5a1 1 0 1 1 0 2 1 1 0 0 1 0-2ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg><span>Instagram</span>
+          </button>
+          <a class="result-share-btn share-line" href="https://social-plugins.line.me/lineit/share?url=${encodedShareUrl}" target="_blank" rel="noopener noreferrer" aria-label="LINEでシェア"><span class="line-logo">LINE</span><span>LINE</span></a>
+          <button class="result-share-btn share-copy" type="button" onclick="copyResultShare(this)" aria-label="シェアURLをコピー">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7V5a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-2v3a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3h3Zm2 0h4a3 3 0 0 1 3 3v4h2a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-8a1 1 0 0 0-1 1v2Zm-5 2a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H5Z"/></svg><span>コピー</span>
+          </button>
+        </div>
+        <span class="share-feedback" role="status" aria-live="polite"></span>
+      </div>
     </section>
 
     <section class="resultGrid-top result-summary-grid">
@@ -566,6 +586,42 @@ function renderResultsScreen(div, q, id) {
       <button class="primary-btn" type="button" onclick="location.href='create.html'">質問を作成する <span>›</span></button>
     </section>
   `;
+}
+
+async function writeShareClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand("copy");
+  textarea.remove();
+}
+
+function showShareFeedback(button, message) {
+  const panel = button.closest(".result-share-panel");
+  const feedback = panel?.querySelector(".share-feedback");
+  if (!feedback) return;
+  feedback.textContent = message;
+  clearTimeout(feedback.hideTimer);
+  feedback.hideTimer = setTimeout(() => { feedback.textContent = ""; }, 3000);
+}
+
+async function copyResultShare(button) {
+  const panel = button.closest(".result-share-panel");
+  try {
+    await writeShareClipboard(`${panel.dataset.shareText}\n${panel.dataset.shareUrl}`);
+    showShareFeedback(button, "✓ シェア文とURLをコピーしました");
+  } catch {
+    showShareFeedback(button, "コピーできませんでした");
+  }
+}
+
+async function shareResultToInstagram(button) {
+  window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
+  await copyResultShare(button);
 }
 
 async function voteAndReload(id) {
