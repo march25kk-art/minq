@@ -20,19 +20,21 @@ const state = {
   currentSort: "update",
   options: ["", ""],
   latestQuestions: [],
-  showAllTags: false
+  showAllTags: false,
+  loadController: null
 };
 
+const sanitizeNode = document.createElement("div");
+const plainNode = document.createElement("div");
+
 function sanitize(value) {
-  const div = document.createElement("div");
-  div.textContent = value == null ? "" : String(value);
-  return div.innerHTML;
+  sanitizeNode.textContent = value == null ? "" : String(value);
+  return sanitizeNode.innerHTML;
 }
 
 function plain(value) {
-  const div = document.createElement("div");
-  div.innerHTML = value == null ? "" : String(value);
-  return div.textContent || div.innerText || "";
+  plainNode.innerHTML = value == null ? "" : String(value);
+  return plainNode.textContent || plainNode.innerText || "";
 }
 
 function optionText(option) {
@@ -103,6 +105,9 @@ async function loadQuestions() {
   const div = document.getElementById("questions");
   if (!div) return;
 
+  if (state.loadController) state.loadController.abort();
+  state.loadController = new AbortController();
+  const { signal } = state.loadController;
   div.innerHTML = '<div class="loading-state">アンケートを読み込み中...</div>';
   try {
     const res = await fetch(`/questions?${createQueryParams({
@@ -110,7 +115,7 @@ async function loadQuestions() {
       search: state.currentSearch,
       tag: state.currentTag,
       sort: state.currentSort
-    })}`);
+    })}`, { signal });
     const data = await res.json();
     if (data.error) throw new Error(data.message || "load failed");
 
@@ -124,14 +129,16 @@ async function loadQuestions() {
       return;
     }
 
-    div.innerHTML = "";
-    state.latestQuestions.forEach(q => div.appendChild(createQuestionCard(q)));
+    const fragment = document.createDocumentFragment();
+    state.latestQuestions.forEach(q => fragment.appendChild(createQuestionCard(q)));
+    div.replaceChildren(fragment);
     renderPopularQuestions(state.latestQuestions);
 
     const pageText = document.getElementById("pageText");
     if (pageText) pageText.textContent = `${state.page} / ${state.totalPages} ページ`;
     updatePagerButtons();
   } catch (err) {
+    if (err.name === "AbortError") return;
     console.error(err);
     div.innerHTML = '<div class="empty-state">データの読み込みに失敗しました。</div>';
   }
@@ -162,6 +169,7 @@ function renderPopularQuestions(list) {
 
   const ranked = [...list].sort((a, b) => Number(b.views || 0) - Number(a.views || 0)).slice(0, 5);
   target.innerHTML = ranked.length ? "" : '<div class="empty-state" style="padding:20px 0;">まだ質問がありません。</div>';
+  const fragment = document.createDocumentFragment();
   ranked.forEach((q, index) => {
     const row = document.createElement("button");
     row.type = "button";
@@ -172,8 +180,9 @@ function renderPopularQuestions(list) {
       <span class="rank-title">${sanitize(plain(q.title))}</span>
       <span class="rank-count">${Number(q.views || 0)}閲覧</span>
     `;
-    target.appendChild(row);
+    fragment.appendChild(row);
   });
+  target.appendChild(fragment);
 }
 
 function changeSort(sort) {

@@ -74,7 +74,15 @@ app.get("/question", async (req, res) => {
 });
 
 // 静的ファイルの設定（※必ず上記2つのルーティングの下に配置）
-app.use(express.static("public", { extensions: ["html"] }));
+app.use(express.static("public", {
+  extensions: ["html"],
+  etag: true,
+  setHeaders: (res, filePath) => {
+    if (/\.(css|js)$/i.test(filePath)) res.setHeader("Cache-Control", "public, max-age=300, must-revalidate");
+    else if (/\.(png|jpg|jpeg|gif|webp|svg|ico)$/i.test(filePath)) res.setHeader("Cache-Control", "public, max-age=86400");
+    else res.setHeader("Cache-Control", "no-cache");
+  }
+}));
 
 // ===== 定数・環境設定 =====
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "march25kk";
@@ -100,6 +108,8 @@ const R_COLL = IS_PRODUCTION ? 'reportsLog' : 'reportsLog_dev';
 // ===== キャッシュ・メモリ管理 =====
 const CACHE_STATS = new Map();
 const CACHE_TTL = 30000;
+const LIST_CACHE_TTL = 15000;
+let listCache = { data: null, timestamp: 0 };
 const COMMENTS_LIMIT = 100;
 const VOTES_STATS_LIMIT = 5000;
 
@@ -180,38 +190,67 @@ const getCachedStats = (qId) => {
   return cached && Date.now() - cached.timestamp < CACHE_TTL ? cached.data : null;
 };
 const setCachedStats = (qId, data) => CACHE_STATS.set(qId, { data, timestamp: Date.now() });
+const invalidateListCache = () => { listCache = { data: null, timestamp: 0 }; };
+
+const getAllQuestions = async () => {
+  if (listCache.data && Date.now() - listCache.timestamp < LIST_CACHE_TTL) return listCache.data;
+  const snapshot = await firestore.collection(Q_COLL).get();
+  const questions = snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      ...data,
+      commentCount: Number(data.commentCount || 0),
+      totalVotes: Number(data.totalVotes || 0),
+      views: Number(data.views || 0),
+      updatedAt: data.updatedAt || data.createdAt || ""
+    };
+  });
+  listCache = { data: questions, timestamp: Date.now() };
+  return questions;
+};
 
 // ===== 統計計算・データ正規化 =====
 const calculateStats = (votes, options = []) => {
   const allVotesCount = votes.length;
+  const optionCounts = options.map(() => 0);
+  const maleCounts = options.map(() => 0);
+  const femaleCounts = options.map(() => 0);
+  const validAgeCounts = options.map(() => 0);
+  const ageCounts = options.map(() => Object.fromEntries(AGE_GROUPS.map(age => [age, 0])));
+
+  votes.forEach(vote => {
+    const index = Number(vote?.optionIndex);
+    if (!Number.isInteger(index) || index < 0 || index >= options.length) return;
+    optionCounts[index] += 1;
+    if (GENDER_ALIASES.male.includes(vote.gender)) maleCounts[index] += 1;
+    if (GENDER_ALIASES.female.includes(vote.gender)) femaleCounts[index] += 1;
+    if (vote.age && vote.age !== "回答しない" && vote.age !== "未回答") {
+      validAgeCounts[index] += 1;
+      const normalizedAge = normalizeAge(vote.age);
+      const ageIndex = LEGACY_AGE_GROUPS.indexOf(vote.age);
+      const resolvedAge = ageIndex >= 0 ? AGE_GROUPS[ageIndex] : normalizedAge;
+      if (ageCounts[index][resolvedAge] !== undefined) ageCounts[index][resolvedAge] += 1;
+    }
+  });
 
   const genderStats = options.map((option, index) => {
-    const optVotes = votes.filter(v => v?.optionIndex === index);
-    const m = optVotes.filter(v => v.gender && GENDER_ALIASES.male.includes(v.gender)).length;
-    const f = optVotes.filter(v => v.gender && GENDER_ALIASES.female.includes(v.gender)).length;
+    const m = maleCounts[index];
+    const f = femaleCounts[index];
     const total = m + f;
     return {
       option,
       male: total > 0 ? Math.round((m * 100) / total) : 0,
       female: total > 0 ? Math.round((f * 100) / total) : 0,
-      rawPercent: allVotesCount > 0 ? Math.round((optVotes.length * 100) / allVotesCount) : 0
+      rawPercent: allVotesCount > 0 ? Math.round((optionCounts[index] * 100) / allVotesCount) : 0
     };
   });
 
   const ageStats = options.map((option, index) => {
-    const optVotes = votes.filter(v => v?.optionIndex === index);
-    const validAgeVotes = optVotes.filter(v => v?.age && v.age !== "回答しない" && v.age !== "未回答");
-    const totalAge = validAgeVotes.length;
+    const totalAge = validAgeCounts[index];
     const row = { option };
-
-    AGE_GROUPS.filter(age => age !== "回答しない").forEach((age, ageIdx) => {
-      const legacyAge = LEGACY_AGE_GROUPS[ageIdx];
-      const count = optVotes.filter(v => {
-        if (!v) return false;
-        if (age === "60代以上") return SENIOR_AGE_ALIASES.includes(v.age);
-        return v.age === age || (legacyAge && v.age === legacyAge);
-      }).length;
-      row[age] = totalAge > 0 ? Math.round((count * 100) / totalAge) : 0;
+    AGE_GROUPS.forEach(age => {
+      row[age] = totalAge > 0 ? Math.round((ageCounts[index][age] * 100) / totalAge) : 0;
     });
     return row;
   });
@@ -233,6 +272,7 @@ const normalizeQuestionData = (data) => ({
 // 1. 質問一覧取得
 app.get("/questions", async (req, res) => {
   try {
+    res.set("Cache-Control", "public, max-age=5, stale-while-revalidate=15");
     const page = Math.max(Number(req.query.page || 1), 1);
     const limit = 30;
     const keyword = String(req.query.search || "");
@@ -257,23 +297,23 @@ app.get("/questions", async (req, res) => {
       query = query.limit(limit);
     }
 
-    const snapshot = await query.get();
-    let questions = await Promise.all(snapshot.docs.map(async (doc) => {
-      const data = doc.data();
-      let commentCount = data.commentCount;
-      if (commentCount === undefined) {
-        const commSnap = await firestore.collection(C_COLL).where("questionId", "==", doc.id).get();
-        commentCount = commSnap.size;
-      }
-      return {
-        id: doc.id,
-        ...data,
-        commentCount: commentCount || 0,
-        totalVotes: data.totalVotes || 0,
-        views: data.views || 0,
-        updatedAt: data.updatedAt || data.createdAt || "" // 💡 過去のデータは作成日時で代用
-      };
-    }));
+    let questions;
+    if (sort === "update" || isFiltered) {
+      questions = (await getAllQuestions()).slice();
+    } else {
+      const snapshot = await query.get();
+      questions = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          commentCount: Number(data.commentCount || 0),
+          totalVotes: Number(data.totalVotes || 0),
+          views: Number(data.views || 0),
+          updatedAt: data.updatedAt || data.createdAt || ""
+        };
+      });
+    }
 
     questions = questions.filter(q => (q.reports || 0) < 5);
 
@@ -310,10 +350,11 @@ app.get("/questions", async (req, res) => {
     }
 
     // 通常時（絞り込みなし・更新順以外）の件数返却
-    const allSnapshot = await firestore.collection(Q_COLL).get();
+    const countSnapshot = await firestore.collection(Q_COLL).count().get();
+    const totalCount = Number(countSnapshot.data().count || 0);
     res.json({
       questions,
-      totalPages: Math.ceil(allSnapshot.size / limit) || 1,
+      totalPages: Math.ceil(totalCount / limit) || 1,
       currentPage: page
     });
   } catch (error) {
@@ -374,6 +415,7 @@ app.post("/questions", async (req, res) => {
     };
 
     const docRef = await firestore.collection(Q_COLL).add(newQuestion);
+    invalidateListCache();
     rememberSubmission(ip, "question", `${title}|${description}|${options.join("|")}`);
     try {
       if (typeof updateSitemap === 'function') updateSitemap({ id: docRef.id, ...newQuestion });
@@ -398,13 +440,14 @@ app.get("/questions/:id", async (req, res) => {
     const q = { id: doc.id, ...doc.data() };
     Object.assign(q, normalizeQuestionData(q));
 
-    const commentsSnapshot = await firestore.collection(C_COLL)
-      .where("questionId", "==", id).orderBy("createdAt", "asc").limit(COMMENTS_LIMIT).get();
+    let statsData = getCachedStats(id);
+    const [commentsSnapshot, votesSnapshot] = await Promise.all([
+      firestore.collection(C_COLL).where("questionId", "==", id).orderBy("createdAt", "asc").limit(COMMENTS_LIMIT).get(),
+      statsData ? Promise.resolve(null) : firestore.collection(V_COLL).where("questionId", "==", id).limit(VOTES_STATS_LIMIT).get()
+    ]);
     q.comments = commentsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    let statsData = getCachedStats(id);
     if (!statsData) {
-      const votesSnapshot = await firestore.collection(V_COLL).where("questionId", "==", id).limit(VOTES_STATS_LIMIT).get();
       statsData = calculateStats(votesSnapshot.docs.map(d => d.data()), q.options);
       setCachedStats(id, statsData);
     }
@@ -437,10 +480,10 @@ app.get("/check-vote/:id", async (req, res) => {
     const ip = getIp(req);
 
     const queries = [
-      firestore.collection(V_COLL).where("questionId", "==", questionId).get()
+      firestore.collection(V_COLL).where("questionId", "==", questionId).where("ip", "==", ip).limit(5).get()
     ];
     if (!isNaN(questionId)) {
-      queries.push(firestore.collection(V_COLL).where("questionId", "==", Number(questionId)).get());
+      queries.push(firestore.collection(V_COLL).where("questionId", "==", Number(questionId)).where("ip", "==", ip).limit(5).get());
     }
 
     const snapshots = await Promise.all(queries);
@@ -475,10 +518,10 @@ const handleVote = async (req, res) => {
 
   try {
     const queries = [
-      firestore.collection(V_COLL).where("questionId", "==", id).get()
+      firestore.collection(V_COLL).where("questionId", "==", id).where("ip", "==", ip).limit(5).get()
     ];
     if (!isNaN(id)) {
-      queries.push(firestore.collection(V_COLL).where("questionId", "==", Number(id)).get());
+      queries.push(firestore.collection(V_COLL).where("questionId", "==", Number(id)).where("ip", "==", ip).limit(5).get());
     }
 
     const snapshots = await Promise.all(queries);
@@ -534,6 +577,7 @@ const handleVote = async (req, res) => {
     });
 
     CACHE_STATS.delete(id);
+    invalidateListCache();
     res.json({ success: true });
   } catch (err) {
     console.error("Vote error:", err);
@@ -622,6 +666,7 @@ const saveComment = async (req, res) => {
       commentCount: FieldValue.increment(1),
       updatedAt: timeStr
     });
+    invalidateListCache();
 
     res.json({ success: true });
   } catch (error) {
@@ -648,6 +693,7 @@ app.post("/report", async (req, res) => {
     });
 
     CACHE_STATS.delete(id);
+    invalidateListCache();
     res.json({ success: true });
   } catch (error) {
     if (error.message === "ALREADY_REPORTED") return sendError(res, "通報済みです");
@@ -676,6 +722,7 @@ app.post("/admin/delete", async (req, res) => {
   try {
     const questionId = String(id);
     await firestore.collection(Q_COLL).doc(questionId).delete();
+    invalidateListCache();
 
     for (const col of [C_COLL, V_COLL, R_COLL]) {
       const snapshot = await firestore.collection(col).where("questionId", "==", questionId).get();
