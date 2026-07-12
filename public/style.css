@@ -1272,17 +1272,15 @@ select:focus {
   .title-text { white-space: nowrap; font-size: 15px; }
   .question-meta { flex-wrap: nowrap; gap: 10px; font-size: 12px; white-space: nowrap; }
   .thread-meta-line {
-    grid-template-columns: calc(3ch + 2em) calc(3ch + 4em) calc(3ch + 2em) minmax(0, 1fr);
+    grid-template-columns: calc(3ch + 2em) calc(3ch + 4em) calc(3ch + 2em) max-content;
+    justify-content: end;
     gap: 4px;
     min-width: 0;
     font-size: 11px;
   }
   .thread-meta-line .postDate {
-    min-width: 0;
-    overflow: hidden;
-    justify-self: stretch;
+    justify-self: end;
     text-align: right;
-    text-overflow: ellipsis;
   }
 
   .site-footer {
