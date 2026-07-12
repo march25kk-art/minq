@@ -154,13 +154,21 @@ function createQuestionCard(q) {
   card.innerHTML = `
     <span class="title-text">${sanitize(plain(q.title))}</span>
     <div class="thread-meta-line">
-      <span>${total}回答</span>
-      <span>${comments}コメント</span>
-      <span>${views}閲覧</span>
+      <span>${compactCount(total)}回答</span>
+      <span>${compactCount(comments)}コメント</span>
+      <span>${compactCount(views)}閲覧</span>
       <time class="postDate">${sanitize(q.updatedAt || q.createdAt || "")}</time>
     </div>
   `;
   return card;
+}
+
+function compactCount(value) {
+  const count = Math.max(0, Number(value) || 0);
+  if (count < 1000) return String(Math.floor(count));
+
+  const thousands = Math.floor(count / 100) / 10;
+  return `${Number.isInteger(thousands) ? thousands.toFixed(0) : thousands.toFixed(1)}K`;
 }
 
 function renderPopularQuestions(list) {

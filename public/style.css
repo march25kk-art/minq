@@ -465,9 +465,10 @@ main {
 
 .thread-meta-line {
   display: grid;
-  grid-template-columns: 4.5em 6em 4.5em 13.5em;
+  grid-template-columns: calc(3ch + 2em) calc(3ch + 4em) calc(3ch + 2em) 13.5em;
+  justify-self: end;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   color: #7a8088;
   font-size: 13px;
   font-weight: 700;
@@ -481,8 +482,10 @@ main {
 }
 
 .postDate {
+  justify-self: end;
   color: #838891;
   font-size: 13px;
+  text-align: right;
   white-space: nowrap;
 }
 
@@ -1269,8 +1272,8 @@ select:focus {
   .title-text { white-space: nowrap; font-size: 15px; }
   .question-meta { flex-wrap: nowrap; gap: 10px; font-size: 12px; white-space: nowrap; }
   .thread-meta-line {
-    grid-template-columns: 4.5em 6em 4.5em minmax(0, 1fr);
-    gap: 8px;
+    grid-template-columns: calc(3ch + 2em) calc(3ch + 4em) calc(3ch + 2em) minmax(0, 1fr);
+    gap: 4px;
     min-width: 0;
     font-size: 11px;
   }
