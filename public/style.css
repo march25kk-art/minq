@@ -1084,16 +1084,29 @@ select:focus {
     flex-direction: column;
   }
 
+  .site-header .header-inner {
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+  }
+
   .header-actions,
   .nav {
     width: 100%;
     gap: 10px;
   }
 
+  .site-header .header-actions {
+    width: auto;
+    min-width: 0;
+    flex: 1;
+  }
+
   .site-logo { font-size: 34px; }
   .site-logo b { width: 42px; height: 42px; font-size: 27px; }
 
-  .search-box { width: 100%; }
+  .search-box { width: 100%; height: 46px; min-width: 0; padding-left: 16px; }
+  .search-box input { min-width: 0; font-size: 14px; }
   .header-create { display: none; }
   .hero-section {
     margin-top: 16px;
@@ -1108,28 +1121,35 @@ select:focus {
   .hero-copy p { font-size: 15px; }
   .hero-btn { width: 100%; min-width: 0; }
   .category-row { gap: 10px; }
-  .category { min-width: 96px; height: 48px; }
+  .category { min-width: 88px; height: 42px; padding: 0 14px; font-size: 13px; }
   .sortMenu { grid-template-columns: repeat(4, minmax(0, 1fr)); height: 52px; }
   .sortMenu button { min-height: 52px; font-size: 13px; padding: 0 3px; }
   .sortMenu span { display: none; }
 
   .thread {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 10px;
     padding: 14px;
   }
 
   .hotTag,
   .kebab { display: none; }
-  .postDate { font-size: 13px; }
-  .title-text { white-space: normal; font-size: 16px; }
-  .question-meta { flex-wrap: wrap; gap: 8px 12px; font-size: 13px; }
+  .postDate { font-size: 11px; }
+  .title-text { white-space: nowrap; font-size: 15px; }
+  .question-meta { flex-wrap: nowrap; gap: 10px; font-size: 12px; white-space: nowrap; }
   .thread-meta-line {
-    grid-template-columns: repeat(3, max-content) 1fr;
-    gap: 10px;
-    font-size: 12px;
+    grid-template-columns: repeat(3, max-content) minmax(0, 1fr);
+    gap: 8px;
+    min-width: 0;
+    font-size: 11px;
   }
-  .thread-meta-line .postDate { justify-self: end; }
+  .thread-meta-line .postDate {
+    min-width: 0;
+    overflow: hidden;
+    justify-self: stretch;
+    text-align: right;
+    text-overflow: ellipsis;
+  }
 
   .site-footer {
     flex-direction: column;
@@ -1138,12 +1158,12 @@ select:focus {
   }
 
   .site-footer nav { flex-wrap: wrap; gap: 14px; }
-  .voteInfoRow,
   .resultGrid,
   .resultGrid-top,
   .overallWrap,
   .age-grid,
   .infoList { grid-template-columns: 1fr; }
+  .voteInfoRow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .layout.results-dashboard { width: min(100% - 24px, 1120px); }
   .result-question-card,
   .results-dashboard .result-wide-card,
