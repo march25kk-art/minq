@@ -528,11 +528,14 @@ app.get("/stats/:id", async (req, res) => {
 const saveComment = async (req, res) => {
   try {
     const id = req.params.id || req.body.id;
-    let { text, age, gender } = req.body;
+    let { text, name, age, gender } = req.body;
     text = String(text || "").trim();
+    name = String(name || "").trim();
 
     if (!text) return sendError(res, "コメントを入力してください");
+    if (name.length > 30) return sendError(res, "名前は30文字以内で入力してください");
     if (NG_WORDS.some(word => text.includes(word))) return sendError(res, "使用できない言葉が含まれています");
+    if (name && NG_WORDS.some(word => name.includes(word))) return sendError(res, "名前に使用できない言葉が含まれています");
 
     const ip = getIp(req);
     const now = Date.now();
@@ -544,7 +547,7 @@ const saveComment = async (req, res) => {
 
     const timeStr = nowJSTString();
     await firestore.collection(C_COLL).add({
-      questionId: String(id), text: escapeHTML(text), age: age || UNANSWERED, gender: gender || UNANSWERED, createdAt: timeStr, ip
+      questionId: String(id), text: escapeHTML(text), name: name ? escapeHTML(name) : "", age: age || UNANSWERED, gender: gender || UNANSWERED, createdAt: timeStr, ip
     });
     
     await firestore.collection(Q_COLL).doc(String(id)).update({ 

@@ -865,6 +865,12 @@ select:focus {
   border-bottom: 1px solid var(--line);
 }
 
+.comment-inputs { min-width: 0; }
+
+.comment-inputs input {
+  margin: 0 0 10px;
+}
+
 .comment-compose textarea {
   min-height: 74px;
   margin: 0;

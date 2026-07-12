@@ -460,14 +460,17 @@ function renderResultsScreen(div, q, id) {
     <section class="resultCard result-wide-card comments-card">
       <div class="result-card-heading"><h2>みんなのコメント</h2><span class="result-total">${Number(q.commentCount || 0)}件</span></div>
       <div class="comment-compose">
-        <textarea id="commentText" placeholder="あなたの意見を入力してください"></textarea>
+        <div class="comment-inputs">
+          <input id="commentName" type="text" maxlength="30" placeholder="名前（任意）">
+          <textarea id="commentText" placeholder="あなたの意見を入力してください"></textarea>
+        </div>
         <button class="commentBtn" type="button" onclick="addCommentAndReload('${sanitize(id)}')">投稿する</button>
       </div>
       <div id="commentList" class="result-comment-list">
         ${(q.comments || []).map((comment, index) => `
           <div class="comment">
             <span class="comment-avatar">${index + 1}</span>
-            <div><div class="comment-author">みんQユーザー <span>${sanitize(comment.createdAt || "")}</span></div><p>${sanitize(plain(comment.text))}</p></div>
+            <div><div class="comment-author">${sanitize(plain(comment.name) || "みんQユーザー")} <span>${sanitize(comment.createdAt || "")}</span></div><p>${sanitize(plain(comment.text))}</p></div>
           </div>
         `).join("") || '<p class="empty-comments">まだコメントはありません。最初の意見を投稿してみましょう。</p>'}
       </div>
@@ -502,12 +505,13 @@ async function voteAndReload(id) {
 
 async function addCommentAndReload(id) {
   const text = document.getElementById("commentText")?.value.trim() || "";
+  const name = document.getElementById("commentName")?.value.trim() || "";
   if (!text) return alert("コメントを入力してください。");
 
   const res = await fetch(`/questions/${encodeURIComponent(id)}/comment`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, age: "回答しない", gender: "回答しない" })
+    body: JSON.stringify({ text, name, age: "回答しない", gender: "回答しない" })
   });
   const data = await res.json();
   if (data.error) return alert(data.message || "コメント投稿に失敗しました。");
