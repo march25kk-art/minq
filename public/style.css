@@ -871,14 +871,15 @@ select:focus {
 
 .result-share-panel {
   position: relative;
+  margin-left: auto;
 }
 
-.result-share-actions { display: flex; align-items: center; gap: 8px; }
+.result-share-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
 
 .result-share-btn {
-  width: 42px;
-  min-width: 42px;
-  height: 38px;
+  width: 36px;
+  min-width: 36px;
+  height: 34px;
   padding: 0;
   display: inline-flex;
   align-items: center;
@@ -906,7 +907,7 @@ select:focus {
 .share-facebook { background: #1877f2; }
 .share-threads { background: #111; }
 .threads-mark { font-size: 21px; font-weight: 700; line-height: 1; }
-.share-copy { width: auto; min-width: 82px; padding: 0 13px; color: #39443e; border: 1px solid #dce4df; background: #fff; }
+.share-copy { width: auto; min-width: 74px; padding: 0 11px; color: #39443e; border: 1px solid #dce4df; background: #fff; }
 .share-feedback { position: absolute; right: 16px; bottom: -23px; color: #087b43; font-size: 11px; font-weight: 700; }
 
 .result-summary-grid {
@@ -1393,7 +1394,7 @@ select:focus {
   .result-question-card .createTitle { font-size: 22px !important; }
   .result-meta-share-row { align-items: stretch; flex-direction: column; gap: 14px; }
   .result-share-panel { width: 100%; }
-  .result-share-actions { width: 100%; flex-wrap: nowrap; justify-content: space-between; gap: 4px; }
+  .result-share-actions { width: 100%; flex-wrap: nowrap; justify-content: flex-end; gap: 3px; }
   .result-share-btn { width: 32px; height: 34px; min-width: 32px; flex: 0 0 32px; }
   .result-share-btn.share-copy { width: auto; min-width: 68px; flex: 0 0 auto; padding: 0 9px; }
   .result-share-btn svg { width: 16px; height: 16px; }
