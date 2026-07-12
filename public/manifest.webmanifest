@@ -1,7 +1,7 @@
 {
   "name": "みんQ",
   "short_name": "みんQ",
-  "description": "みんなでつくるアンケートコミュニティ",
+  "description": "登録不要ですべて無料。みんなでつくるアンケートコミュニティ",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
