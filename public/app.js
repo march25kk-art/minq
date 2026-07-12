@@ -523,10 +523,10 @@ function renderResultsScreen(div, q, id) {
         <h1 class="createTitle">${sanitize(plain(q.title))}</h1>
       </div>
       ${q.description ? `<p>${sanitize(plain(q.description))}</p>` : ""}
-      <p class="question-meta result-meta"><span>● ${total}回答</span><span>◇ ${Number(q.commentCount || 0)}コメント</span><span>◉ ${Number(q.views || 0)}閲覧</span></p>
-      <div class="result-share-panel" data-share-url="${sanitize(shareUrl)}" data-share-text="${sanitize(shareText)}">
-        <div class="result-share-copy"><span class="result-share-spark">✦</span><div><strong>この結果をシェア</strong><small>みんなの意見を友だちにも</small></div></div>
-        <div class="result-share-actions">
+      <div class="result-meta-share-row">
+        <p class="question-meta result-meta"><span>● ${total}回答</span><span>◇ ${Number(q.commentCount || 0)}コメント</span><span>◉ ${Number(q.views || 0)}閲覧</span></p>
+        <div class="result-share-panel" data-share-url="${sanitize(shareUrl)}" data-share-text="${sanitize(shareText)}">
+          <div class="result-share-actions">
           <a class="result-share-btn share-x" href="https://twitter.com/intent/tweet?url=${encodedShareUrl}&text=${encodedShareText}" target="_blank" rel="noopener noreferrer" aria-label="Xでシェア">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.451-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"/></svg>
           </a>
@@ -541,8 +541,9 @@ function renderResultsScreen(div, q, id) {
           <button class="result-share-btn share-copy" type="button" onclick="copyResultShare(this)" aria-label="シェアURLをコピー">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7V5a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-2v3a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3h3Zm2 0h4a3 3 0 0 1 3 3v4h2a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-8a1 1 0 0 0-1 1v2Zm-5 2a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H5Z"/></svg><span>コピー</span>
           </button>
+          </div>
+          <span class="share-feedback" role="status" aria-live="polite"></span>
         </div>
-        <span class="share-feedback" role="status" aria-live="polite"></span>
       </div>
     </section>
 

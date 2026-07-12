@@ -855,29 +855,24 @@ select:focus {
 }
 
 .result-meta {
-  margin-top: 22px;
+  margin: 0;
   color: #4f575f;
 }
 
 .result-meta span:first-child { color: var(--green); }
 
-.result-share-panel {
-  position: relative;
+.result-meta-share-row {
   margin-top: 22px;
-  padding: 14px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  border: 1px solid #dfece5;
-  border-radius: 14px;
-  background: linear-gradient(110deg, #f3fbf6, #fff 65%);
 }
 
-.result-share-copy { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.result-share-copy strong { display: block; color: #24312a; font-size: 14px; }
-.result-share-copy small { display: block; margin-top: 2px; color: #788079; font-size: 11px; }
-.result-share-spark { color: #e6a914; font-size: 22px; line-height: 1; }
+.result-share-panel {
+  position: relative;
+}
+
 .result-share-actions { display: flex; align-items: center; gap: 8px; }
 
 .result-share-btn {
@@ -1396,13 +1391,15 @@ select:focus {
   .result-title-row { align-items: flex-start; }
   .result-question-icon { width: 36px; height: 36px; }
   .result-question-card .createTitle { font-size: 22px !important; }
-  .result-share-panel { align-items: stretch; flex-direction: column; gap: 12px; }
-  .result-share-actions { display: flex; flex-wrap: wrap; gap: 7px; }
-  .result-share-btn { flex: 0 0 42px; min-width: 42px; }
-  .result-share-btn.share-copy { flex-basis: auto; min-width: 82px; padding: 0 13px; }
-  .result-share-btn svg { width: 18px; height: 18px; }
-  .line-logo { font-size: 9px; }
-  .share-feedback { right: auto; bottom: -22px; left: 16px; }
+  .result-meta-share-row { align-items: stretch; flex-direction: column; gap: 14px; }
+  .result-share-panel { width: 100%; }
+  .result-share-actions { width: 100%; flex-wrap: nowrap; justify-content: space-between; gap: 4px; }
+  .result-share-btn { width: 32px; height: 34px; min-width: 32px; flex: 0 0 32px; }
+  .result-share-btn.share-copy { width: auto; min-width: 68px; flex: 0 0 auto; padding: 0 9px; }
+  .result-share-btn svg { width: 16px; height: 16px; }
+  .line-logo { font-size: 8px; }
+  .threads-mark { font-size: 18px; }
+  .share-feedback { right: auto; bottom: -22px; left: 0; }
   .result-age-grid { grid-template-columns: 1fr; }
   .comment-compose { grid-template-columns: 1fr; }
   .comment-compose .commentBtn { width: 100%; }
