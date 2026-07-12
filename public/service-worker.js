@@ -1,4 +1,4 @@
-const CACHE_NAME = "minq-shell-v1";
+const CACHE_NAME = "minq-shell-v2";
 const APP_SHELL = [
   "/",
   "/style.css",
@@ -32,18 +32,30 @@ self.addEventListener("fetch", event => {
 
   const isShellAsset = APP_SHELL.includes(url.pathname);
   const isNavigation = event.request.mode === "navigate";
+  const isQuestionList = url.pathname === "/questions";
 
-  if (!isShellAsset && !isNavigation) return;
+  if (!isShellAsset && !isNavigation && !isQuestionList) return;
+
+  // CSS・JS・一覧はキャッシュを即表示し、裏側で最新版へ更新する。
+  if (isShellAsset || isQuestionList) {
+    const cachePromise = caches.open(CACHE_NAME);
+    const cachedPromise = cachePromise.then(cache =>
+      cache.match(event.request, { ignoreSearch: isShellAsset })
+    );
+    const networkPromise = fetch(event.request).then(async response => {
+        if (response.ok) {
+          const cache = await cachePromise;
+          await cache.put(event.request, response.clone());
+        }
+        return response;
+      });
+    event.waitUntil(networkPromise.then(() => undefined, () => undefined));
+    event.respondWith(cachedPromise.then(cached => cached || networkPromise));
+    return;
+  }
 
   event.respondWith(
     fetch(event.request)
-      .then(response => {
-        if (isShellAsset && response.ok) {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-        }
-        return response;
-      })
       .catch(() => caches.match(event.request).then(response => response || (isNavigation ? caches.match("/") : undefined)))
   );
 });

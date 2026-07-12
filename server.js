@@ -49,14 +49,19 @@ app.get("/question", async (req, res) => {
       return res.redirect(302, "/");
     }
 
-    // Firestoreからアンケート取得
-    const doc = await firestore.collection(Q_COLL).doc(id).get();
+    // 一覧・詳細で取得済みなら再利用し、ページ遷移時のFirestore重複読込を避ける
+    const cachedDetail = DETAIL_CACHE.get(id);
+    let q = cachedDetail && Date.now() - cachedDetail.timestamp < DETAIL_CACHE_TTL
+      ? cachedDetail.data
+      : listCache.data?.find(question => String(question.id) === id);
 
-    if (!doc.exists) {
-      return res.status(404).sendFile(path.join(__dirname, "public", "question.html"));
+    if (!q) {
+      const doc = await firestore.collection(Q_COLL).doc(id).get();
+      if (!doc.exists) {
+        return res.status(404).sendFile(path.join(__dirname, "public", "question.html"));
+      }
+      q = doc.data();
     }
-
-    const q = doc.data();
 
     // question.htmlを読み込む
     let html = fs.readFileSync(
@@ -140,7 +145,9 @@ const R_COLL = IS_PRODUCTION ? 'reportsLog' : 'reportsLog_dev';
 
 // ===== キャッシュ・メモリ管理 =====
 const CACHE_STATS = new Map();
+const DETAIL_CACHE = new Map();
 const CACHE_TTL = 30000;
+const DETAIL_CACHE_TTL = 10000;
 const LIST_CACHE_TTL = 15000;
 let listCache = { data: null, timestamp: 0 };
 const COMMENTS_LIMIT = 100;
@@ -239,6 +246,9 @@ setInterval(() => {
 
   for (const [key, val] of CACHE_STATS.entries()) {
     if (now - val.timestamp > CACHE_TTL) CACHE_STATS.delete(key);
+  }
+  for (const [key, val] of DETAIL_CACHE.entries()) {
+    if (now - val.timestamp > DETAIL_CACHE_TTL) DETAIL_CACHE.delete(key);
   }
 }, CACHE_TTL);
 
@@ -510,6 +520,11 @@ app.post("/questions", async (req, res) => {
 app.get("/questions/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    const cachedDetail = DETAIL_CACHE.get(id);
+    if (cachedDetail && Date.now() - cachedDetail.timestamp < DETAIL_CACHE_TTL) {
+      res.set("Cache-Control", "public, max-age=5, stale-while-revalidate=10");
+      return res.json(cachedDetail.data);
+    }
     const doc = await firestore.collection(Q_COLL).doc(id).get();
     if (!doc.exists) return sendError(res, "アンケートが見つかりません");
 
@@ -528,7 +543,10 @@ app.get("/questions/:id", async (req, res) => {
       setCachedStats(id, statsData);
     }
 
-    res.json({ ...q, ...statsData });
+    const detailData = { ...q, ...statsData };
+    DETAIL_CACHE.set(id, { data: detailData, timestamp: Date.now() });
+    res.set("Cache-Control", "public, max-age=5, stale-while-revalidate=10");
+    res.json(detailData);
   } catch (error) {
     console.error("Firestore error:", error);
     sendError(res, "データの取得に失敗しました", 500);
@@ -630,6 +648,7 @@ const handleVote = async (req, res) => {
     }
 
     CACHE_STATS.delete(id);
+    DETAIL_CACHE.delete(id);
     invalidateListCache();
     res.json({ success: true });
   } catch (err) {
@@ -719,6 +738,7 @@ const saveComment = async (req, res) => {
       commentCount: FieldValue.increment(1),
       updatedAt: timeStr
     });
+    DETAIL_CACHE.delete(String(id));
     invalidateListCache();
 
     res.json({ success: true });
@@ -746,6 +766,7 @@ app.post("/report", async (req, res) => {
     });
 
     CACHE_STATS.delete(id);
+    DETAIL_CACHE.delete(String(id));
     invalidateListCache();
     res.json({ success: true });
   } catch (error) {
@@ -761,6 +782,7 @@ app.post("/admin/delete-comment", async (req, res) => {
 
   try {
     await firestore.collection(C_COLL).doc(String(id)).delete();
+    DETAIL_CACHE.clear();
     res.json({ success: true });
   } catch (error) {
     sendError(res, "削除に失敗しました", 500);
@@ -785,6 +807,7 @@ app.post("/admin/delete", async (req, res) => {
     }
 
     CACHE_STATS.delete(questionId);
+    DETAIL_CACHE.delete(questionId);
     res.json({ success: true });
   } catch (error) {
     sendError(res, "削除に失敗しました", 500);
