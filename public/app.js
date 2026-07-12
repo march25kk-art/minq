@@ -528,12 +528,16 @@ function renderResultsScreen(div, q, id) {
         <div class="result-share-copy"><span class="result-share-spark">✦</span><div><strong>この結果をシェア</strong><small>みんなの意見を友だちにも</small></div></div>
         <div class="result-share-actions">
           <a class="result-share-btn share-x" href="https://twitter.com/intent/tweet?url=${encodedShareUrl}&text=${encodedShareText}" target="_blank" rel="noopener noreferrer" aria-label="Xでシェア">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.451-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"/></svg><span>X</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.451-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"/></svg>
           </a>
           <button class="result-share-btn share-instagram" type="button" onclick="shareResultToInstagram(this)" aria-label="Instagram用にコピー">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Zm10.5 1.5a1 1 0 1 1 0 2 1 1 0 0 1 0-2ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg><span>Instagram</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Zm10.5 1.5a1 1 0 1 1 0 2 1 1 0 0 1 0-2ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg>
           </button>
-          <a class="result-share-btn share-line" href="https://social-plugins.line.me/lineit/share?url=${encodedShareUrl}" target="_blank" rel="noopener noreferrer" aria-label="LINEでシェア"><span class="line-logo">LINE</span><span>LINE</span></a>
+          <a class="result-share-btn share-line" href="https://social-plugins.line.me/lineit/share?url=${encodedShareUrl}" target="_blank" rel="noopener noreferrer" aria-label="LINEでシェア"><span class="line-logo">LINE</span></a>
+          <a class="result-share-btn share-facebook" href="https://www.facebook.com/sharer/sharer.php?u=${encodedShareUrl}" target="_blank" rel="noopener noreferrer" aria-label="Facebookでシェア">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8.5V6.8c0-.8.5-1 1-1h2.8V2.1L14.6 2C11.4 2 10 3.9 10 6.5v2H7v4h3V22h4v-9.5h3.4l.6-4H14Z"/></svg>
+          </a>
+          <a class="result-share-btn share-threads" href="https://www.threads.net/intent/post?text=${encodedShareText}%20${encodedShareUrl}" target="_blank" rel="noopener noreferrer" aria-label="Threadsでシェア"><span class="threads-mark">@</span></a>
           <button class="result-share-btn share-copy" type="button" onclick="copyResultShare(this)" aria-label="シェアURLをコピー">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7V5a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-2v3a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3h3Zm2 0h4a3 3 0 0 1 3 3v4h2a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-8a1 1 0 0 0-1 1v2Zm-5 2a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H5Z"/></svg><span>コピー</span>
           </button>
