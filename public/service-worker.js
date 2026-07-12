@@ -1,4 +1,4 @@
-const CACHE_NAME = "minq-shell-v2";
+const CACHE_NAME = "minq-shell-v3";
 const APP_SHELL = [
   "/",
   "/style.css",
@@ -39,9 +39,7 @@ self.addEventListener("fetch", event => {
   // CSS・JS・一覧はキャッシュを即表示し、裏側で最新版へ更新する。
   if (isShellAsset || isQuestionList) {
     const cachePromise = caches.open(CACHE_NAME);
-    const cachedPromise = cachePromise.then(cache =>
-      cache.match(event.request, { ignoreSearch: isShellAsset })
-    );
+    const cachedPromise = cachePromise.then(cache => cache.match(event.request));
     const networkPromise = fetch(event.request).then(async response => {
         if (response.ok) {
           const cache = await cachePromise;
