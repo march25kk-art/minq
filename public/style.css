@@ -1151,6 +1151,34 @@ select:focus {
     flex-direction: column;
   }
 
+  .question-header {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px;
+  }
+
+  .question-header .logo-container {
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .question-header .site-logo { font-size: 28px; }
+  .question-header .site-logo b { width: 34px; height: 34px; font-size: 22px; }
+  .question-header .home-link { gap: 4px; font-size: 12px; }
+  .question-header .home-link span { font-size: 17px; }
+
+  .question-header .nav {
+    width: auto;
+    flex: 0 0 auto;
+  }
+
+  .question-header .primary-btn {
+    padding-right: 8px;
+    padding-left: 8px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
   .site-header .header-inner {
     flex-direction: row;
     align-items: center;
@@ -1227,7 +1255,14 @@ select:focus {
     align-items: flex-start;
   }
 
-  .site-footer nav { flex-wrap: wrap; gap: 14px; }
+  .site-footer nav {
+    width: 100%;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 4px;
+    font-size: clamp(10px, 2.8vw, 12px);
+    white-space: nowrap;
+  }
   .resultGrid,
   .resultGrid-top,
   .overallWrap,
