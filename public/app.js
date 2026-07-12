@@ -156,8 +156,10 @@ function createQuestionCard(q) {
     <div class="thread-meta-line">
       <span>${compactCount(total)}回答</span>
       <span>${compactCount(comments)}コメント</span>
-      <span>${compactCount(views)}閲覧</span>
-      <time class="postDate">${sanitize(q.updatedAt || q.createdAt || "")}</time>
+      <span class="view-date-group">
+        <span class="view-count">${compactCount(views)}閲覧</span>
+        <time class="postDate">${sanitize(q.updatedAt || q.createdAt || "")}</time>
+      </span>
     </div>
   `;
   return card;

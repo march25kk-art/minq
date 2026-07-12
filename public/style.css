@@ -465,7 +465,7 @@ main {
 
 .thread-meta-line {
   display: grid;
-  grid-template-columns: calc(3ch + 2em) calc(3ch + 4em) calc(3ch + 2em) max-content;
+  grid-template-columns: calc(3ch + 2em) calc(3ch + 4em) max-content;
   justify-self: end;
   align-items: center;
   gap: 6px;
@@ -481,9 +481,20 @@ main {
   font-variant-numeric: tabular-nums;
 }
 
+.thread-meta-line > .view-date-group {
+  display: flex;
+  align-items: center;
+  gap: 2ch;
+}
+
+.view-count {
+  width: calc(3ch + 2em);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 .postDate {
   justify-self: end;
-  margin-left: 1ch;
   color: #838891;
   font-size: 13px;
   text-align: right;
@@ -1273,7 +1284,7 @@ select:focus {
   .title-text { white-space: nowrap; font-size: 15px; }
   .question-meta { flex-wrap: nowrap; gap: 10px; font-size: 12px; white-space: nowrap; }
   .thread-meta-line {
-    grid-template-columns: calc(3ch + 2em) calc(3ch + 4em) calc(3ch + 2em) max-content;
+    grid-template-columns: calc(3ch + 2em) calc(3ch + 4em) max-content;
     justify-content: end;
     gap: 4px;
     min-width: 0;
