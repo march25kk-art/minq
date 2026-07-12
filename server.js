@@ -211,12 +211,28 @@ const getAllQuestions = async () => {
 };
 
 // ===== 統計計算・データ正規化 =====
+const calculatePercentages = counts => {
+  const total = counts.reduce((sum, count) => sum + count, 0);
+  if (total === 0) return counts.map(() => 0);
+
+  const exact = counts.map(count => (count * 100) / total);
+  const percentages = exact.map(Math.floor);
+  let remainder = 100 - percentages.reduce((sum, percent) => sum + percent, 0);
+
+  exact
+    .map((value, index) => ({ index, fraction: value - percentages[index] }))
+    .sort((a, b) => b.fraction - a.fraction || a.index - b.index)
+    .slice(0, remainder)
+    .forEach(({ index }) => { percentages[index] += 1; });
+
+  return percentages;
+};
+
 const calculateStats = (votes, options = []) => {
   const allVotesCount = votes.length;
   const optionCounts = options.map(() => 0);
   const maleCounts = options.map(() => 0);
   const femaleCounts = options.map(() => 0);
-  const validAgeCounts = options.map(() => 0);
   const ageCounts = options.map(() => Object.fromEntries(AGE_GROUPS.map(age => [age, 0])));
 
   votes.forEach(vote => {
@@ -226,7 +242,6 @@ const calculateStats = (votes, options = []) => {
     if (GENDER_ALIASES.male.includes(vote.gender)) maleCounts[index] += 1;
     if (GENDER_ALIASES.female.includes(vote.gender)) femaleCounts[index] += 1;
     if (vote.age && vote.age !== "回答しない" && vote.age !== "未回答") {
-      validAgeCounts[index] += 1;
       const normalizedAge = normalizeAge(vote.age);
       const ageIndex = LEGACY_AGE_GROUPS.indexOf(vote.age);
       const resolvedAge = ageIndex >= 0 ? AGE_GROUPS[ageIndex] : normalizedAge;
@@ -234,23 +249,26 @@ const calculateStats = (votes, options = []) => {
     }
   });
 
+  const malePercentages = calculatePercentages(maleCounts);
+  const femalePercentages = calculatePercentages(femaleCounts);
+  const agePercentages = Object.fromEntries(AGE_GROUPS.map(age => [
+    age,
+    calculatePercentages(ageCounts.map(row => row[age]))
+  ]));
+
   const genderStats = options.map((option, index) => {
-    const m = maleCounts[index];
-    const f = femaleCounts[index];
-    const total = m + f;
     return {
       option,
-      male: total > 0 ? Math.round((m * 100) / total) : 0,
-      female: total > 0 ? Math.round((f * 100) / total) : 0,
+      male: malePercentages[index],
+      female: femalePercentages[index],
       rawPercent: allVotesCount > 0 ? Math.round((optionCounts[index] * 100) / allVotesCount) : 0
     };
   });
 
   const ageStats = options.map((option, index) => {
-    const totalAge = validAgeCounts[index];
     const row = { option };
     AGE_GROUPS.forEach(age => {
-      row[age] = totalAge > 0 ? Math.round((ageCounts[index][age] * 100) / totalAge) : 0;
+      row[age] = agePercentages[age][index];
     });
     return row;
   });
