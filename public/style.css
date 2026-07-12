@@ -465,7 +465,7 @@ main {
 
 .thread-meta-line {
   display: grid;
-  grid-template-columns: calc(3ch + 2em) calc(3ch + 4em) calc(3ch + 2em) 13.5em;
+  grid-template-columns: calc(3ch + 2em) calc(3ch + 4em) calc(3ch + 2em) max-content;
   justify-self: end;
   align-items: center;
   gap: 6px;
@@ -483,6 +483,7 @@ main {
 
 .postDate {
   justify-self: end;
+  margin-left: 1ch;
   color: #838891;
   font-size: 13px;
   text-align: right;
