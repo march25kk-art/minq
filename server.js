@@ -129,10 +129,30 @@ const getIp = (req) => {
   return Array.isArray(forwarded) ? forwarded[0] : String(forwarded || req.socket.remoteAddress).split(",")[0].trim();
 };
 
-const voteDocumentId = (questionId, ip) => crypto
+const voteDocumentId = (questionId, voterId) => crypto
   .createHash("sha256")
-  .update(`${String(questionId)}\u0000${String(ip)}`)
+  .update(`${String(questionId)}\u0000${String(voterId)}`)
   .digest("hex");
+
+const getVoterId = (req, res) => {
+  const cookieHeader = String(req.headers.cookie || "");
+  const cookie = cookieHeader.split(";").map(value => value.trim()).find(value => value.startsWith("minq_voter="));
+  const savedId = cookie ? decodeURIComponent(cookie.slice("minq_voter=".length)) : "";
+  const voterId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(savedId)
+    ? savedId
+    : crypto.randomUUID();
+
+  if (voterId !== savedId) {
+    res.cookie("minq_voter", voterId, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: IS_PRODUCTION,
+      maxAge: 10 * 365 * 24 * 60 * 60 * 1000
+    });
+  }
+
+  return voterId;
+};
 
 const nowJSTString = () => new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().replace("T", " ").substring(0, 19);
 
@@ -501,24 +521,11 @@ app.post("/view", async (req, res) => {
 app.get("/check-vote/:id", async (req, res) => {
   try {
     const questionId = String(req.params.id);
-    const ip = getIp(req);
+    const voterId = getVoterId(req, res);
+    const voteDoc = await firestore.collection(V_COLL).doc(voteDocumentId(questionId, voterId)).get();
 
-    const queries = [
-      firestore.collection(V_COLL).where("questionId", "==", questionId).where("ip", "==", ip).limit(5).get()
-    ];
-    if (!isNaN(questionId)) {
-      queries.push(firestore.collection(V_COLL).where("questionId", "==", Number(questionId)).where("ip", "==", ip).limit(5).get());
-    }
-
-    const snapshots = await Promise.all(queries);
-
-    // 💡 判定：これから新しく投票したログ（statusが 'reset2026'）がある場合のみ「投票済み」とする
-    const isVoted = snapshots.some(snapshot => 
-      snapshot.docs.some(doc => {
-        const data = doc.data();
-        return data.ip === ip;
-      })
-    );
+    // このブラウザ用の一意な投票記録があれば投票済みとする。
+    const isVoted = voteDoc.exists;
 
     res.json({ voted: isVoted });
   } catch (error) {
@@ -534,6 +541,7 @@ const handleVote = async (req, res) => {
   if (id == null || index == null) return sendError(res, "不完全なデータです", 400);
 
   const ip = getIp(req);
+  const voterId = getVoterId(req, res);
   if (!allowAction(ip, "vote", 20, 10 * 60 * 1000)) {
     return sendError(res, "短時間の投票回数が多すぎます。しばらく待ってからお試しください", 429);
   }
@@ -541,29 +549,8 @@ const handleVote = async (req, res) => {
   const selectedGender = gender || UNANSWERED;
 
   try {
-    const queries = [
-      firestore.collection(V_COLL).where("questionId", "==", id).where("ip", "==", ip).limit(5).get()
-    ];
-    if (!isNaN(id)) {
-      queries.push(firestore.collection(V_COLL).where("questionId", "==", Number(id)).where("ip", "==", ip).limit(5).get());
-    }
-
-    const snapshots = await Promise.all(queries);
-
-    // 新しいルール（status === 'reset2026'）で既に投票しているかチェック
-    const hasVoted = snapshots.some(snapshot => 
-      snapshot.docs.some(doc => {
-        const data = doc.data();
-        return data.ip === ip;
-      })
-    );
-      
-    if (hasVoted) {
-      return res.status(400).json({ error: true, message: "既に投票済みです" });
-    }
-
     const questionRef = firestore.collection(Q_COLL).doc(id);
-    const voteLogRef = firestore.collection(V_COLL).doc(voteDocumentId(id, ip));
+    const voteLogRef = firestore.collection(V_COLL).doc(voteDocumentId(id, voterId));
     const didVote = await firestore.runTransaction(async (transaction) => {
       let sfDoc = await transaction.get(questionRef);
       let targetRef = questionRef;
@@ -598,6 +585,7 @@ const handleVote = async (req, res) => {
         age: selectedAge, 
         gender: selectedGender, 
         ip: ip, 
+        voterId: voterId,
         status: "reset2026", // 💡 これから投票するログにはこの目印を付け、2回目をブロックします
         createdAt: new Date().toISOString()
       });
