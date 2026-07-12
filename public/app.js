@@ -24,6 +24,45 @@ const state = {
   loadController: null
 };
 
+let deferredInstallPrompt = null;
+
+function isAppInstalled() {
+  return window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+}
+
+function updateInstallButton() {
+  const button = document.getElementById("installAppBtn");
+  if (!button) return;
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  button.hidden = isAppInstalled() || (!deferredInstallPrompt && !isIOS);
+}
+
+async function installApp() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    updateInstallButton();
+    return;
+  }
+
+  if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+    alert("Safari下部の共有ボタンを押し、「ホーム画面に追加」を選んでください。");
+  }
+}
+
+window.addEventListener("beforeinstallprompt", event => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  updateInstallButton();
+});
+
+window.addEventListener("appinstalled", () => {
+  deferredInstallPrompt = null;
+  updateInstallButton();
+});
+
 const sanitizeNode = document.createElement("div");
 const plainNode = document.createElement("div");
 
@@ -46,6 +85,7 @@ function createQueryParams(params) {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
+  updateInstallButton();
   const questionsDiv = document.getElementById("questions");
   if (questionsDiv) {
     renderTopTags(false);

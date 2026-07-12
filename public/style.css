@@ -299,6 +299,10 @@ main {
   margin-top: 28px;
 }
 
+.install-app-btn {
+  display: none;
+}
+
 .category-section { padding: 28px 0 30px; }
 .section-head {
   display: flex;
@@ -1266,6 +1270,20 @@ select:focus {
   .trust-points { flex-wrap: nowrap; }
   .trust-points span { padding: 0 11px; font-size: 12px; }
   .hero-btn { width: 100%; min-width: 0; }
+  .install-app-btn:not([hidden]) {
+    width: 100%;
+    min-height: 46px;
+    margin-top: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid #159855;
+    border-radius: 23px;
+    color: #087b43;
+    background: rgba(255, 255, 255, 0.9);
+    font-weight: 900;
+  }
   .category-row { gap: 10px; }
   .category { min-width: 88px; height: 42px; padding: 0 14px; font-size: 13px; }
   .sortMenu { grid-template-columns: repeat(4, minmax(0, 1fr)); height: 52px; }
