@@ -366,8 +366,10 @@ function renderVotingScreen(div, q, id) {
         <label><span class="voteLabel">性別</span><select id="gender">${GENDERS.map(g => `<option>${g}</option>`).join("")}</select></label>
       </div>
       <p class="vote-result-note"><span>✓</span>回答すると、みんなの回答結果をすぐに見ることができます。</p>
-      <button class="voteSubmitBtn" type="button" onclick="voteAndReload('${sanitize(id)}')">投票する</button>
-      <button class="subBtn" type="button" onclick="reportQuestion('${sanitize(id)}')" style="margin-top:16px;">通報</button>
+      <div class="vote-actions">
+        <button class="voteSubmitBtn" type="button" onclick="voteAndReload('${sanitize(id)}')">投票する</button>
+        <button class="reportBtn" type="button" onclick="reportQuestion('${sanitize(id)}')">通報</button>
+      </div>
     </section>
   `;
 }
@@ -385,7 +387,6 @@ function renderOptionBars(options, q, total = 0) {
     return `
       <div class="stat-row result-option-row">
         <div class="stat-label">
-          <span class="result-rank">${index + 1}</span>
           <strong>${sanitize(optionText(option))}</strong>
           <span class="result-percent">${percent}%</span>
         </div>
