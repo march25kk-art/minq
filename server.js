@@ -765,21 +765,13 @@ const handleVote = async (req, res) => {
       return true;
     });
 
-    if (!didVote) {
-      return res.status(400).json({ error: true, message: "既に投票済みです" });
-    }
+    // 投票保存後にクライアント側の通信が切れた場合も、再試行を成功扱いにする。
+    if (!didVote) return res.json({ success: true, alreadyVoted: true });
 
     CACHE_STATS.delete(id);
     DETAIL_CACHE.delete(id);
     invalidateListCache();
-    res.json({
-      success: true,
-      comment: {
-        text,
-        name,
-        createdAt: timeStr
-      }
-    });
+    res.json({ success: true });
   } catch (err) {
     console.error("Vote error:", err);
     sendError(res, "投票の処理に失敗しました", 500);
@@ -870,7 +862,14 @@ const saveComment = async (req, res) => {
     DETAIL_CACHE.delete(String(id));
     invalidateListCache();
 
-    res.json({ success: true });
+    res.json({
+      success: true,
+      comment: {
+        text,
+        name,
+        createdAt: timeStr
+      }
+    });
   } catch (error) {
     console.error("Comment Save Error:", error);
     sendError(res, "コメントの投稿に失敗しました", 500);
