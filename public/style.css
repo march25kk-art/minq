@@ -544,6 +544,43 @@ main {
   gap: 34px;
 }
 
+.ad-placement {
+  display: none;
+}
+
+.ad-placement.is-enabled {
+  width: 100%;
+  min-height: 120px;
+  display: block;
+  padding: 18px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  text-align: center;
+}
+
+.ad-label {
+  display: block;
+  margin-bottom: 8px;
+  color: #92979d;
+  font-size: 10px;
+  letter-spacing: .08em;
+}
+
+.ad-placement-in-feed.is-enabled {
+  min-height: 150px;
+  margin: 18px 0;
+}
+
+.ad-placement-sidebar.is-enabled {
+  min-height: 280px;
+}
+
+.ad-placement-result.is-enabled {
+  min-height: 150px;
+  margin-top: 20px;
+}
+
 .side-card {
   padding: 26px;
   border: 1px solid var(--line);
@@ -1236,6 +1273,7 @@ select:focus {
   .brand-copy { display: none; }
   .content-grid { grid-template-columns: 1fr; }
   .sidebar { padding-top: 0; }
+  .ad-placement-sidebar { display: none !important; }
   .result-summary-grid { grid-template-columns: 1fr; }
   .result-age-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

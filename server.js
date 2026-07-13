@@ -37,6 +37,62 @@ app.get('/detail.html', (req, res) => {
   }
 });
 
+const normalizeAdSensePublisherId = value => {
+  const match = String(value || "").trim().match(/^(?:ca-)?pub-(\d{16})$/);
+  return match ? `ca-pub-${match[1]}` : "";
+};
+
+const normalizeAdSenseSlotId = value => {
+  const slot = String(value || "").trim();
+  return /^\d{5,20}$/.test(slot) ? slot : "";
+};
+
+const createAdSenseHeadScript = () => {
+  const client = normalizeAdSensePublisherId(process.env.ADSENSE_PUBLISHER_ID);
+  if (!client) return "";
+  return `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}" crossorigin="anonymous" data-minq-adsense="true"></script>`;
+};
+
+const injectAdSenseHeadScript = html => html.replace("<!-- ADSENSE_HEAD -->", createAdSenseHeadScript());
+
+// AdSenseのIDはリポジトリへ直書きせず、デプロイ先の環境変数から配信する。
+app.get("/adsense-config.js", (req, res) => {
+  const client = normalizeAdSensePublisherId(process.env.ADSENSE_PUBLISHER_ID);
+  const config = {
+    client,
+    slots: {
+      homeInFeed: normalizeAdSenseSlotId(process.env.ADSENSE_SLOT_HOME_INFEED),
+      homeSidebar: normalizeAdSenseSlotId(process.env.ADSENSE_SLOT_HOME_SIDEBAR),
+      resultInline: normalizeAdSenseSlotId(process.env.ADSENSE_SLOT_RESULT_INLINE)
+    },
+    testMode: process.env.ADSENSE_TEST_MODE === "true"
+  };
+
+  res
+    .type("application/javascript")
+    .set("Cache-Control", "no-store")
+    .send(`window.MINQ_ADSENSE_CONFIG = ${JSON.stringify(config)};`);
+});
+
+// publisher IDを設定すると、Googleが確認するads.txtも同じ値から生成される。
+app.get("/ads.txt", (req, res) => {
+  const client = normalizeAdSensePublisherId(process.env.ADSENSE_PUBLISHER_ID);
+  if (!client) return res.status(404).type("text/plain").send("Not configured\n");
+
+  res
+    .type("text/plain")
+    .set("Cache-Control", "public, max-age=3600")
+    .send(`google.com, ${client.replace("ca-", "")}, DIRECT, f08c47fec0942fa0\n`);
+});
+
+// トップページのHTMLソースにもGoogle公式の確認用スクリプトを出力する。
+app.get("/", (req, res) => {
+  const html = fs.readFileSync(path.join(__dirname, "public", "index.html"), "utf8");
+  res.send(injectAdSenseHeadScript(html));
+});
+
+app.get("/index.html", (req, res) => res.redirect(301, "/"));
+
 // ==========================================
 // 2. 新しい詳細ページ（/question）へのアクセスを正しく処理する設定
 // ==========================================
@@ -68,6 +124,7 @@ app.get("/question", async (req, res) => {
       path.join(__dirname, "public", "question.html"),
       "utf8"
     );
+    html = injectAdSenseHeadScript(html);
 
     const title = decodeStoredText(q.title);
     const description = decodeStoredText(q.description || q.title).slice(0, 160);

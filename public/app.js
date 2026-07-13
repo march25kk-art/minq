@@ -176,8 +176,14 @@ async function loadQuestions() {
     }
 
     const fragment = document.createDocumentFragment();
-    state.latestQuestions.forEach(q => fragment.appendChild(createQuestionCard(q)));
+    state.latestQuestions.forEach((q, index) => {
+      fragment.appendChild(createQuestionCard(q));
+      if (index === 3 && state.latestQuestions.length >= 5) {
+        fragment.appendChild(createAdPlacement("homeInFeed", "ad-placement-in-feed"));
+      }
+    });
     div.replaceChildren(fragment);
+    window.mountAdSenseAds?.(div);
     renderPopularQuestions(state.latestQuestions);
 
     const pageText = document.getElementById("pageText");
@@ -188,6 +194,14 @@ async function loadQuestions() {
     console.error(err);
     div.innerHTML = '<div class="empty-state">データの読み込みに失敗しました。</div>';
   }
+}
+
+function createAdPlacement(name, modifierClass = "") {
+  const placement = document.createElement("aside");
+  placement.className = `ad-placement ${modifierClass}`.trim();
+  placement.dataset.adPlacement = name;
+  placement.setAttribute("aria-label", "スポンサー広告");
+  return placement;
 }
 
 function createQuestionCard(q) {
@@ -560,6 +574,8 @@ function renderResultsScreen(div, q, id) {
       </div>
     </section>
 
+    <aside class="ad-placement ad-placement-result" data-ad-placement="resultInline" aria-label="スポンサー広告"></aside>
+
     <section class="resultCard result-wide-card">
       <h2>年代別の回答内訳</h2>
       <div class="age-grid result-age-grid">${renderAgeBreakdown(options, q)}</div>
@@ -589,6 +605,7 @@ function renderResultsScreen(div, q, id) {
       <button class="primary-btn" type="button" onclick="location.href='create.html'">質問を作成する <span>›</span></button>
     </section>
   `;
+  window.mountAdSenseAds?.(div);
 }
 
 async function writeShareClipboard(text) {

@@ -10,6 +10,7 @@
     gtag('js', new Date());
     gtag('config', 'G-FWPQD3EYNB');
   </script>
+  <!-- ADSENSE_HEAD -->
   <title>みんQ - アンケート詳細</title>
   <meta id="metaDescription" name="description" content="みんQでアンケートに投票しよう。">
   <link rel="canonical" id="canonical" href="">
@@ -19,7 +20,9 @@
   <meta property="og:description" id="ogDescription" content="みんQでアンケートに投票しよう。">
   <meta property="og:type" content="website">
   <meta property="og:url" id="ogUrl" content="">
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=9">
+  <script src="/adsense-config.js"></script>
+  <script src="adsense-loader.js?v=1" defer></script>
 </head>
 <body>
   <header class="question-header">
@@ -36,7 +39,17 @@
     <div class="loading-state">データを読み込み中...</div>
   </main>
 
-  <script src="app.js?v=8"></script>
+  <footer class="site-footer">
+    <nav>
+      <a href="terms.html">利用規約</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+      <a href="operator.html">運営者情報</a>
+      <a href="contact.html">お問い合わせ</a>
+    </nav>
+    <span>© 2026 みんQ</span>
+  </footer>
+
+  <script src="app.js?v=9"></script>
   <script>
     window.addEventListener("DOMContentLoaded", () => {
       loadCombinedQuestion();
