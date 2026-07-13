@@ -5,6 +5,7 @@ const { updateSitemap } = require('./generateSitemap');
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 
 const app = express();
 app.use(express.json({ limit: "32kb" }));
@@ -180,6 +181,9 @@ app.use(express.static("public", {
 // ===== 定数・環境設定 =====
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "march25kk";
 const PORT = Number(process.env.PORT || 3000);
+const CONTACT_EMAIL = "march25kk@gmail.com";
+const GMAIL_USER = String(process.env.GMAIL_USER || CONTACT_EMAIL).trim();
+const GMAIL_APP_PASSWORD = String(process.env.GMAIL_APP_PASSWORD || "").replace(/\s+/g, "");
 
 const UNANSWERED = "回答しない";
 const AGE_GROUPS = ["10代", "20代", "30代", "40代", "50代", "60代以上"];
@@ -314,6 +318,69 @@ const getCachedStats = (qId) => {
 };
 const setCachedStats = (qId, data) => CACHE_STATS.set(qId, { data, timestamp: Date.now() });
 const invalidateListCache = () => { listCache = { data: null, timestamp: 0 }; };
+
+let contactTransporter = null;
+const getContactTransporter = () => {
+  if (!GMAIL_APP_PASSWORD) return null;
+  if (!contactTransporter) {
+    contactTransporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: GMAIL_USER,
+        pass: GMAIL_APP_PASSWORD
+      }
+    });
+  }
+  return contactTransporter;
+};
+
+app.post("/contact", async (req, res) => {
+  const name = String(req.body?.name || "").trim().replace(/[\r\n]+/g, " ").slice(0, 80);
+  const email = String(req.body?.email || "").trim().slice(0, 254);
+  const message = String(req.body?.message || "").trim().slice(0, 4000);
+  const website = String(req.body?.website || "").trim();
+
+  // 非表示項目へ入力する単純なボットには、送信したように見せてメールを送らない。
+  if (website) return res.json({ ok: true, message: "お問い合わせを送信しました。" });
+  if (!name) return sendError(res, "お名前を入力してください。", 400);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return sendError(res, "有効なメールアドレスを入力してください。", 400);
+  }
+  if (message.length < 10) return sendError(res, "お問い合わせ内容を10文字以上で入力してください。", 400);
+
+  const ip = getIp(req);
+  if (!allowAction(ip, "contact", 5, 60 * 60 * 1000)) {
+    return sendError(res, "送信回数が多すぎます。時間をおいてから再度お試しください。", 429);
+  }
+
+  const transporter = getContactTransporter();
+  if (!transporter) {
+    return sendError(res, "現在メール送信の準備中です。時間をおいてから再度お試しください。", 503);
+  }
+
+  try {
+    await transporter.sendMail({
+      from: `みんQお問い合わせ <${GMAIL_USER}>`,
+      to: CONTACT_EMAIL,
+      replyTo: email,
+      subject: `【みんQ】お問い合わせ：${name}`,
+      text: [
+        "みんQのお問い合わせフォームから送信されました。",
+        "",
+        `お名前: ${name}`,
+        `メールアドレス: ${email}`,
+        `送信日時: ${nowJSTString()} JST`,
+        "",
+        "お問い合わせ内容:",
+        message
+      ].join("\n")
+    });
+    res.json({ ok: true, message: "お問い合わせを送信しました。" });
+  } catch (error) {
+    console.error("Contact email send failed:", error.message);
+    sendError(res, "送信に失敗しました。時間をおいてから再度お試しください。", 502);
+  }
+});
 
 const getAllQuestions = async () => {
   if (listCache.data && Date.now() - listCache.timestamp < LIST_CACHE_TTL) return listCache.data;

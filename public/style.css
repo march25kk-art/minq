@@ -1269,6 +1269,36 @@ select:focus {
   margin-top: 24px;
 }
 
+.contact-field {
+  display: block;
+  margin-top: 18px;
+  color: #343941;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.contact-field:first-child { margin-top: 0; }
+
+.contact-honeypot {
+  position: absolute !important;
+  left: -10000px !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+}
+
+.contact-status {
+  min-height: 1.6em;
+  margin: 14px 0 0 !important;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.contact-status.is-success { color: var(--green-dark); }
+.contact-status.is-error { color: #c83b3b; }
+.contactForm .submitBtn:disabled { cursor: wait; opacity: .65; }
+
 @media (max-width: 980px) {
   .brand-copy { display: none; }
   .content-grid { grid-template-columns: 1fr; }

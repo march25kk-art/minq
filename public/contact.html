@@ -11,7 +11,8 @@
     gtag('config', 'G-FWPQD3EYNB');
   </script>
   <title>お問い合わせ - みんQ</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=9">
+  <script src="contact.js?v=1" defer></script>
 </head>
 <body>
   <header>
@@ -24,13 +25,32 @@
     <article class="staticCard">
       <h1>お問い合わせ</h1>
       <p>不具合報告、削除依頼、その他のご連絡はこちらからお願いします。</p>
-      <form class="contactForm" onsubmit="event.preventDefault(); alert('お問い合わせ内容を受け付けました。'); this.reset();">
-        <input type="text" name="name" placeholder="お名前">
-        <input type="email" name="email" placeholder="メールアドレス">
-        <textarea name="message" placeholder="お問い合わせ内容"></textarea>
-        <button class="submitBtn" type="submit">送信する</button>
+      <form id="contactForm" class="contactForm">
+        <label class="contact-field">お名前
+          <input type="text" name="name" maxlength="80" autocomplete="name" required>
+        </label>
+        <label class="contact-field">メールアドレス
+          <input type="email" name="email" maxlength="254" autocomplete="email" required>
+        </label>
+        <label class="contact-field">お問い合わせ内容
+          <textarea name="message" minlength="10" maxlength="4000" required></textarea>
+        </label>
+        <label class="contact-honeypot" aria-hidden="true">ウェブサイト
+          <input type="text" name="website" tabindex="-1" autocomplete="off">
+        </label>
+        <button id="contactSubmit" class="submitBtn" type="submit">送信する</button>
+        <p id="contactStatus" class="contact-status" role="status" aria-live="polite"></p>
       </form>
     </article>
   </main>
+  <footer class="site-footer">
+    <nav>
+      <a href="terms.html">利用規約</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+      <a href="operator.html">運営者情報</a>
+      <a href="contact.html" aria-current="page">お問い合わせ</a>
+    </nav>
+    <span>© 2026 みんQ</span>
+  </footer>
 </body>
 </html>
