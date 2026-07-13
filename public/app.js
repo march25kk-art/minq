@@ -119,6 +119,13 @@ function renderTopTags(all = false) {
   tagArea.classList.toggle("expanded", all);
   tagArea.innerHTML = "";
 
+  const allButton = document.createElement("button");
+  allButton.type = "button";
+  allButton.className = `category${state.currentTag === "" ? " active" : ""}`;
+  allButton.textContent = "全体";
+  allButton.onclick = clearTag;
+  tagArea.appendChild(allButton);
+
   (all ? TAGS : TAGS.slice(0, 7)).forEach(tag => {
     const button = document.createElement("button");
     button.type = "button";
@@ -127,15 +134,6 @@ function renderTopTags(all = false) {
     button.onclick = () => searchTag(tag);
     tagArea.appendChild(button);
   });
-
-  if (state.currentTag) {
-    const clear = document.createElement("button");
-    clear.type = "button";
-    clear.className = "category";
-    clear.textContent = "絞り込み解除";
-    clear.onclick = clearTag;
-    tagArea.appendChild(clear);
-  }
 
   const toggleBtn = document.getElementById("toggleTagsBtn");
   if (toggleBtn) toggleBtn.textContent = all ? "閉じる" : "もっと見る ›";
