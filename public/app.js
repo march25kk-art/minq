@@ -161,7 +161,7 @@ async function loadQuestions() {
       search: state.currentSearch,
       tag: state.currentTag,
       sort: state.currentSort
-    })}`, { signal });
+    })}`, { signal, cache: "no-store" });
     const data = await res.json();
     if (data.error) throw new Error(data.message || "load failed");
 
@@ -660,7 +660,7 @@ async function voteAndReload(id) {
   });
   const data = await res.json();
   if (data.error) return alert(data.message || "投票に失敗しました。");
-  const q = await (await fetch(`/questions/${encodeURIComponent(id)}`)).json();
+  const q = await (await fetch(`/questions/${encodeURIComponent(id)}`, { cache: "no-store" })).json();
   renderResultsScreen(document.getElementById("questionArea") || document.getElementById("detail"), q, id);
 }
 
@@ -669,14 +669,70 @@ async function addCommentAndReload(id) {
   const name = document.getElementById("commentName")?.value.trim() || "";
   if (!text) return alert("コメントを入力してください。");
 
-  const res = await fetch(`/questions/${encodeURIComponent(id)}/comment`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, name, age: "回答しない", gender: "回答しない" })
-  });
-  const data = await res.json();
-  if (data.error) return alert(data.message || "コメント投稿に失敗しました。");
-  location.reload();
+  const button = document.querySelector(".comments-card .commentBtn");
+  if (button) {
+    button.disabled = true;
+    button.textContent = "投稿中...";
+  }
+
+  try {
+    const res = await fetch(`/questions/${encodeURIComponent(id)}/comment`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, name, age: "回答しない", gender: "回答しない" })
+    });
+    const data = await res.json();
+    if (data.error) return alert(data.message || "コメント投稿に失敗しました。");
+
+    appendPostedComment(data.comment || { text, name });
+    const textInput = document.getElementById("commentText");
+    const nameInput = document.getElementById("commentName");
+    if (textInput) textInput.value = "";
+    if (nameInput) nameInput.value = "";
+  } catch (error) {
+    console.error(error);
+    alert("コメント投稿に失敗しました。通信状態を確認して再度お試しください。");
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "投稿する";
+    }
+  }
+}
+
+function appendPostedComment(comment) {
+  const list = document.getElementById("commentList");
+  if (!list) return;
+
+  list.querySelector(".empty-comments")?.remove();
+  const number = list.querySelectorAll(".comment").length + 1;
+  const item = document.createElement("div");
+  item.className = "comment";
+
+  const avatar = document.createElement("span");
+  avatar.className = "comment-avatar";
+  avatar.textContent = String(number);
+
+  const body = document.createElement("div");
+  const author = document.createElement("div");
+  author.className = "comment-author";
+  author.append(document.createTextNode(comment.name || "みんQユーザー"));
+  const date = document.createElement("span");
+  date.textContent = comment.createdAt || "";
+  author.append(" ", date);
+
+  const message = document.createElement("p");
+  message.textContent = comment.text || "";
+  body.append(author, message);
+  item.append(avatar, body);
+  list.appendChild(item);
+
+  const countBadge = document.querySelector(".comments-card .result-card-heading .result-total");
+  const currentCount = Number.parseInt(countBadge?.textContent || "0", 10) || 0;
+  const updatedCount = currentCount + 1;
+  if (countBadge) countBadge.textContent = `${updatedCount}件`;
+  const metaComment = document.querySelector(".result-meta span:nth-child(2)");
+  if (metaComment) metaComment.textContent = `◇ ${updatedCount}コメント`;
 }
 
 async function reportQuestion(id) {

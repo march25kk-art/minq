@@ -480,7 +480,7 @@ const normalizeQuestionData = (data) => ({
 // 1. 質問一覧取得
 app.get("/questions", async (req, res) => {
   try {
-    res.set("Cache-Control", "public, max-age=5, stale-while-revalidate=15");
+    res.set("Cache-Control", "no-cache");
     const page = Math.max(Number(req.query.page || 1), 1);
     const limit = 30;
     const keyword = String(req.query.search || "");
@@ -644,7 +644,7 @@ app.get("/questions/:id", async (req, res) => {
     const { id } = req.params;
     const cachedDetail = DETAIL_CACHE.get(id);
     if (cachedDetail && Date.now() - cachedDetail.timestamp < DETAIL_CACHE_TTL) {
-      res.set("Cache-Control", "public, max-age=5, stale-while-revalidate=10");
+      res.set("Cache-Control", "no-cache");
       return res.json(cachedDetail.data);
     }
     const doc = await firestore.collection(Q_COLL).doc(id).get();
@@ -667,7 +667,7 @@ app.get("/questions/:id", async (req, res) => {
 
     const detailData = { ...q, ...statsData };
     DETAIL_CACHE.set(id, { data: detailData, timestamp: Date.now() });
-    res.set("Cache-Control", "public, max-age=5, stale-while-revalidate=10");
+    res.set("Cache-Control", "no-cache");
     res.json(detailData);
   } catch (error) {
     console.error("Firestore error:", error);
@@ -772,7 +772,14 @@ const handleVote = async (req, res) => {
     CACHE_STATS.delete(id);
     DETAIL_CACHE.delete(id);
     invalidateListCache();
-    res.json({ success: true });
+    res.json({
+      success: true,
+      comment: {
+        text,
+        name,
+        createdAt: timeStr
+      }
+    });
   } catch (err) {
     console.error("Vote error:", err);
     sendError(res, "投票の処理に失敗しました", 500);

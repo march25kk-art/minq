@@ -1,4 +1,4 @@
-const CACHE_NAME = "minq-shell-v4";
+const CACHE_NAME = "minq-shell-v5";
 const APP_SHELL = [
   "/",
   "/style.css",
@@ -36,8 +36,24 @@ self.addEventListener("fetch", event => {
 
   if (!isShellAsset && !isNavigation && !isQuestionList) return;
 
-  // CSS・JS・一覧はキャッシュを即表示し、裏側で最新版へ更新する。
-  if (isShellAsset || isQuestionList) {
+  // 投稿直後の内容を確実に反映するため、質問一覧はネットワークを優先する。
+  if (isQuestionList) {
+    event.respondWith(
+      fetch(new Request(event.request, { cache: "no-store" }))
+        .then(async response => {
+          if (response.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            await cache.put(event.request, response.clone());
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // CSS・JSはキャッシュを即表示し、裏側で最新版へ更新する。
+  if (isShellAsset) {
     const cachePromise = caches.open(CACHE_NAME);
     const cachedPromise = cachePromise.then(cache => cache.match(event.request));
     const networkPromise = fetch(event.request).then(async response => {
