@@ -42,24 +42,25 @@ const normalizeAdSensePublisherId = value => {
   return match ? `ca-pub-${match[1]}` : "";
 };
 
+const ADSENSE_PUBLISHER_ID = normalizeAdSensePublisherId(
+  process.env.ADSENSE_PUBLISHER_ID
+) || "ca-pub-3394319286074054";
+
 const normalizeAdSenseSlotId = value => {
   const slot = String(value || "").trim();
   return /^\d{5,20}$/.test(slot) ? slot : "";
 };
 
 const createAdSenseHeadScript = () => {
-  const client = normalizeAdSensePublisherId(process.env.ADSENSE_PUBLISHER_ID);
-  if (!client) return "";
-  return `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}" crossorigin="anonymous" data-minq-adsense="true"></script>`;
+  return `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_PUBLISHER_ID}" crossorigin="anonymous" data-minq-adsense="true"></script>`;
 };
 
 const injectAdSenseHeadScript = html => html.replace("<!-- ADSENSE_HEAD -->", createAdSenseHeadScript());
 
 // AdSenseのIDはリポジトリへ直書きせず、デプロイ先の環境変数から配信する。
 app.get("/adsense-config.js", (req, res) => {
-  const client = normalizeAdSensePublisherId(process.env.ADSENSE_PUBLISHER_ID);
   const config = {
-    client,
+    client: ADSENSE_PUBLISHER_ID,
     slots: {
       homeInFeed: normalizeAdSenseSlotId(process.env.ADSENSE_SLOT_HOME_INFEED),
       homeSidebar: normalizeAdSenseSlotId(process.env.ADSENSE_SLOT_HOME_SIDEBAR),
@@ -76,13 +77,10 @@ app.get("/adsense-config.js", (req, res) => {
 
 // publisher IDを設定すると、Googleが確認するads.txtも同じ値から生成される。
 app.get("/ads.txt", (req, res) => {
-  const client = normalizeAdSensePublisherId(process.env.ADSENSE_PUBLISHER_ID);
-  if (!client) return res.status(404).type("text/plain").send("Not configured\n");
-
   res
     .type("text/plain")
     .set("Cache-Control", "public, max-age=3600")
-    .send(`google.com, ${client.replace("ca-", "")}, DIRECT, f08c47fec0942fa0\n`);
+    .send(`google.com, ${ADSENSE_PUBLISHER_ID.replace("ca-", "")}, DIRECT, f08c47fec0942fa0\n`);
 });
 
 // トップページのHTMLソースにもGoogle公式の確認用スクリプトを出力する。

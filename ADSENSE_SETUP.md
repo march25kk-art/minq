@@ -1,15 +1,14 @@
 # Google AdSense setup
 
-広告コードと `ads.txt` は、デプロイ先の環境変数から生成されます。IDをソースコードへ直書きする必要はありません。
+パブリッシャーID `ca-pub-3394319286074054` は設定済みです。広告コードと `ads.txt` は、このIDからサーバーが自動生成します。
 
 ## Required environment variables
 
-- `ADSENSE_PUBLISHER_ID`: `ca-pub-` から始まる16桁のパブリッシャーID
 - `ADSENSE_SLOT_HOME_INFEED`: トップページの一覧内広告ユニットID
 - `ADSENSE_SLOT_HOME_SIDEBAR`: PC版トップページのサイドバー広告ユニットID
 - `ADSENSE_SLOT_RESULT_INLINE`: 回答結果ページのインライン広告ユニットID
 
-広告ユニットIDが設定されていない枠はHTML上で非表示になります。パブリッシャーIDが未設定の場合は、外部のAdSenseスクリプトも読み込まれません。
+広告ユニットIDが設定されていない枠はHTML上で非表示になります。別のパブリッシャーIDへ切り替える場合のみ、`ADSENSE_PUBLISHER_ID` 環境変数を設定してください。
 
 ## Verification
 
