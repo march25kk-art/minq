@@ -53,7 +53,8 @@ button { cursor: pointer; }
 .mbti-eyebrow { position: relative; display: inline-flex; align-items: center; gap: 7px; padding: 8px 15px; border: 1px solid #e7dfff; border-radius: 24px; color: #5e43b2; background: #f5f1ff; font-size: 13px; font-weight: 850; }
 .mbti-eyebrow::before { content: "✓"; width: 18px; height: 18px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #7056c7; font-size: 11px; }
 .mbti-symbol { width: 94px; height: 94px; margin: 25px auto 20px; display: grid; place-items: center; border-radius: 30px; color: #fff; background: linear-gradient(145deg, #8b72df, #5b40b5); box-shadow: 0 18px 36px rgba(88, 64, 170, .28), inset 0 1px rgba(255, 255, 255, .25); font-size: 38px; font-weight: 900; transform: rotate(-3deg); }
-.mbti-start h1, .mbti-result h1 { margin: 0; font-size: clamp(30px, 6vw, 46px); }
+.mbti-start h1 { margin: 0; font-size: clamp(26px, 4.5vw, 38px); }
+.mbti-result h1 { margin: 0; font-size: clamp(30px, 6vw, 46px); }
 .mbti-lead { max-width: 680px; margin: 18px auto 22px; color: var(--muted); font-size: 17px; line-height: 1.75; }
 .mbti-lead span { display: block; }
 .mbti-feature-row { margin: 0 0 30px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
