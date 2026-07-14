@@ -11,6 +11,14 @@ async function updateSitemap() {
     
     const sitemap = new SitemapStream({ hostname: 'https://minnano-question.com' });
 
+    [
+      { url: '/', priority: 1 },
+      { url: '/mbti.html', priority: 0.8 },
+      { url: '/love-diagnosis', priority: 0.8 },
+      { url: '/hsp-diagnosis', priority: 0.8 },
+      { url: '/stress-diagnosis', priority: 0.8 }
+    ].forEach(page => sitemap.write({ ...page, changefreq: 'weekly' }));
+
     snapshot.forEach(doc => {
       // doc.id（Firestoreの文字列ID）を使ってURLを生成
       sitemap.write({

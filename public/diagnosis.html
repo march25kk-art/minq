@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FWPQD3EYNB"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-FWPQD3EYNB');</script>
+  <!-- ADSENSE_HEAD -->
+  <meta name="description" content="{{DESCRIPTION}}">
+  <link rel="canonical" href="https://minnano-question.com/{{SLUG}}">
+  <meta property="og:title" content="{{TITLE}} | みんQ">
+  <meta property="og:description" content="{{DESCRIPTION}}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://minnano-question.com/{{SLUG}}">
+  <meta property="og:image" content="https://minnano-question.com/icon-512.png">
+  <title>{{TITLE}} | みんQ</title>
+  <meta name="theme-color" content="{{THEME}}">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png">
+  <link rel="stylesheet" href="/style.css?v=14">
+  <script src="/adsense-config.js"></script>
+  <script src="/adsense-loader.js?v=1" defer></script>
+  <script src="/diagnosis.js?v=1" defer></script>
+</head>
+<body class="mbti-page diagnosis-page" data-diagnosis="{{KIND}}">
+  <header class="site-header"><div class="header-inner">
+    <a class="site-logo" href="/" aria-label="みんQ ホーム"><span>みん</span><b>Q</b></a>
+    <a class="home-link" href="/"><span aria-hidden="true">⌂</span> アンケート一覧へ</a>
+  </div></header>
+
+  <main class="mbti-main diagnosis-main">
+    <section id="diagnosisStart" class="mbti-card mbti-start diagnosis-start">
+      <span class="mbti-eyebrow">無料・登録不要</span>
+      <div id="diagnosisSymbol" class="mbti-symbol diagnosis-symbol" aria-hidden="true"></div>
+      <h1 id="diagnosisTitle"></h1>
+      <p id="diagnosisLead" class="mbti-lead"></p>
+      <div class="mbti-feature-row"><span>約3分</span><span>全20問</span><span>結果をシェア</span></div>
+      <div class="mbti-profile-fields">
+        <label><span>性別</span><select id="diagnosisGender"><option>男性</option><option>女性</option><option>回答しない</option></select></label>
+        <label><span>年代</span><select id="diagnosisAge"><option>10代</option><option>20代</option><option>30代</option><option>40代</option><option>50代</option><option>60代以上</option><option>回答しない</option></select></label>
+      </div>
+      <div class="mbti-start-actions">
+        <button id="diagnosisStartButton" class="primary-btn mbti-main-button" type="button">診断をはじめる <span>›</span></button>
+        <button id="diagnosisIntroShareButton" class="mbti-intro-share" type="button"><span aria-hidden="true">↗</span> 診断をシェアする</button>
+      </div>
+      <p class="mbti-note">深く考えすぎず、普段の自分に近い回答を選んでください。</p>
+    </section>
+
+    <section id="diagnosisQuiz" class="mbti-card mbti-quiz" hidden aria-live="polite">
+      <div class="mbti-progress-head"><span id="diagnosisCount">1 / 20</span><span id="diagnosisPercent">5%</span></div>
+      <div class="mbti-progress" aria-hidden="true"><span id="diagnosisProgressBar"></span></div>
+      <h1 id="diagnosisQuestion"></h1>
+      <div id="diagnosisAnswers" class="mbti-answers"></div>
+      <button id="diagnosisBackButton" class="mbti-back" type="button">‹ 前の質問に戻る</button>
+    </section>
+
+    <section id="diagnosisResult" class="mbti-card mbti-result diagnosis-result" hidden aria-live="polite">
+      <p class="mbti-result-kicker">あなたの診断結果は</p>
+      <div id="diagnosisType" class="diagnosis-type"></div>
+      <h1 id="diagnosisTypeName"></h1>
+      <p id="diagnosisCatch" class="mbti-result-catch"></p>
+      <div id="diagnosisTraits" class="mbti-traits"></div>
+      <div id="diagnosisDescription" class="mbti-description"></div>
+      <div class="mbti-result-actions">
+        <button id="diagnosisShareButton" class="primary-btn" type="button">結果をシェア</button>
+        <button id="diagnosisRetryButton" class="mbti-secondary-button" type="button">もう一度診断する</button>
+      </div>
+      <section class="mbti-statistics" aria-labelledby="diagnosisStatsTitle">
+        <h2 id="diagnosisStatsTitle">みんなの診断結果</h2>
+        <p id="diagnosisStatsStatus" class="mbti-stats-status">統計を読み込んでいます...</p>
+        <div id="diagnosisStats"></div>
+      </section>
+    </section>
+
+    <p id="diagnosisDisclaimer" class="mbti-disclaimer"></p>
+    <aside class="ad-placement ad-placement-result" data-ad-placement="resultInline" aria-label="スポンサー広告"></aside>
+  </main>
+  <footer class="site-footer"><nav><a href="terms.html">利用規約</a><a href="privacy.html">プライバシーポリシー</a><a href="operator.html">運営者情報</a><a href="contact.html">お問い合わせ</a></nav><span>© 2026 みんQ</span></footer>
+</body>
+</html>

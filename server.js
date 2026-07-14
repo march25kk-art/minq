@@ -92,6 +92,25 @@ app.get("/", (req, res) => {
 
 app.get("/index.html", (req, res) => res.redirect(301, "/"));
 
+const DIAGNOSIS_PAGES = {
+  "/love-diagnosis": { kind: "love", slug: "love-diagnosis", title: "恋愛価値観診断", description: "20の質問から、恋愛で大切にしている価値観や関係の築き方を診断します。", theme: "#e85b8b" },
+  "/hsp-diagnosis": { kind: "hsp", slug: "hsp-diagnosis", title: "HSP傾向診断", description: "刺激への敏感さや考え方の傾向を20の質問からチェックする簡易診断です。", theme: "#765ac8" },
+  "/stress-diagnosis": { kind: "stress", slug: "stress-diagnosis", title: "ストレス耐性診断", description: "ストレスへの向き合い方と回復力の傾向を20の質問からチェックします。", theme: "#168f75" }
+};
+
+Object.entries(DIAGNOSIS_PAGES).forEach(([route, page]) => {
+  app.get([route, `${route}.html`], (_req, res) => {
+    const html = fs.readFileSync(path.join(__dirname, "public", "diagnosis.html"), "utf8")
+      .replaceAll("{{KIND}}", page.kind)
+      .replaceAll("{{SLUG}}", page.slug)
+      .replaceAll("{{TITLE}}", page.title)
+      .replaceAll("{{DESCRIPTION}}", page.description)
+      .replaceAll("{{THEME}}", page.theme);
+    res.send(injectAdSenseHeadScript(html));
+  });
+});
+app.get("/diagnosis.html", (_req, res) => res.redirect(302, "/"));
+
 // ==========================================
 // 2. 新しい詳細ページ（/question）へのアクセスを正しく処理する設定
 // ==========================================
@@ -202,6 +221,7 @@ const V_COLL = IS_PRODUCTION ? 'votes' : 'votes_dev';
 const C_COLL = IS_PRODUCTION ? 'comments' : 'comments_dev';
 const R_COLL = IS_PRODUCTION ? 'reportsLog' : 'reportsLog_dev';
 const MBTI_COLL = IS_PRODUCTION ? 'mbtiResults' : 'mbtiResults_dev';
+const DIAGNOSIS_COLL = IS_PRODUCTION ? 'diagnosisResults' : 'diagnosisResults_dev';
 
 // ===== キャッシュ・メモリ管理 =====
 const CACHE_STATS = new Map();
@@ -213,6 +233,11 @@ let listCache = { data: null, timestamp: 0 };
 const COMMENTS_LIMIT = 100;
 const VOTES_STATS_LIMIT = 5000;
 const MBTI_TYPES = ["INTJ", "INTP", "ENTJ", "ENTP", "INFJ", "INFP", "ENFJ", "ENFP", "ISTJ", "ISFJ", "ESTJ", "ESFJ", "ISTP", "ISFP", "ESTP", "ESFP"];
+const DIAGNOSIS_TYPES = {
+  love: ["security", "passion", "independent", "devotion"],
+  hsp: ["low", "mild", "high", "veryHigh"],
+  stress: ["care", "sensitive", "balanced", "resilient"]
+};
 
 const questionCooldown = {};
 const commentCooldown = {};
@@ -921,6 +946,56 @@ app.get("/mbti/stats", async (_req, res) => {
     });
   } catch (error) {
     console.error("MBTI stats load failed:", error);
+    sendError(res, "診断結果の統計を取得できませんでした", 500);
+  }
+});
+
+app.post("/diagnosis/result", async (req, res) => {
+  const kind = String(req.body?.kind || "");
+  const type = String(req.body?.type || "");
+  const gender = String(req.body?.gender || UNANSWERED);
+  const age = normalizeAge(String(req.body?.age || UNANSWERED));
+  const validGender = [...GENDER_ALIASES.male, ...GENDER_ALIASES.female, UNANSWERED].includes(gender);
+  const validAge = [...AGE_GROUPS, UNANSWERED].includes(age);
+
+  if (!DIAGNOSIS_TYPES[kind]?.includes(type) || !validGender || !validAge) {
+    return sendError(res, "診断結果を保存できませんでした", 400);
+  }
+
+  try {
+    await firestore.collection(DIAGNOSIS_COLL).add({ kind, type, gender, age, createdAt: new Date() });
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Diagnosis result save failed:", error);
+    sendError(res, "診断結果を保存できませんでした", 500);
+  }
+});
+
+app.get("/diagnosis/stats/:kind", async (req, res) => {
+  const kind = String(req.params.kind || "");
+  const types = DIAGNOSIS_TYPES[kind];
+  if (!types) return sendError(res, "診断が見つかりません", 404);
+
+  try {
+    const snapshot = await firestore.collection(DIAGNOSIS_COLL).limit(VOTES_STATS_LIMIT).get();
+    const rows = snapshot.docs.map(doc => doc.data()).filter(row => row.kind === kind && types.includes(row.type));
+    const distribution = filteredRows => {
+      const counts = types.map(type => filteredRows.filter(row => row.type === type).length);
+      const percentages = calculatePercentages(counts);
+      return types.map((type, index) => ({ type, votes: counts[index], percent: percentages[index] }));
+    };
+
+    res.set("Cache-Control", "no-store").json({
+      total: rows.length,
+      overall: distribution(rows),
+      genders: {
+        male: distribution(rows.filter(row => GENDER_ALIASES.male.includes(row.gender))),
+        female: distribution(rows.filter(row => GENDER_ALIASES.female.includes(row.gender)))
+      },
+      ages: Object.fromEntries(AGE_GROUPS.map(age => [age, distribution(rows.filter(row => normalizeAge(row.age) === age))]))
+    });
+  } catch (error) {
+    console.error("Diagnosis stats load failed:", error);
     sendError(res, "診断結果の統計を取得できませんでした", 500);
   }
 });
