@@ -42,9 +42,9 @@ const typeData = {
   ESFP: ["エンターテイナー", "場を明るくするムードメーカー", ["陽気", "親しみやすい", "柔軟"], "人と一緒に今を楽しみ、自然体の魅力で場を明るくするタイプ。周囲の気持ちに敏感で、実際的な助けも惜しみません。", "人との交流が多く、楽しさや手応えがある環境"]
 };
 
-const axisNames = { "E/I": "エネルギーの向き", "S/N": "ものの見方", "T/F": "判断のしかた", "J/P": "外界への接し方" };
 let current = 0;
 let answers = [];
+let profile = { gender: "回答しない", age: "回答しない" };
 
 const $ = id => document.getElementById(id);
 
@@ -56,6 +56,10 @@ function show(view) {
 function startQuiz() {
   current = 0;
   answers = [];
+  profile = {
+    gender: $("mbtiGender").value,
+    age: $("mbtiAge").value
+  };
   show("mbtiQuiz");
   renderQuestion();
 }
@@ -67,7 +71,6 @@ function renderQuestion() {
   $("mbtiCount").textContent = `${displayNumber} / ${questions.length}`;
   $("mbtiPercent").textContent = `${percent}%`;
   $("mbtiProgressBar").style.width = `${percent}%`;
-  $("mbtiAxis").textContent = axisNames[q.axis];
   $("mbtiQuestion").textContent = q.text;
   $("mbtiAnswers").replaceChildren(...q.a.map((label, index) => {
     const button = document.createElement("button");
@@ -107,7 +110,7 @@ function getResult() {
   return { type, counts, pairs };
 }
 
-function renderResult() {
+async function renderResult() {
   const { type, counts, pairs } = getResult();
   const [name, catchText, traits, description, environment] = typeData[type];
   $("mbtiType").textContent = type;
@@ -131,7 +134,7 @@ function renderResult() {
     const leftPercent = Math.round((counts[left] / total) * 100);
     const row = document.createElement("div");
     row.className = "mbti-scale";
-    row.innerHTML = `<div><b>${left} ${leftPercent}%</b><span>${axisNames[`${left}/${right}`]}</span><b>${100 - leftPercent}% ${right}</b></div><div class="mbti-scale-track"><span></span></div>`;
+    row.innerHTML = `<div><b>${left} ${leftPercent}%</b><span></span><b>${100 - leftPercent}% ${right}</b></div><div class="mbti-scale-track"><span></span></div>`;
     row.querySelector(".mbti-scale-track span").style.width = `${leftPercent}%`;
     return row;
   }));
@@ -139,6 +142,55 @@ function renderResult() {
   $("mbtiShareButton").dataset.name = name;
   show("mbtiResult");
   if (typeof gtag === "function") gtag("event", "mbti_complete", { mbti_type: type });
+  await saveResultAndLoadStats(type);
+}
+
+function statsRows(rows) {
+  return `<div class="mbti-stats-grid">${rows.map(row => `
+    <div class="mbti-stat-row">
+      <span>${row.type}</span>
+      <div class="mbti-stat-bar" aria-hidden="true"><span style="width:${row.percent}%"></span></div>
+      <span>${row.percent}%</span>
+    </div>`).join("")}</div>`;
+}
+
+function statsSection(title, rows) {
+  return `<section class="mbti-stats-section"><h3>${title}</h3>${statsRows(rows)}</section>`;
+}
+
+function renderStats(stats) {
+  $("mbtiStatsStatus").textContent = stats.total ? `回答数 ${stats.total}件` : "まだ診断結果がありません。";
+  $("mbtiStats").innerHTML = `
+    ${statsSection("全体", stats.overall)}
+    <div class="mbti-stats-demographics">
+      ${statsSection("男性", stats.genders.male)}
+      ${statsSection("女性", stats.genders.female)}
+    </div>
+    <div class="mbti-stats-demographics">
+      ${Object.entries(stats.ages).map(([age, rows]) => statsSection(age, rows)).join("")}
+    </div>`;
+}
+
+async function saveResultAndLoadStats(type) {
+  $("mbtiStatsStatus").textContent = "統計を読み込んでいます...";
+  $("mbtiStats").innerHTML = "";
+  try {
+    const saveResponse = await fetch("/mbti/result", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, ...profile })
+    });
+    const saved = await saveResponse.json();
+    if (!saveResponse.ok || saved.error) throw new Error(saved.message || "save failed");
+
+    const statsResponse = await fetch("/mbti/stats", { cache: "no-store" });
+    const stats = await statsResponse.json();
+    if (!statsResponse.ok || stats.error) throw new Error(stats.message || "load failed");
+    renderStats(stats);
+  } catch (error) {
+    console.error("MBTI statistics failed:", error);
+    $("mbtiStatsStatus").textContent = "統計を読み込めませんでした。時間をおいて再度お試しください。";
+  }
 }
 
 async function shareResult() {

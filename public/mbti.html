@@ -23,10 +23,10 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png">
-  <link rel="stylesheet" href="style.css?v=10">
+  <link rel="stylesheet" href="style.css?v=11">
   <script src="/adsense-config.js"></script>
   <script src="adsense-loader.js?v=1" defer></script>
-  <script src="mbti.js?v=1" defer></script>
+  <script src="mbti.js?v=2" defer></script>
 </head>
 <body class="mbti-page">
   <header class="site-header">
@@ -45,6 +45,10 @@
       <div class="mbti-feature-row">
         <span>約3分</span><span>全20問</span><span>結果をシェア</span>
       </div>
+      <div class="mbti-profile-fields">
+        <label><span>性別</span><select id="mbtiGender"><option>男性</option><option>女性</option><option>回答しない</option></select></label>
+        <label><span>年代</span><select id="mbtiAge"><option>10代</option><option>20代</option><option>30代</option><option>40代</option><option>50代</option><option>60代以上</option><option>回答しない</option></select></label>
+      </div>
       <button id="mbtiStartButton" class="primary-btn mbti-main-button" type="button">診断をはじめる <span>›</span></button>
       <p class="mbti-note">深く考えすぎず、普段の自分に近い方を選んでください。</p>
     </section>
@@ -52,7 +56,6 @@
     <section id="mbtiQuiz" class="mbti-card mbti-quiz" hidden aria-live="polite">
       <div class="mbti-progress-head"><span id="mbtiCount">1 / 20</span><span id="mbtiPercent">5%</span></div>
       <div class="mbti-progress" aria-hidden="true"><span id="mbtiProgressBar"></span></div>
-      <p id="mbtiAxis" class="mbti-axis"></p>
       <h1 id="mbtiQuestion"></h1>
       <div id="mbtiAnswers" class="mbti-answers"></div>
       <button id="mbtiBackButton" class="mbti-back" type="button">‹ 前の質問に戻る</button>
@@ -71,6 +74,11 @@
         <button id="mbtiShareButton" class="primary-btn" type="button">結果をシェア</button>
         <button id="mbtiRetryButton" class="mbti-secondary-button" type="button">もう一度診断する</button>
       </div>
+      <section class="mbti-statistics" aria-labelledby="mbtiStatsTitle">
+        <h2 id="mbtiStatsTitle">みんなの性格診断結果</h2>
+        <p id="mbtiStatsStatus" class="mbti-stats-status">統計を読み込んでいます...</p>
+        <div id="mbtiStats"></div>
+      </section>
     </section>
 
     <p class="mbti-disclaimer">この診断は自己理解を楽しむための簡易コンテンツです。MBTI®の公式検査や、医学的・心理学的な診断ではありません。MBTIはThe Myers-Briggs Companyの登録商標です。</p>
