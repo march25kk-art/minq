@@ -201,6 +201,7 @@ const Q_COLL = IS_PRODUCTION ? 'questions' : 'questions_dev';
 const V_COLL = IS_PRODUCTION ? 'votes' : 'votes_dev';
 const C_COLL = IS_PRODUCTION ? 'comments' : 'comments_dev';
 const R_COLL = IS_PRODUCTION ? 'reportsLog' : 'reportsLog_dev';
+const MBTI_COLL = IS_PRODUCTION ? 'mbtiResults' : 'mbtiResults_dev';
 
 // ===== キャッシュ・メモリ管理 =====
 const CACHE_STATS = new Map();
@@ -211,6 +212,7 @@ const LIST_CACHE_TTL = 15000;
 let listCache = { data: null, timestamp: 0 };
 const COMMENTS_LIMIT = 100;
 const VOTES_STATS_LIMIT = 5000;
+const MBTI_TYPES = ["INTJ", "INTP", "ENTJ", "ENTP", "INFJ", "INFP", "ENFJ", "ENFP", "ISTJ", "ISFJ", "ESTJ", "ESFJ", "ISTP", "ISFP", "ESTP", "ESFP"];
 
 const questionCooldown = {};
 const commentCooldown = {};
@@ -876,6 +878,52 @@ const saveComment = async (req, res) => {
   }
 };
 app.post(["/comment", "/questions/:id/comment"], saveComment);
+
+// 性格診断の回答保存と、全体・属性別のタイプ割合
+app.post("/mbti/result", async (req, res) => {
+  const type = String(req.body?.type || "").toUpperCase();
+  const gender = String(req.body?.gender || UNANSWERED);
+  const age = normalizeAge(String(req.body?.age || UNANSWERED));
+  const validGender = [...GENDER_ALIASES.male, ...GENDER_ALIASES.female, UNANSWERED].includes(gender);
+  const validAge = [...AGE_GROUPS, UNANSWERED].includes(age);
+
+  if (!MBTI_TYPES.includes(type) || !validGender || !validAge) {
+    return sendError(res, "診断結果を保存できませんでした", 400);
+  }
+
+  try {
+    await firestore.collection(MBTI_COLL).add({ type, gender, age, createdAt: new Date() });
+    res.json({ success: true });
+  } catch (error) {
+    console.error("MBTI result save failed:", error);
+    sendError(res, "診断結果を保存できませんでした", 500);
+  }
+});
+
+app.get("/mbti/stats", async (_req, res) => {
+  try {
+    const snapshot = await firestore.collection(MBTI_COLL).limit(VOTES_STATS_LIMIT).get();
+    const rows = snapshot.docs.map(doc => doc.data()).filter(row => MBTI_TYPES.includes(row.type));
+    const distribution = filteredRows => {
+      const counts = MBTI_TYPES.map(type => filteredRows.filter(row => row.type === type).length);
+      const percentages = calculatePercentages(counts);
+      return MBTI_TYPES.map((type, index) => ({ type, votes: counts[index], percent: percentages[index] }));
+    };
+
+    res.set("Cache-Control", "no-store").json({
+      total: rows.length,
+      overall: distribution(rows),
+      genders: {
+        male: distribution(rows.filter(row => GENDER_ALIASES.male.includes(row.gender))),
+        female: distribution(rows.filter(row => GENDER_ALIASES.female.includes(row.gender)))
+      },
+      ages: Object.fromEntries(AGE_GROUPS.map(age => [age, distribution(rows.filter(row => normalizeAge(row.age) === age))]))
+    });
+  } catch (error) {
+    console.error("MBTI stats load failed:", error);
+    sendError(res, "診断結果の統計を取得できませんでした", 500);
+  }
+});
 
 // 9. 通報処理
 app.post("/report", async (req, res) => {
