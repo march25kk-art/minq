@@ -23,10 +23,10 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png">
-  <link rel="stylesheet" href="style.css?v=11">
+  <link rel="stylesheet" href="style.css?v=13">
   <script src="/adsense-config.js"></script>
   <script src="adsense-loader.js?v=1" defer></script>
-  <script src="mbti.js?v=2" defer></script>
+  <script src="mbti.js?v=4" defer></script>
 </head>
 <body class="mbti-page">
   <header class="site-header">
@@ -41,7 +41,7 @@
       <span class="mbti-eyebrow">無料・登録不要</span>
       <div class="mbti-symbol" aria-hidden="true">16</div>
       <h1>16タイプ性格診断</h1>
-      <p class="mbti-lead">20の質問から、あなたの考え方や行動の傾向を4つの軸で読み解きます。</p>
+      <p class="mbti-lead"><span>20の質問から、あなたの考え方や行動の傾向を</span><span>4つの軸で読み解きます。</span></p>
       <div class="mbti-feature-row">
         <span>約3分</span><span>全20問</span><span>結果をシェア</span>
       </div>
@@ -49,7 +49,10 @@
         <label><span>性別</span><select id="mbtiGender"><option>男性</option><option>女性</option><option>回答しない</option></select></label>
         <label><span>年代</span><select id="mbtiAge"><option>10代</option><option>20代</option><option>30代</option><option>40代</option><option>50代</option><option>60代以上</option><option>回答しない</option></select></label>
       </div>
-      <button id="mbtiStartButton" class="primary-btn mbti-main-button" type="button">診断をはじめる <span>›</span></button>
+      <div class="mbti-start-actions">
+        <button id="mbtiStartButton" class="primary-btn mbti-main-button" type="button">診断をはじめる <span>›</span></button>
+        <button id="mbtiIntroShareButton" class="mbti-intro-share" type="button"><span aria-hidden="true">↗</span> 診断をシェアする</button>
+      </div>
       <p class="mbti-note">深く考えすぎず、普段の自分に近い方を選んでください。</p>
     </section>
 

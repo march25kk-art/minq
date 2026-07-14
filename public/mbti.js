@@ -148,7 +148,7 @@ async function renderResult() {
 function statsRows(rows) {
   return `<div class="mbti-stats-grid">${rows.map(row => `
     <div class="mbti-stat-row">
-      <span>${row.type}</span>
+      <span>${row.type}（${typeData[row.type]?.[0] || ""}）</span>
       <div class="mbti-stat-bar" aria-hidden="true"><span style="width:${row.percent}%"></span></div>
       <span>${row.percent}%</span>
     </div>`).join("")}</div>`;
@@ -211,7 +211,25 @@ async function shareResult() {
   }
 }
 
+async function shareDiagnosis() {
+  const button = $("mbtiIntroShareButton");
+  const text = "20の質問でわかる、みんQの16タイプ性格診断をやってみよう！";
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: "16タイプ性格診断 | みんQ", text, url: location.href });
+    } else {
+      await navigator.clipboard.writeText(`${text}\n${location.href}`);
+      const original = button.textContent;
+      button.textContent = "リンクをコピーしました";
+      setTimeout(() => { button.textContent = original; }, 1800);
+    }
+  } catch (error) {
+    if (error.name !== "AbortError") location.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(location.href)}`;
+  }
+}
+
 $("mbtiStartButton").addEventListener("click", startQuiz);
 $("mbtiBackButton").addEventListener("click", goBack);
 $("mbtiRetryButton").addEventListener("click", startQuiz);
 $("mbtiShareButton").addEventListener("click", shareResult);
+$("mbtiIntroShareButton").addEventListener("click", shareDiagnosis);
