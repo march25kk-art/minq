@@ -74,8 +74,12 @@ button { cursor: pointer; }
 .mbti-progress { height: 8px; margin: 9px 0 42px; overflow: hidden; border-radius: 8px; background: #edf0ee; }
 .mbti-progress span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--green), #68c982); transition: width .25s ease; }
 .mbti-axis { margin: 0 0 10px; color: #7056c7; font-size: 13px; font-weight: 800; }
-.mbti-quiz h1 { min-height: 74px; margin: 0 0 32px; font-size: clamp(24px, 5vw, 34px); line-height: 1.45; }
+.mbti-quiz h1 { min-height: 38px; margin: 0 0 24px; font-size: clamp(16px, 2.6vw, 26px); line-height: 1.35; letter-spacing: -.02em; white-space: nowrap; }
 .mbti-answers { display: grid; gap: 14px; }
+.mbti-answers.four-options { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.mbti-answers.four-options .mbti-answer { min-height: 64px; padding: 10px 14px; gap: 11px; }
+.mbti-answers.four-options .mbti-answer span { flex-basis: 34px; width: 34px; height: 34px; }
+.mbti-answers.four-options .mbti-answer b { font-size: 14px; }
 .mbti-answer { width: 100%; min-height: 76px; padding: 14px 20px; display: flex; align-items: center; gap: 16px; border: 2px solid #e7e9eb; border-radius: 18px; color: var(--ink); background: #fff; text-align: left; transition: .18s ease; }
 .mbti-answer:hover, .mbti-answer:focus-visible { border-color: var(--green); background: var(--green-soft); transform: translateY(-2px); outline: none; }
 .mbti-answer span { flex: 0 0 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; color: var(--green-dark); background: var(--green-soft); font-weight: 900; }
@@ -145,8 +149,12 @@ button { cursor: pointer; }
   .mbti-lead span + span::before { content: " "; }
   .mbti-start-actions { display: grid; }
   .mbti-main-button, .mbti-intro-share { width: 100%; }
-  .mbti-quiz h1 { min-height: 104px; }
+  .mbti-quiz h1 { min-height: 30px; margin-bottom: 20px; }
   .mbti-answer { min-height: 82px; padding: 12px 14px; }
+  .mbti-answers.four-options { gap: 9px; }
+  .mbti-answers.four-options .mbti-answer { min-height: 60px; padding: 8px 9px; gap: 7px; }
+  .mbti-answers.four-options .mbti-answer span { flex-basis: 28px; width: 28px; height: 28px; font-size: 12px; }
+  .mbti-answers.four-options .mbti-answer b { font-size: 12px; }
   .mbti-profile-fields, .mbti-stats-demographics { grid-template-columns: 1fr; }
   .mbti-stat-row { grid-template-columns: minmax(108px, auto) 1fr 38px; font-size: 12px; }
   .mbti-page .header-inner { min-height: 70px; width: calc(100% - 28px); }

@@ -121,8 +121,12 @@ function renderQuestion() {
   $("diagnosisCount").textContent = `${number} / ${config.questions.length}`;
   $("diagnosisPercent").textContent = `${percent}%`;
   $("diagnosisProgressBar").style.width = `${percent}%`;
-  $("diagnosisQuestion").textContent = q.text;
-  $("diagnosisAnswers").replaceChildren(...q.answers.map((answer, index) => {
+  const questionElement = $("diagnosisQuestion");
+  questionElement.textContent = q.text;
+  questionElement.style.fontSize = "";
+  const answersElement = $("diagnosisAnswers");
+  answersElement.classList.toggle("four-options", q.answers.length === 4);
+  answersElement.replaceChildren(...q.answers.map((answer, index) => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "mbti-answer";
@@ -132,6 +136,15 @@ function renderQuestion() {
     return button;
   }));
   $("diagnosisBackButton").hidden = current === 0;
+  fitQuestionText(questionElement);
+}
+
+function fitQuestionText(element) {
+  const baseSize = parseFloat(getComputedStyle(element).fontSize);
+  if (element.scrollWidth > element.clientWidth) {
+    const fittedSize = baseSize * element.clientWidth / element.scrollWidth * .98;
+    element.style.fontSize = `${Math.max(12, fittedSize)}px`;
+  }
 }
 
 function selectAnswer(value) {

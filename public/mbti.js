@@ -71,7 +71,9 @@ function renderQuestion() {
   $("mbtiCount").textContent = `${displayNumber} / ${questions.length}`;
   $("mbtiPercent").textContent = `${percent}%`;
   $("mbtiProgressBar").style.width = `${percent}%`;
-  $("mbtiQuestion").textContent = q.text;
+  const questionElement = $("mbtiQuestion");
+  questionElement.textContent = q.text;
+  questionElement.style.fontSize = "";
   $("mbtiAnswers").replaceChildren(...q.a.map((label, index) => {
     const button = document.createElement("button");
     button.type = "button";
@@ -82,6 +84,15 @@ function renderQuestion() {
     return button;
   }));
   $("mbtiBackButton").hidden = current === 0;
+  fitQuestionText(questionElement);
+}
+
+function fitQuestionText(element) {
+  const baseSize = parseFloat(getComputedStyle(element).fontSize);
+  if (element.scrollWidth > element.clientWidth) {
+    const fittedSize = baseSize * element.clientWidth / element.scrollWidth * .98;
+    element.style.fontSize = `${Math.max(12, fittedSize)}px`;
+  }
 }
 
 function selectAnswer(value) {
