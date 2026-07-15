@@ -103,7 +103,11 @@ const DIAGNOSIS_PAGES = {
   "/asd-diagnosis": { kind: "asd", slug: "asd-diagnosis", title: "ASD傾向診断", description: "対人コミュニケーションやこだわり、感覚に関する傾向を確認する簡易セルフチェックです。", theme: "#4778bf" },
   "/cheating-risk-diagnosis": { kind: "cheatingRisk", slug: "cheating-risk-diagnosis", title: "浮気されやすさ診断", description: "恋愛での境界線やコミュニケーションの傾向を20の質問からチェックします。", theme: "#d94f71" },
   "/possessiveness-diagnosis": { kind: "possessiveness", slug: "possessiveness-diagnosis", title: "束縛度診断", description: "恋愛で相手の行動を把握したい気持ちや不安の傾向を20の質問からチェックします。", theme: "#6a5db5" },
-  "/love-dependency-diagnosis": { kind: "loveDependency", slug: "love-dependency-diagnosis", title: "恋愛依存診断", description: "恋愛と自分の生活のバランスを20の質問からチェックします。", theme: "#c94e91" }
+  "/love-dependency-diagnosis": { kind: "loveDependency", slug: "love-dependency-diagnosis", title: "恋愛依存診断", description: "恋愛と自分の生活のバランスを20の質問からチェックします。", theme: "#c94e91" },
+  "/career-diagnosis": { kind: "career", slug: "career-diagnosis", title: "適職診断", description: "仕事で発揮しやすい強みから、向いている仕事の方向性を20の質問で診断します。", theme: "#238a68" },
+  "/manager-aptitude-diagnosis": { kind: "manager", slug: "manager-aptitude-diagnosis", title: "管理職適性診断", description: "チームを率いるための対話力・判断力・育成力の傾向を20の質問でチェックします。", theme: "#3569a8" },
+  "/entrepreneur-aptitude-diagnosis": { kind: "entrepreneur", slug: "entrepreneur-aptitude-diagnosis", title: "起業家適性診断", description: "行動力・不確実性への強さ・事業を形にする力を20の質問でチェックします。", theme: "#d27822" },
+  "/job-change-readiness-diagnosis": { kind: "jobChange", slug: "job-change-readiness-diagnosis", title: "転職適性診断", description: "転職理由やキャリアの準備状況から、今の転職適性を20の質問でチェックします。", theme: "#67727d" }
 };
 
 Object.entries(DIAGNOSIS_PAGES).forEach(([route, page]) => {
@@ -252,7 +256,11 @@ const DIAGNOSIS_TYPES = {
   asd: ["low", "mild", "high", "veryHigh"],
   cheatingRisk: ["low", "mild", "high", "veryHigh"],
   possessiveness: ["low", "mild", "high", "veryHigh"],
-  loveDependency: ["low", "mild", "high", "veryHigh"]
+  loveDependency: ["low", "mild", "high", "veryHigh"],
+  career: ["creator", "supporter", "analyst", "leader"],
+  manager: ["low", "mild", "high", "veryHigh"],
+  entrepreneur: ["low", "mild", "high", "veryHigh"],
+  jobChange: ["low", "mild", "high", "veryHigh"]
 };
 
 const questionCooldown = {};

@@ -86,6 +86,7 @@ function createQueryParams(params) {
 
 window.addEventListener("DOMContentLoaded", () => {
   updateInstallButton();
+  setupDiagnosisTabs();
   const questionsDiv = document.getElementById("questions");
   if (questionsDiv) {
     renderTopTags(false);
@@ -102,6 +103,27 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
 });
+
+function setupDiagnosisTabs() {
+  const tabs = [...document.querySelectorAll("[data-diagnosis-tab]")];
+  const cards = [...document.querySelectorAll("[data-diagnosis-groups]")];
+  if (!tabs.length || !cards.length) return;
+
+  const selectCategory = category => {
+    tabs.forEach(tab => {
+      const selected = tab.dataset.diagnosisTab === category;
+      tab.classList.toggle("active", selected);
+      tab.setAttribute("aria-selected", String(selected));
+    });
+    cards.forEach(card => {
+      const groups = card.dataset.diagnosisGroups.split(" ");
+      card.hidden = !groups.includes(category);
+    });
+  };
+
+  tabs.forEach(tab => tab.addEventListener("click", () => selectCategory(tab.dataset.diagnosisTab)));
+  selectCategory("recommended");
+}
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

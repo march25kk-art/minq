@@ -24,7 +24,11 @@ async function updateSitemap() {
       { url: '/asd-diagnosis', priority: 0.8 },
       { url: '/cheating-risk-diagnosis', priority: 0.8 },
       { url: '/possessiveness-diagnosis', priority: 0.8 },
-      { url: '/love-dependency-diagnosis', priority: 0.8 }
+      { url: '/love-dependency-diagnosis', priority: 0.8 },
+      { url: '/career-diagnosis', priority: 0.8 },
+      { url: '/manager-aptitude-diagnosis', priority: 0.8 },
+      { url: '/entrepreneur-aptitude-diagnosis', priority: 0.8 },
+      { url: '/job-change-readiness-diagnosis', priority: 0.8 }
     ].forEach(page => sitemap.write({ ...page, changefreq: 'weekly' }));
 
     snapshot.forEach(doc => {

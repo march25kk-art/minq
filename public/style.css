@@ -125,6 +125,10 @@ button { cursor: pointer; }
 .diagnosis-cheatingRisk { --diagnosis-accent: #d94f71; --diagnosis-soft: #fff0f4; }
 .diagnosis-possessiveness { --diagnosis-accent: #6a5db5; --diagnosis-soft: #f2effc; }
 .diagnosis-loveDependency { --diagnosis-accent: #c94e91; --diagnosis-soft: #fff0f8; }
+.diagnosis-career { --diagnosis-accent: #238a68; --diagnosis-soft: #ebf8f3; }
+.diagnosis-manager { --diagnosis-accent: #3569a8; --diagnosis-soft: #edf4fb; }
+.diagnosis-entrepreneur { --diagnosis-accent: #d27822; --diagnosis-soft: #fff5e9; }
+.diagnosis-jobChange { --diagnosis-accent: #67727d; --diagnosis-soft: #f1f3f5; }
 .diagnosis-start { background: radial-gradient(circle at 7% 4%, color-mix(in srgb, var(--diagnosis-accent) 15%, transparent), transparent 30%), radial-gradient(circle at 94% 92%, rgba(18, 160, 90, .1), transparent 33%), #fff; }
 .diagnosis-symbol { background: linear-gradient(145deg, color-mix(in srgb, var(--diagnosis-accent) 78%, white), var(--diagnosis-accent)); }
 .diagnosis-type { width: 92px; height: 92px; margin: 0 auto 20px; display: grid; place-items: center; border-radius: 30px; color: #fff; background: var(--diagnosis-accent); box-shadow: 0 16px 32px color-mix(in srgb, var(--diagnosis-accent) 25%, transparent); font-size: 42px; font-weight: 900; }
@@ -137,7 +141,13 @@ button { cursor: pointer; }
 .diagnosis-hub-head { align-items: center; margin-bottom: 13px; }
 .diagnosis-hub-head h2 { margin: 0; font-size: clamp(20px, 2.4vw, 24px); }
 .diagnosis-hub-head p { margin: 0; color: var(--muted); font-size: 13px; }
+.diagnosis-tabs { display: grid; grid-template-columns: repeat(5, 1fr); margin: 0 0 14px; border-bottom: 1px solid #dfe4e1; }
+.diagnosis-tab { position: relative; min-height: 48px; padding: 8px 6px 12px; border: 0; background: transparent; color: #2b2b2b; font: inherit; font-size: 16px; font-weight: 800; cursor: pointer; }
+.diagnosis-tab::after { content: ""; position: absolute; right: 0; bottom: -1px; left: 0; height: 4px; border-radius: 4px 4px 0 0; background: transparent; }
+.diagnosis-tab:hover, .diagnosis-tab:focus-visible, .diagnosis-tab.active { color: #159855; }
+.diagnosis-tab.active::after { background: #18a15b; }
 .diagnosis-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.diagnosis-link-card[hidden] { display: none; }
 .diagnosis-link-card { --card-accent: #7056c7; min-height: 70px; padding: 10px 14px; display: grid; grid-template-columns: 44px 1fr 18px; align-items: center; gap: 11px; border: 1px solid #ece9f1; border-radius: 15px; background: rgba(255,255,255,.9); box-shadow: 0 5px 14px rgba(46,35,78,.035); transition: transform .2s, box-shadow .2s, border-color .2s; }
 .diagnosis-link-card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--card-accent) 35%, white); box-shadow: 0 13px 28px rgba(46,35,78,.1); }
 .diagnosis-link-icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 13px; color: #fff; background: var(--card-accent); font-size: 18px; font-weight: 900; }
@@ -156,6 +166,10 @@ button { cursor: pointer; }
 .diagnosis-link-cheating { --card-accent: #d94f71; }
 .diagnosis-link-possessiveness { --card-accent: #6a5db5; }
 .diagnosis-link-dependency { --card-accent: #c94e91; }
+.diagnosis-link-career { --card-accent: #238a68; }
+.diagnosis-link-manager { --card-accent: #3569a8; }
+.diagnosis-link-entrepreneur { --card-accent: #d27822; }
+.diagnosis-link-job-change { --card-accent: #67727d; }
 
 @media (max-width: 640px) {
   .mbti-hero-link { margin: 14px 0 0; }
@@ -182,6 +196,8 @@ button { cursor: pointer; }
   .diagnosis-hub-head { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; margin-bottom: 12px; }
   .diagnosis-hub-head h2 { font-size: 19px; line-height: 1.35; white-space: nowrap; }
   .diagnosis-hub-head p { margin: 0; font-size: clamp(10px, 3.2vw, 12px); line-height: 1.4; white-space: nowrap; }
+  .diagnosis-tabs { margin-right: -4px; margin-left: -4px; }
+  .diagnosis-tab { min-height: 43px; padding: 7px 2px 10px; font-size: 13px; }
   .diagnosis-card-grid { grid-template-columns: 1fr; }
 }
 

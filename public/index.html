@@ -77,22 +77,33 @@
 
     <section class="diagnosis-hub" aria-labelledby="diagnosisHubTitle">
       <div class="section-head diagnosis-hub-head">
-        <div><h2 id="diagnosisHubTitle">自分を知る12の診断</h2></div>
+        <div><h2 id="diagnosisHubTitle">自分を知る16の診断</h2></div>
         <p>気になる診断を選んであなたの傾向をチェック</p>
       </div>
+      <div class="diagnosis-tabs" role="tablist" aria-label="診断カテゴリ">
+        <button class="diagnosis-tab active" type="button" role="tab" aria-selected="true" data-diagnosis-tab="recommended">おすすめ</button>
+        <button class="diagnosis-tab" type="button" role="tab" aria-selected="false" data-diagnosis-tab="personality">性格系</button>
+        <button class="diagnosis-tab" type="button" role="tab" aria-selected="false" data-diagnosis-tab="mental">メンタル系</button>
+        <button class="diagnosis-tab" type="button" role="tab" aria-selected="false" data-diagnosis-tab="love">恋愛系</button>
+        <button class="diagnosis-tab" type="button" role="tab" aria-selected="false" data-diagnosis-tab="work">仕事系</button>
+      </div>
       <div class="diagnosis-card-grid">
-        <a class="diagnosis-link-card diagnosis-link-mbti" href="mbti.html"><span class="diagnosis-link-icon">16</span><div><b>16タイプ性格診断</b><small>考え方と行動の傾向をチェック</small></div><i>›</i></a>
-        <a class="diagnosis-link-card diagnosis-link-love" href="love-diagnosis"><span class="diagnosis-link-icon">♡</span><div><b>恋愛価値観診断</b><small>心地よい恋愛関係の築き方がわかる</small></div><i>›</i></a>
-        <a class="diagnosis-link-card diagnosis-link-hsp" href="hsp-diagnosis"><span class="diagnosis-link-icon">♧</span><div><b>HSP傾向診断</b><small>刺激への敏感さをセルフチェック</small></div><i>›</i></a>
-        <a class="diagnosis-link-card diagnosis-link-stress" href="stress-diagnosis"><span class="diagnosis-link-icon">◒</span><div><b>ストレス耐性診断</b><small>向き合い方と回復力の傾向がわかる</small></div><i>›</i></a>
-        <a class="diagnosis-link-card diagnosis-link-self-esteem" href="self-esteem-diagnosis"><span class="diagnosis-link-icon">☀</span><div><b>自己肯定感診断</b><small>自分を受け入れる力をチェック</small></div><i>›</i></a>
-        <a class="diagnosis-link-card diagnosis-link-communication" href="communication-diagnosis"><span class="diagnosis-link-icon">話</span><div><b>コミュ力診断</b><small>会話・傾聴・伝え方の傾向がわかる</small></div><i>›</i></a>
-        <a class="diagnosis-link-card diagnosis-link-approval" href="approval-seeking-diagnosis"><span class="diagnosis-link-icon">☆</span><div><b>承認欲求診断</b><small>周囲の評価を気にする度合いをチェック</small></div><i>›</i></a>
-        <a class="diagnosis-link-card diagnosis-link-adhd" href="adhd-diagnosis"><span class="diagnosis-link-icon">AD</span><div><b>ADHD傾向診断</b><small>注意・衝動性の傾向をセルフチェック</small></div><i>›</i></a>
-        <a class="diagnosis-link-card diagnosis-link-asd" href="asd-diagnosis"><span class="diagnosis-link-icon">AS</span><div><b>ASD傾向診断</b><small>対人・こだわりの傾向をセルフチェック</small></div><i>›</i></a>
-        <a class="diagnosis-link-card diagnosis-link-cheating" href="cheating-risk-diagnosis"><span class="diagnosis-link-icon">?</span><div><b>浮気されやすさ診断</b><small>恋愛の境界線と関係づくりをチェック</small></div><i>›</i></a>
-        <a class="diagnosis-link-card diagnosis-link-possessiveness" href="possessiveness-diagnosis"><span class="diagnosis-link-icon">♢</span><div><b>束縛度診断</b><small>相手を把握したい気持ちをチェック</small></div><i>›</i></a>
-        <a class="diagnosis-link-card diagnosis-link-dependency" href="love-dependency-diagnosis"><span class="diagnosis-link-icon">∞</span><div><b>恋愛依存診断</b><small>恋愛と自分の生活のバランスをチェック</small></div><i>›</i></a>
+        <a class="diagnosis-link-card diagnosis-link-mbti" data-diagnosis-groups="recommended personality" href="mbti.html"><span class="diagnosis-link-icon">16</span><div><b>16タイプ性格診断</b><small>考え方と行動の傾向をチェック</small></div><i>›</i></a>
+        <a class="diagnosis-link-card diagnosis-link-love" data-diagnosis-groups="recommended love" href="love-diagnosis"><span class="diagnosis-link-icon">♡</span><div><b>恋愛価値観診断</b><small>心地よい恋愛関係の築き方がわかる</small></div><i>›</i></a>
+        <a class="diagnosis-link-card diagnosis-link-self-esteem" data-diagnosis-groups="recommended personality" href="self-esteem-diagnosis"><span class="diagnosis-link-icon">☀</span><div><b>自己肯定感診断</b><small>自分を受け入れる力をチェック</small></div><i>›</i></a>
+        <a class="diagnosis-link-card diagnosis-link-adhd" data-diagnosis-groups="recommended mental" href="adhd-diagnosis"><span class="diagnosis-link-icon">AD</span><div><b>ADHD傾向診断</b><small>注意・衝動性の傾向をセルフチェック</small></div><i>›</i></a>
+        <a class="diagnosis-link-card diagnosis-link-communication" data-diagnosis-groups="personality" href="communication-diagnosis"><span class="diagnosis-link-icon">話</span><div><b>コミュ力診断</b><small>会話・傾聴・伝え方の傾向がわかる</small></div><i>›</i></a>
+        <a class="diagnosis-link-card diagnosis-link-approval" data-diagnosis-groups="personality" href="approval-seeking-diagnosis"><span class="diagnosis-link-icon">☆</span><div><b>承認欲求診断</b><small>周囲の評価を気にする度合いをチェック</small></div><i>›</i></a>
+        <a class="diagnosis-link-card diagnosis-link-hsp" data-diagnosis-groups="mental" href="hsp-diagnosis"><span class="diagnosis-link-icon">♧</span><div><b>HSP傾向診断</b><small>刺激への敏感さをセルフチェック</small></div><i>›</i></a>
+        <a class="diagnosis-link-card diagnosis-link-stress" data-diagnosis-groups="mental" href="stress-diagnosis"><span class="diagnosis-link-icon">◒</span><div><b>ストレス耐性診断</b><small>向き合い方と回復力の傾向がわかる</small></div><i>›</i></a>
+        <a class="diagnosis-link-card diagnosis-link-asd" data-diagnosis-groups="mental" href="asd-diagnosis"><span class="diagnosis-link-icon">AS</span><div><b>ASD傾向診断</b><small>対人・こだわりの傾向をセルフチェック</small></div><i>›</i></a>
+        <a class="diagnosis-link-card diagnosis-link-cheating" data-diagnosis-groups="love" href="cheating-risk-diagnosis"><span class="diagnosis-link-icon">?</span><div><b>浮気されやすさ診断</b><small>恋愛の境界線と関係づくりをチェック</small></div><i>›</i></a>
+        <a class="diagnosis-link-card diagnosis-link-possessiveness" data-diagnosis-groups="love" href="possessiveness-diagnosis"><span class="diagnosis-link-icon">♢</span><div><b>束縛度診断</b><small>相手を把握したい気持ちをチェック</small></div><i>›</i></a>
+        <a class="diagnosis-link-card diagnosis-link-dependency" data-diagnosis-groups="love" href="love-dependency-diagnosis"><span class="diagnosis-link-icon">∞</span><div><b>恋愛依存診断</b><small>恋愛と自分の生活のバランスをチェック</small></div><i>›</i></a>
+        <a class="diagnosis-link-card diagnosis-link-career" data-diagnosis-groups="work" href="career-diagnosis"><span class="diagnosis-link-icon">適</span><div><b>適職診断</b><small>強みを活かせる仕事の方向性がわかる</small></div><i>›</i></a>
+        <a class="diagnosis-link-card diagnosis-link-manager" data-diagnosis-groups="work" href="manager-aptitude-diagnosis"><span class="diagnosis-link-icon">管</span><div><b>管理職適性診断</b><small>チームを率いる力と傾向をチェック</small></div><i>›</i></a>
+        <a class="diagnosis-link-card diagnosis-link-entrepreneur" data-diagnosis-groups="work" href="entrepreneur-aptitude-diagnosis"><span class="diagnosis-link-icon">起</span><div><b>起業家適性診断</b><small>事業を生み出す資質をチェック</small></div><i>›</i></a>
+        <a class="diagnosis-link-card diagnosis-link-job-change" data-diagnosis-groups="work" href="job-change-readiness-diagnosis"><span class="diagnosis-link-icon">転</span><div><b>転職適性診断</b><small>今の転職準備度と方向性をチェック</small></div><i>›</i></a>
       </div>
     </section>
 
