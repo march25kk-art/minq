@@ -24,6 +24,37 @@ const state = {
   loadController: null
 };
 
+const QUESTION_LIST_REFRESH_KEY = "minq:refresh-question-list";
+
+function markQuestionListForRefresh() {
+  try {
+    sessionStorage.setItem(QUESTION_LIST_REFRESH_KEY, "1");
+  } catch (_) {}
+}
+
+function consumeQuestionListRefresh() {
+  try {
+    if (sessionStorage.getItem(QUESTION_LIST_REFRESH_KEY) !== "1") return false;
+    sessionStorage.removeItem(QUESTION_LIST_REFRESH_KEY);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function resetToUpdatedQuestionList() {
+  state.page = 1;
+  state.currentSort = "update";
+  state.currentSearch = "";
+  state.currentTag = "";
+
+  const searchInput = document.getElementById("searchInput");
+  if (searchInput) searchInput.value = "";
+  document.querySelectorAll(".sortMenu button").forEach(item => item.classList.remove("active"));
+  document.getElementById("sort-update")?.classList.add("active");
+  renderTopTags(state.showAllTags);
+}
+
 let deferredInstallPrompt = null;
 
 function isAppInstalled() {
@@ -89,6 +120,7 @@ window.addEventListener("DOMContentLoaded", () => {
   setupDiagnosisTabs();
   const questionsDiv = document.getElementById("questions");
   if (questionsDiv) {
+    if (consumeQuestionListRefresh()) resetToUpdatedQuestionList();
     renderTopTags(false);
     loadQuestions();
   }
@@ -102,6 +134,13 @@ window.addEventListener("DOMContentLoaded", () => {
       TAGS.forEach(tag => tagSelect.appendChild(new Option(tag, tag)));
     }
   }
+});
+
+window.addEventListener("pageshow", event => {
+  if (!event.persisted || !document.getElementById("questions")) return;
+  if (!consumeQuestionListRefresh()) return;
+  resetToUpdatedQuestionList();
+  loadQuestions();
 });
 
 function setupDiagnosisTabs() {
@@ -698,6 +737,7 @@ async function voteAndReload(id) {
   });
   const data = await res.json();
   if (data.error) return alert(data.message || "投票に失敗しました。");
+  markQuestionListForRefresh();
   const q = await (await fetch(`/questions/${encodeURIComponent(id)}`, { cache: "no-store" })).json();
   renderResultsScreen(document.getElementById("questionArea") || document.getElementById("detail"), q, id);
 }
