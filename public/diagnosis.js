@@ -77,6 +77,8 @@ const diagnosisConfigs = {
   }
 };
 
+Object.assign(diagnosisConfigs, window.EXTRA_DIAGNOSIS_CONFIGS || {});
+
 const $ = id => document.getElementById(id);
 const kind = document.body.dataset.diagnosis;
 const config = diagnosisConfigs[kind];

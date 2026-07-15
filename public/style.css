@@ -117,6 +117,14 @@ button { cursor: pointer; }
 .diagnosis-love { --diagnosis-accent: #df527f; --diagnosis-soft: #fff0f5; }
 .diagnosis-hsp { --diagnosis-accent: #765ac8; --diagnosis-soft: #f3f0ff; }
 .diagnosis-stress { --diagnosis-accent: #11886f; --diagnosis-soft: #eaf8f4; }
+.diagnosis-selfEsteem { --diagnosis-accent: #d48b16; --diagnosis-soft: #fff7e6; }
+.diagnosis-communication { --diagnosis-accent: #147fa1; --diagnosis-soft: #eaf8fc; }
+.diagnosis-approval { --diagnosis-accent: #8a5ac2; --diagnosis-soft: #f5effc; }
+.diagnosis-adhd { --diagnosis-accent: #e06a3b; --diagnosis-soft: #fff1eb; }
+.diagnosis-asd { --diagnosis-accent: #4778bf; --diagnosis-soft: #edf4ff; }
+.diagnosis-cheatingRisk { --diagnosis-accent: #d94f71; --diagnosis-soft: #fff0f4; }
+.diagnosis-possessiveness { --diagnosis-accent: #6a5db5; --diagnosis-soft: #f2effc; }
+.diagnosis-loveDependency { --diagnosis-accent: #c94e91; --diagnosis-soft: #fff0f8; }
 .diagnosis-start { background: radial-gradient(circle at 7% 4%, color-mix(in srgb, var(--diagnosis-accent) 15%, transparent), transparent 30%), radial-gradient(circle at 94% 92%, rgba(18, 160, 90, .1), transparent 33%), #fff; }
 .diagnosis-symbol { background: linear-gradient(145deg, color-mix(in srgb, var(--diagnosis-accent) 78%, white), var(--diagnosis-accent)); }
 .diagnosis-type { width: 92px; height: 92px; margin: 0 auto 20px; display: grid; place-items: center; border-radius: 30px; color: #fff; background: var(--diagnosis-accent); box-shadow: 0 16px 32px color-mix(in srgb, var(--diagnosis-accent) 25%, transparent); font-size: 42px; font-weight: 900; }
@@ -140,6 +148,14 @@ button { cursor: pointer; }
 .diagnosis-link-love { --card-accent: #df527f; }
 .diagnosis-link-hsp { --card-accent: #765ac8; }
 .diagnosis-link-stress { --card-accent: #11886f; }
+.diagnosis-link-self-esteem { --card-accent: #d48b16; }
+.diagnosis-link-communication { --card-accent: #147fa1; }
+.diagnosis-link-approval { --card-accent: #8a5ac2; }
+.diagnosis-link-adhd { --card-accent: #e06a3b; }
+.diagnosis-link-asd { --card-accent: #4778bf; }
+.diagnosis-link-cheating { --card-accent: #d94f71; }
+.diagnosis-link-possessiveness { --card-accent: #6a5db5; }
+.diagnosis-link-dependency { --card-accent: #c94e91; }
 
 @media (max-width: 640px) {
   .mbti-hero-link { margin: 14px 0 0; }

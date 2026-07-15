@@ -95,7 +95,15 @@ app.get("/index.html", (req, res) => res.redirect(301, "/"));
 const DIAGNOSIS_PAGES = {
   "/love-diagnosis": { kind: "love", slug: "love-diagnosis", title: "恋愛価値観診断", description: "20の質問から、恋愛で大切にしている価値観や関係の築き方を診断します。", theme: "#e85b8b" },
   "/hsp-diagnosis": { kind: "hsp", slug: "hsp-diagnosis", title: "HSP傾向診断", description: "刺激への敏感さや考え方の傾向を20の質問からチェックする簡易診断です。", theme: "#765ac8" },
-  "/stress-diagnosis": { kind: "stress", slug: "stress-diagnosis", title: "ストレス耐性診断", description: "ストレスへの向き合い方と回復力の傾向を20の質問からチェックします。", theme: "#168f75" }
+  "/stress-diagnosis": { kind: "stress", slug: "stress-diagnosis", title: "ストレス耐性診断", description: "ストレスへの向き合い方と回復力の傾向を20の質問からチェックします。", theme: "#168f75" },
+  "/self-esteem-diagnosis": { kind: "selfEsteem", slug: "self-esteem-diagnosis", title: "自己肯定感診断", description: "自分を受け入れ、尊重できている度合いを20の質問からチェックします。", theme: "#d48b16" },
+  "/communication-diagnosis": { kind: "communication", slug: "communication-diagnosis", title: "コミュ力診断", description: "会話・傾聴・伝え方の傾向を20の質問からチェックします。", theme: "#147fa1" },
+  "/approval-seeking-diagnosis": { kind: "approval", slug: "approval-seeking-diagnosis", title: "承認欲求診断", description: "周囲からの評価をどのくらい気にする傾向があるか、20の質問でチェックします。", theme: "#8a5ac2" },
+  "/adhd-diagnosis": { kind: "adhd", slug: "adhd-diagnosis", title: "ADHD傾向診断", description: "注意・衝動性・落ち着きに関する日常の傾向を確認する簡易セルフチェックです。", theme: "#e06a3b" },
+  "/asd-diagnosis": { kind: "asd", slug: "asd-diagnosis", title: "ASD傾向診断", description: "対人コミュニケーションやこだわり、感覚に関する傾向を確認する簡易セルフチェックです。", theme: "#4778bf" },
+  "/cheating-risk-diagnosis": { kind: "cheatingRisk", slug: "cheating-risk-diagnosis", title: "浮気されやすさ診断", description: "恋愛での境界線やコミュニケーションの傾向を20の質問からチェックします。", theme: "#d94f71" },
+  "/possessiveness-diagnosis": { kind: "possessiveness", slug: "possessiveness-diagnosis", title: "束縛度診断", description: "恋愛で相手の行動を把握したい気持ちや不安の傾向を20の質問からチェックします。", theme: "#6a5db5" },
+  "/love-dependency-diagnosis": { kind: "loveDependency", slug: "love-dependency-diagnosis", title: "恋愛依存診断", description: "恋愛と自分の生活のバランスを20の質問からチェックします。", theme: "#c94e91" }
 };
 
 Object.entries(DIAGNOSIS_PAGES).forEach(([route, page]) => {
@@ -236,7 +244,15 @@ const MBTI_TYPES = ["INTJ", "INTP", "ENTJ", "ENTP", "INFJ", "INFP", "ENFJ", "ENF
 const DIAGNOSIS_TYPES = {
   love: ["security", "passion", "independent", "devotion"],
   hsp: ["low", "mild", "high", "veryHigh"],
-  stress: ["care", "sensitive", "balanced", "resilient"]
+  stress: ["care", "sensitive", "balanced", "resilient"],
+  selfEsteem: ["low", "mild", "high", "veryHigh"],
+  communication: ["low", "mild", "high", "veryHigh"],
+  approval: ["low", "mild", "high", "veryHigh"],
+  adhd: ["low", "mild", "high", "veryHigh"],
+  asd: ["low", "mild", "high", "veryHigh"],
+  cheatingRisk: ["low", "mild", "high", "veryHigh"],
+  possessiveness: ["low", "mild", "high", "veryHigh"],
+  loveDependency: ["low", "mild", "high", "veryHigh"]
 };
 
 const questionCooldown = {};

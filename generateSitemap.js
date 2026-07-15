@@ -16,7 +16,15 @@ async function updateSitemap() {
       { url: '/mbti.html', priority: 0.8 },
       { url: '/love-diagnosis', priority: 0.8 },
       { url: '/hsp-diagnosis', priority: 0.8 },
-      { url: '/stress-diagnosis', priority: 0.8 }
+      { url: '/stress-diagnosis', priority: 0.8 },
+      { url: '/self-esteem-diagnosis', priority: 0.8 },
+      { url: '/communication-diagnosis', priority: 0.8 },
+      { url: '/approval-seeking-diagnosis', priority: 0.8 },
+      { url: '/adhd-diagnosis', priority: 0.8 },
+      { url: '/asd-diagnosis', priority: 0.8 },
+      { url: '/cheating-risk-diagnosis', priority: 0.8 },
+      { url: '/possessiveness-diagnosis', priority: 0.8 },
+      { url: '/love-dependency-diagnosis', priority: 0.8 }
     ].forEach(page => sitemap.write({ ...page, changefreq: 'weekly' }));
 
     snapshot.forEach(doc => {
