@@ -202,6 +202,7 @@ app.get("/question", async (req, res) => {
         <h1 class="createTitle">${safeTitle}</h1>
         ${description && description !== title ? `<p>${safeDescription}</p>` : ""}
         ${optionItems ? `<h2>回答の選択肢</h2><ul>${optionItems}</ul>` : ""}
+        <p>このアンケートは複数回回答できます。表示値は回答者数ではなく回答回数です。</p>
       </section>`;
     html = html.replace(
       /<main class="layout" id="questionArea">[\s\S]*?<\/main>/,
@@ -295,11 +296,6 @@ const getIp = (req) => {
   const forwarded = req.headers["x-forwarded-for"];
   return Array.isArray(forwarded) ? forwarded[0] : String(forwarded || req.socket.remoteAddress).split(",")[0].trim();
 };
-
-const voteDocumentId = (questionId, voterId) => crypto
-  .createHash("sha256")
-  .update(`${String(questionId)}\u0000${String(voterId)}`)
-  .digest("hex");
 
 const getVoterId = (req, res) => {
   const cookieHeader = String(req.headers.cookie || "");
@@ -758,17 +754,12 @@ app.post("/view", async (req, res) => {
   }
 });
 
-// 5. 投票済みチェック（フラグ完全判別・二重投票ブロック版）
+// 5. 複数回回答に対応するため、常に未回答として返す
 app.get("/check-vote/:id", async (req, res) => {
   try {
-    const questionId = String(req.params.id);
-    const voterId = getVoterId(req, res);
-    const voteDoc = await firestore.collection(V_COLL).doc(voteDocumentId(questionId, voterId)).get();
+    getVoterId(req, res);
 
-    // このブラウザ用の一意な投票記録があれば投票済みとする。
-    const isVoted = voteDoc.exists;
-
-    res.json({ voted: isVoted });
+    res.json({ voted: false, multipleResponses: true });
   } catch (error) {
     console.error("====== 投票チェックエラー ======", error);
     res.status(500).json({ error: true, voted: false });
@@ -791,8 +782,8 @@ const handleVote = async (req, res) => {
 
   try {
     const questionRef = firestore.collection(Q_COLL).doc(id);
-    const voteLogRef = firestore.collection(V_COLL).doc(voteDocumentId(id, voterId));
-    const didVote = await firestore.runTransaction(async (transaction) => {
+    const voteLogRef = firestore.collection(V_COLL).doc();
+    await firestore.runTransaction(async (transaction) => {
       let sfDoc = await transaction.get(questionRef);
       let targetRef = questionRef;
       
@@ -802,9 +793,6 @@ const handleVote = async (req, res) => {
       }
       
       if (!sfDoc.exists) throw new Error("Document does not exist!");
-
-      const existingVote = await transaction.get(voteLogRef);
-      if (existingVote.exists) return false;
 
       const data = sfDoc.data();
       const counts = data.counts || {};
@@ -833,9 +821,6 @@ const handleVote = async (req, res) => {
 
       return true;
     });
-
-    // 投票保存後にクライアント側の通信が切れた場合も、再試行を成功扱いにする。
-    if (!didVote) return res.json({ success: true, alreadyVoted: true });
 
     CACHE_STATS.delete(id);
     DETAIL_CACHE.delete(id);

@@ -1,4 +1,4 @@
-const CACHE_NAME = "minq-shell-v25";
+const CACHE_NAME = "minq-shell-v26";
 const APP_SHELL = [
   "/",
   "/style.css",

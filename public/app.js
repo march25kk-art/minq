@@ -473,7 +473,7 @@ function renderVotingScreen(div, q, id) {
         <label><span class="voteLabel">年代</span><select id="age">${AGE_GROUPS.map(age => `<option>${age}</option>`).join("")}</select></label>
         <label><span class="voteLabel">性別</span><select id="gender">${GENDERS.map(g => `<option>${g}</option>`).join("")}</select></label>
       </div>
-      <p class="vote-result-note"><span>✓</span>回答すると、みんなの回答結果をすぐに見ることができます。</p>
+      <p class="vote-result-note"><span>✓</span>このアンケートは複数回回答できます。表示値は回答者数ではなく回答回数です。</p>
       <div class="vote-actions">
         <button class="voteSubmitBtn" type="button" onclick="voteAndReload('${sanitize(id)}')">投票する</button>
         <button class="reportBtn" type="button" onclick="reportQuestion('${sanitize(id)}')">通報</button>
@@ -571,6 +571,7 @@ function renderResultsScreen(div, q, id) {
         <h1 class="createTitle">${sanitize(plain(q.title))}</h1>
       </div>
       ${q.description ? `<p>${sanitize(plain(q.description))}</p>` : ""}
+      <p class="multiple-response-notice">複数回回答可・表示値は回答者数ではなく回答回数です。</p>
       <div class="result-meta-share-row">
         <p class="question-meta result-meta"><span>● ${total}回答</span><span>◇ ${Number(q.commentCount || 0)}コメント</span><span>◉ ${Number(q.views || 0)}閲覧</span></p>
         <div class="result-share-panel" data-share-url="${sanitize(shareUrl)}" data-share-text="${sanitize(shareText)}">
@@ -593,6 +594,7 @@ function renderResultsScreen(div, q, id) {
           <span class="share-feedback" role="status" aria-live="polite"></span>
         </div>
       </div>
+      <button class="answer-again-btn" type="button" onclick="location.reload()">もう一度回答する</button>
     </section>
 
     <section class="resultGrid-top result-summary-grid">
