@@ -245,9 +245,9 @@ function createQuestionCard(q) {
   const total = Number(q.totalVotes || 0);
   const comments = Number(q.commentCount || (Array.isArray(q.comments) ? q.comments.length : 0));
   const views = Number(q.views || 0);
-  const card = document.createElement("article");
+  const card = document.createElement("a");
   card.className = "thread";
-  card.onclick = () => openDetail(q.id);
+  card.href = `/question?id=${encodeURIComponent(q.id)}`;
   card.innerHTML = `
     <span class="title-text">${sanitize(plain(q.title))}</span>
     <div class="thread-meta-line">
@@ -278,10 +278,9 @@ function renderPopularQuestions(list) {
   target.innerHTML = ranked.length ? "" : '<div class="empty-state" style="padding:20px 0;">まだ質問がありません。</div>';
   const fragment = document.createDocumentFragment();
   ranked.forEach((q, index) => {
-    const row = document.createElement("button");
-    row.type = "button";
+    const row = document.createElement("a");
     row.className = "ranking-item";
-    row.onclick = () => openDetail(q.id);
+    row.href = `/question?id=${encodeURIComponent(q.id)}`;
     row.innerHTML = `
       <span class="rank-number">${index + 1}</span>
       <span class="rank-title">${sanitize(plain(q.title))}</span>
