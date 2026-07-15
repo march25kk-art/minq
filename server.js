@@ -803,8 +803,8 @@ const handleVote = async (req, res) => {
       
       if (!sfDoc.exists) throw new Error("Document does not exist!");
 
-      const existingVote = await transaction.get(voteLogRef);
-      if (existingVote.exists) return false;
+      //const existingVote = await transaction.get(voteLogRef);
+      //if (existingVote.exists) return false;
 
       const data = sfDoc.data();
       const counts = data.counts || {};
