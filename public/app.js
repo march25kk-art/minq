@@ -148,7 +148,7 @@ function renderTopTags(all = false) {
   allButton.onclick = clearTag;
   tagArea.appendChild(allButton);
 
-  (all ? TAGS : TAGS.slice(0, 7)).forEach(tag => {
+  TAGS.slice(0, 7).forEach(tag => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = `category${state.currentTag === tag ? " active" : ""}`;
@@ -157,8 +157,22 @@ function renderTopTags(all = false) {
     tagArea.appendChild(button);
   });
 
-  const toggleBtn = document.getElementById("toggleTagsBtn");
-  if (toggleBtn) toggleBtn.textContent = all ? "閉じる" : "もっと見る ›";
+  const toggleBtn = document.createElement("button");
+  toggleBtn.id = "toggleTagsBtn";
+  toggleBtn.type = "button";
+  toggleBtn.className = "text-btn category-toggle";
+  toggleBtn.textContent = all ? "閉じる" : "もっと見る ›";
+  toggleBtn.onclick = toggleAllTags;
+  tagArea.appendChild(toggleBtn);
+
+  if (all) TAGS.slice(7).forEach(tag => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `category${state.currentTag === tag ? " active" : ""}`;
+    button.textContent = tag;
+    button.onclick = () => searchTag(tag);
+    tagArea.appendChild(button);
+  });
 }
 
 function showAllTags() {

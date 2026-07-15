@@ -13,6 +13,21 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://minnano-question.com/{{SLUG}}">
   <meta property="og:image" content="https://minnano-question.com/icon-512.png">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "{{TITLE}}",
+    "description": "{{DESCRIPTION}}",
+    "url": "https://minnano-question.com/{{SLUG}}",
+    "inLanguage": "ja",
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "みんQ",
+      "url": "https://minnano-question.com/"
+    }
+  }
+  </script>
   <title>{{TITLE}} | みんQ</title>
   <meta name="theme-color" content="{{THEME}}">
   <link rel="manifest" href="/manifest.webmanifest">
@@ -34,8 +49,8 @@
     <section id="diagnosisStart" class="mbti-card mbti-start diagnosis-start">
       <span class="mbti-eyebrow">無料・登録不要</span>
       <div id="diagnosisSymbol" class="mbti-symbol diagnosis-symbol" aria-hidden="true"></div>
-      <h1 id="diagnosisTitle"></h1>
-      <p id="diagnosisLead" class="mbti-lead"></p>
+      <h1 id="diagnosisTitle">{{TITLE}}</h1>
+      <p id="diagnosisLead" class="mbti-lead">{{DESCRIPTION}}</p>
       <div class="mbti-feature-row"><span>約3分</span><span>全20問</span><span>結果をシェア</span></div>
       <div class="mbti-profile-fields">
         <label><span>性別</span><select id="diagnosisGender"><option>男性</option><option>女性</option><option>回答しない</option></select></label>

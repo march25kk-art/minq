@@ -123,6 +123,25 @@ Object.entries(DIAGNOSIS_PAGES).forEach(([route, page]) => {
 });
 app.get("/diagnosis.html", (_req, res) => res.redirect(302, "/"));
 
+const SITEMAP_STATIC_PAGES = [
+  "/",
+  "/mbti.html",
+  ...Object.keys(DIAGNOSIS_PAGES)
+];
+
+app.get("/sitemap.xml", (_req, res) => {
+  try {
+    let sitemap = fs.readFileSync(path.join(__dirname, "public", "sitemap.xml"), "utf8");
+    const missingPages = SITEMAP_STATIC_PAGES.filter(page => !sitemap.includes(`<loc>https://minnano-question.com${page}</loc>`));
+    const entries = missingPages.map(page => `<url><loc>https://minnano-question.com${page}</loc><changefreq>weekly</changefreq><priority>${page === "/" ? "1.0" : "0.8"}</priority></url>`).join("");
+    sitemap = sitemap.replace("</urlset>", `${entries}</urlset>`);
+    res.type("application/xml").set("Cache-Control", "public, max-age=3600").send(sitemap);
+  } catch (error) {
+    console.error("Sitemap load failed:", error);
+    res.status(500).type("text/plain").send("Sitemap unavailable");
+  }
+});
+
 // ==========================================
 // 2. 新しい詳細ページ（/question）へのアクセスを正しく処理する設定
 // ==========================================
