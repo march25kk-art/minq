@@ -137,23 +137,23 @@ button { cursor: pointer; }
 .diagnosis-page .mbti-stat-bar span { background: var(--diagnosis-accent); }
 .diagnosis-page .mbti-answer:hover, .diagnosis-page .mbti-answer:focus-visible { border-color: var(--diagnosis-accent); background: var(--diagnosis-soft); }
 
-.diagnosis-hub { width: min(1180px, calc(100% - 40px)); margin: 12px auto 32px; padding: 20px; border: 1px solid #e9e5f3; border-radius: 22px; background: linear-gradient(135deg, #fbf9ff, #f7fcf9); box-shadow: 0 10px 30px rgba(46, 35, 78, .06); }
-.diagnosis-hub-head { align-items: center; margin-bottom: 13px; }
+.diagnosis-hub { width: min(1180px, calc(100% - 40px)); margin: 10px auto 22px; padding: 14px 18px 16px; border: 1px solid #e9e5f3; border-radius: 20px; background: linear-gradient(135deg, #fbf9ff, #f7fcf9); box-shadow: 0 10px 30px rgba(46, 35, 78, .06); }
+.diagnosis-hub-head { align-items: center; margin-bottom: 7px; }
 .diagnosis-hub-head h2 { margin: 0; font-size: clamp(20px, 2.4vw, 24px); }
 .diagnosis-hub-head p { margin: 0; color: var(--muted); font-size: 13px; }
-.diagnosis-tabs { display: grid; grid-template-columns: repeat(5, 1fr); margin: 0 0 14px; border-bottom: 1px solid #dfe4e1; }
-.diagnosis-tab { position: relative; min-height: 48px; padding: 8px 6px 12px; border: 0; background: transparent; color: #2b2b2b; font: inherit; font-size: 16px; font-weight: 800; cursor: pointer; }
+.diagnosis-tabs { display: grid; grid-template-columns: repeat(5, 1fr); margin: 0 0 10px; border-bottom: 1px solid #dfe4e1; }
+.diagnosis-tab { position: relative; min-height: 40px; padding: 5px 6px 9px; border: 0; background: transparent; color: #2b2b2b; font: inherit; font-size: 15px; font-weight: 800; white-space: nowrap; cursor: pointer; }
 .diagnosis-tab::after { content: ""; position: absolute; right: 0; bottom: -1px; left: 0; height: 4px; border-radius: 4px 4px 0 0; background: transparent; }
 .diagnosis-tab:hover, .diagnosis-tab:focus-visible, .diagnosis-tab.active { color: #159855; }
 .diagnosis-tab.active::after { background: #18a15b; }
-.diagnosis-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.diagnosis-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px; }
 .diagnosis-link-card[hidden] { display: none; }
-.diagnosis-link-card { --card-accent: #7056c7; min-height: 70px; padding: 10px 14px; display: grid; grid-template-columns: 44px 1fr 18px; align-items: center; gap: 11px; border: 1px solid #ece9f1; border-radius: 15px; background: rgba(255,255,255,.9); box-shadow: 0 5px 14px rgba(46,35,78,.035); transition: transform .2s, box-shadow .2s, border-color .2s; }
+.diagnosis-link-card { --card-accent: #7056c7; min-height: 58px; padding: 7px 12px; display: grid; grid-template-columns: 38px minmax(0, 1fr) 16px; align-items: center; gap: 10px; border: 1px solid #ece9f1; border-radius: 14px; background: rgba(255,255,255,.9); box-shadow: 0 5px 14px rgba(46,35,78,.035); transition: transform .2s, box-shadow .2s, border-color .2s; }
 .diagnosis-link-card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--card-accent) 35%, white); box-shadow: 0 13px 28px rgba(46,35,78,.1); }
-.diagnosis-link-icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 13px; color: #fff; background: var(--card-accent); font-size: 18px; font-weight: 900; }
+.diagnosis-link-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; color: #fff; background: var(--card-accent); font-size: 16px; font-weight: 900; }
 .diagnosis-link-card b, .diagnosis-link-card small { display: block; }
-.diagnosis-link-card b { margin-bottom: 3px; font-size: 15px; }
-.diagnosis-link-card small { color: var(--muted); font-size: 11px; }
+.diagnosis-link-card b { margin-bottom: 1px; overflow: hidden; font-size: 14px; line-height: 1.35; white-space: nowrap; text-overflow: ellipsis; }
+.diagnosis-link-card small { overflow: hidden; color: var(--muted); font-size: 11px; line-height: 1.35; white-space: nowrap; text-overflow: ellipsis; }
 .diagnosis-link-card i { color: var(--card-accent); font-size: 21px; font-style: normal; }
 .diagnosis-link-love { --card-accent: #df527f; }
 .diagnosis-link-hsp { --card-accent: #765ac8; }
@@ -193,17 +193,21 @@ button { cursor: pointer; }
   .mbti-stat-row > span:first-child { grid-column: 1; grid-row: 1; }
   .mbti-stat-row > span:last-child { grid-column: 2; grid-row: 1; text-align: right; }
   .mbti-stat-row .mbti-stat-bar { grid-column: 1 / -1; grid-row: 2; }
-  .mbti-page .header-inner { min-height: 70px; width: calc(100% - 28px); }
-  .mbti-page .site-logo { font-size: 31px; }
-  .mbti-page .site-logo b { width: 40px; height: 40px; font-size: 26px; }
-  .mbti-page .home-link { font-size: 12px; }
-  .diagnosis-hub { width: calc(100% - 28px); margin-bottom: 24px; padding: 16px 12px; border-radius: 18px; }
-  .diagnosis-hub-head { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; margin-bottom: 12px; }
-  .diagnosis-hub-head h2 { font-size: 19px; line-height: 1.35; white-space: nowrap; }
+  .mbti-page .header-inner { min-height: 48px; width: calc(100% - 28px); }
+  .mbti-page .site-logo { font-size: 26px; }
+  .mbti-page .site-logo b { width: 32px; height: 32px; font-size: 21px; }
+  .mbti-page .home-link { font-size: 11px; }
+  .diagnosis-hub { width: calc(100% - 28px); margin-top: 8px; margin-bottom: 16px; padding: 11px 10px 12px; border-radius: 16px; }
+  .diagnosis-hub-head { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-bottom: 6px; }
+  .diagnosis-hub-head h2 { font-size: 17px; line-height: 1.3; white-space: nowrap; }
   .diagnosis-hub-head p { margin: 0; font-size: clamp(10px, 3.2vw, 12px); line-height: 1.4; white-space: nowrap; }
-  .diagnosis-tabs { margin-right: -4px; margin-left: -4px; }
-  .diagnosis-tab { min-height: 43px; padding: 7px 2px 10px; font-size: 13px; }
+  .diagnosis-tabs { margin-right: -4px; margin-bottom: 8px; margin-left: -4px; }
+  .diagnosis-tab { min-height: 36px; padding: 4px 1px 7px; font-size: clamp(10px, 3vw, 12px); }
   .diagnosis-card-grid { grid-template-columns: 1fr; }
+  .diagnosis-link-card { min-height: 52px; padding: 6px 9px; grid-template-columns: 36px minmax(0, 1fr) 14px; gap: 8px; }
+  .diagnosis-link-icon { width: 36px; height: 36px; font-size: 15px; }
+  .diagnosis-link-card b { font-size: 13px; }
+  .diagnosis-link-card small { font-size: 10px; }
 }
 
 .site-header,
@@ -219,7 +223,7 @@ header {
 .header-inner,
 header:not(.site-header) {
   width: min(1200px, calc(100% - 40px));
-  min-height: 72px;
+  min-height: 58px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -237,7 +241,7 @@ header:not(.site-header) {
 .brand-main,
 .logo {
   color: var(--green);
-  font-size: 32px;
+  font-size: 27px;
   font-weight: 900;
   line-height: 1;
 }
@@ -245,18 +249,18 @@ header:not(.site-header) {
 .brand-main span {
   display: inline-grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 29px;
+  height: 29px;
   margin-left: 1px;
   border-radius: 50%;
   color: #fff;
   background: linear-gradient(135deg, #fec83f, #16a05b);
-  font-size: 24px;
+  font-size: 20px;
 }
 
 .brand-copy {
   color: #4f5359;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -266,7 +270,7 @@ header:not(.site-header) {
   align-items: center;
   flex: 0 0 auto;
   color: var(--green);
-  font-size: 34px;
+  font-size: 28px;
   font-weight: 900;
   line-height: 1;
   letter-spacing: -4px;
@@ -281,8 +285,8 @@ header:not(.site-header) {
 }
 
 .site-logo b {
-  width: 42px;
-  height: 42px;
+  width: 34px;
+  height: 34px;
   margin-left: 3px;
   display: inline-grid;
   place-items: center;
@@ -290,7 +294,7 @@ header:not(.site-header) {
   color: #fff;
   background: linear-gradient(135deg, #f5cb3e 5%, #98bd44 48%, #159855 100%);
   box-shadow: inset -3px -4px 8px rgba(0, 100, 55, 0.1);
-  font-size: 27px;
+  font-size: 22px;
   font-weight: 900;
   font-style: normal;
   letter-spacing: -2px;
@@ -301,15 +305,15 @@ header:not(.site-header) {
 .home-link {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 5px;
   color: #30353b;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 800;
   white-space: nowrap;
 }
 
 .home-link span {
-  font-size: 20px;
+  font-size: 17px;
   line-height: 1;
 }
 
@@ -319,16 +323,16 @@ header:not(.site-header) {
 .nav {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 12px;
 }
 
 .search-box {
-  width: 290px;
-  height: 46px;
+  width: 250px;
+  height: 38px;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 14px 0 28px;
+  padding: 0 10px 0 20px;
   border: 1px solid var(--line);
   border-radius: 27px;
   background: #fff;
@@ -344,16 +348,16 @@ header:not(.site-header) {
   outline: 0;
   color: var(--ink);
   background: transparent;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .search-box button {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   border: 0;
   color: #4f5359;
   background: transparent;
-  font-size: 28px;
+  font-size: 23px;
   line-height: 1;
 }
 
@@ -361,6 +365,8 @@ header:not(.site-header) {
   border-color: transparent;
   box-shadow: none;
 }
+
+.header-create { min-height: 38px; padding: 0 17px; border-radius: 20px; font-size: 13px; }
 
 .primary-btn,
 .submitBtn,
@@ -404,9 +410,9 @@ main {
 
 .hero-section {
   position: relative;
-  min-height: 218px;
-  margin-top: 20px;
-  padding: 30px 40px;
+  min-height: 184px;
+  margin-top: 14px;
+  padding: 21px 34px;
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -439,7 +445,7 @@ main {
 }
 
 .hero-copy h1 {
-  margin: 0 0 12px;
+  margin: 0 0 7px;
   color: #22262a;
   font-size: 32px !important;
   line-height: 1.35;
@@ -459,7 +465,7 @@ main {
 .trust-points {
   display: flex;
   gap: 10px;
-  margin-top: 10px;
+  margin-top: 7px;
 }
 
 .trust-points span {
@@ -478,8 +484,8 @@ main {
 
 .hero-btn {
   min-width: 240px;
-  min-height: 46px;
-  margin-top: 18px;
+  min-height: 42px;
+  margin-top: 12px;
 }
 
 .install-app-btn {
@@ -1501,7 +1507,7 @@ select:focus {
   .header-inner,
   header:not(.site-header) {
     min-height: auto;
-    padding: 12px 0;
+    padding: 7px 0;
     align-items: flex-start;
     flex-direction: column;
   }
@@ -1517,10 +1523,10 @@ select:focus {
     gap: 8px;
   }
 
-  .question-header .site-logo { font-size: 28px; }
-  .question-header .site-logo b { width: 34px; height: 34px; font-size: 22px; }
-  .question-header .home-link { gap: 4px; font-size: 12px; }
-  .question-header .home-link span { font-size: 17px; }
+  .question-header .site-logo { font-size: 24px; }
+  .question-header .site-logo b { width: 30px; height: 30px; font-size: 19px; }
+  .question-header .home-link { gap: 3px; font-size: 10px; }
+  .question-header .home-link span { font-size: 15px; }
 
   .question-header .nav {
     width: auto;
@@ -1552,27 +1558,28 @@ select:focus {
     flex: 1;
   }
 
-  .site-logo { font-size: 34px; }
-  .site-logo b { width: 42px; height: 42px; font-size: 27px; }
-  .home-link { font-size: 13px; }
+  .site-logo { font-size: 27px; }
+  .site-logo b { width: 33px; height: 33px; font-size: 21px; }
+  .home-link { font-size: 11px; }
 
-  .search-box { width: 100%; height: 46px; min-width: 0; padding-left: 16px; }
-  .search-box input { min-width: 0; font-size: 14px; }
+  .search-box { width: 100%; height: 36px; min-width: 0; padding-left: 13px; }
+  .search-box input { min-width: 0; font-size: 13px; }
   .header-create { display: none; }
   .hero-section {
-    margin-top: 16px;
-    padding: 26px 20px;
+    margin-top: 10px;
+    padding: 17px 16px;
     min-height: 0;
     border-radius: 18px;
   }
 
   .hero-section::after { right: -55px; bottom: -55px; }
-  .hero-copy h1 { font-size: 28px !important; }
+  .hero-copy h1 { margin-bottom: 5px; font-size: clamp(22px, 7vw, 26px) !important; line-height: 1.3; }
   .hero-copy h1 { white-space: normal; }
-  .hero-copy p { font-size: 15px; }
+  .hero-copy p { font-size: clamp(11px, 3.6vw, 14px); line-height: 1.45; }
   .trust-points { flex-wrap: nowrap; }
-  .trust-points span { padding: 0 11px; font-size: 12px; }
-  .hero-btn { width: 100%; min-width: 0; }
+  .trust-points { gap: 7px; margin-top: 6px; }
+  .trust-points span { min-height: 25px; padding: 0 9px; font-size: 11px; white-space: nowrap; }
+  .hero-btn { width: 100%; min-width: 0; min-height: 40px; margin-top: 10px; }
   .install-app-btn:not([hidden]) {
     width: 100%;
     min-height: 46px;
