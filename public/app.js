@@ -163,7 +163,6 @@ function renderTopTags(all = false) {
   toggleBtn.className = "text-btn category-toggle";
   toggleBtn.textContent = all ? "閉じる" : "もっと見る ›";
   toggleBtn.onclick = toggleAllTags;
-  tagArea.appendChild(toggleBtn);
 
   if (all) TAGS.slice(7).forEach(tag => {
     const button = document.createElement("button");
@@ -173,6 +172,8 @@ function renderTopTags(all = false) {
     button.onclick = () => searchTag(tag);
     tagArea.appendChild(button);
   });
+
+  tagArea.appendChild(toggleBtn);
 }
 
 function showAllTags() {
