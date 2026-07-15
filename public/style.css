@@ -710,6 +710,18 @@ main {
 /* JavaScript実行前も質問本文を読めるようにする */
 .seo-question-content { display: block; }
 
+.question-page-loader { display: none; }
+
+.question-page-loading .question-page-loader {
+  display: block;
+  min-height: 320px;
+  padding: 100px 20px;
+  color: #777d85;
+  text-align: center;
+}
+
+.question-page-loading #questionArea { display: none; }
+
 .pager {
   display: flex;
   align-items: center;

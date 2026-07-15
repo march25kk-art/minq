@@ -451,8 +451,8 @@ app.post("/contact", async (req, res) => {
   }
 });
 
-const getAllQuestions = async () => {
-  if (listCache.data && Date.now() - listCache.timestamp < LIST_CACHE_TTL) return listCache.data;
+const getAllQuestions = async ({ fresh = false } = {}) => {
+  if (!fresh && listCache.data && Date.now() - listCache.timestamp < LIST_CACHE_TTL) return listCache.data;
   const snapshot = await firestore.collection(Q_COLL).get();
   const questions = snapshot.docs.map(doc => {
     const data = doc.data();
@@ -549,7 +549,7 @@ const normalizeQuestionData = (data) => ({
 // 1. 質問一覧取得
 app.get("/questions", async (req, res) => {
   try {
-    res.set("Cache-Control", "no-cache");
+    res.set("Cache-Control", "no-store");
     const page = Math.max(Number(req.query.page || 1), 1);
     const limit = 30;
     const keyword = String(req.query.search || "");
@@ -576,7 +576,7 @@ app.get("/questions", async (req, res) => {
 
     let questions;
     if (sort === "update" || isFiltered) {
-      questions = (await getAllQuestions()).slice();
+      questions = (await getAllQuestions({ fresh: sort === "update" })).slice();
     } else {
       const snapshot = await query.get();
       questions = snapshot.docs.map(doc => {
@@ -803,8 +803,8 @@ const handleVote = async (req, res) => {
       
       if (!sfDoc.exists) throw new Error("Document does not exist!");
 
-      //const existingVote = await transaction.get(voteLogRef);
-      //if (existingVote.exists) return false;
+      const existingVote = await transaction.get(voteLogRef);
+      if (existingVote.exists) return false;
 
       const data = sfDoc.data();
       const counts = data.counts || {};
