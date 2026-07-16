@@ -466,6 +466,27 @@ const getAllQuestions = async ({ fresh = false } = {}) => {
 };
 
 // ===== 統計計算・データ正規化 =====
+const toSortableTime = value => {
+  if (!value) return 0;
+  if (typeof value.toMillis === "function") return value.toMillis();
+  if (value instanceof Date) return value.getTime();
+
+  const seconds = Number(value.seconds ?? value._seconds);
+  if (Number.isFinite(seconds)) {
+    const nanoseconds = Number(value.nanoseconds ?? value._nanoseconds) || 0;
+    return seconds * 1000 + nanoseconds / 1e6;
+  }
+
+  const parsed = Date.parse(String(value).replace(" ", "T"));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const compareQuestionUpdatedAt = (a, b) => {
+  const aUpdatedAt = toSortableTime(a.updatedAt || a.createdAt);
+  const bUpdatedAt = toSortableTime(b.updatedAt || b.createdAt);
+  return bUpdatedAt - aUpdatedAt || String(b.id || "").localeCompare(String(a.id || ""));
+};
+
 const calculatePercentages = counts => {
   const total = counts.reduce((sum, count) => sum + count, 0);
   if (total === 0) return counts.map(() => 0);
@@ -608,7 +629,7 @@ app.get("/questions", async (req, res) => {
         questions.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
       } else {
         // 💡 更新順ソート（updatedAtがない過去データもcreatedAtで安全に比較される）
-        questions.sort((a, b) => String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || "")));
+        questions.sort(compareQuestionUpdatedAt);
       }
 
       const totalCount = questions.length;
