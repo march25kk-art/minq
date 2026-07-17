@@ -1029,13 +1029,6 @@ select:focus {
   background: var(--green);
 }
 
-.multiple-response-notice {
-  margin: 10px 0 0;
-  color: #6b7280;
-  font-size: 13px;
-  font-weight: 700;
-}
-
 .voteLabel {
   display: block;
   margin-bottom: 4px;
@@ -1098,7 +1091,7 @@ select:focus {
   margin: 0;
 }
 
-.result-question-card > p:not(.question-meta):not(.multiple-response-notice) {
+.result-question-card > p:not(.question-meta) {
   margin: 18px 0 0;
   color: #333940;
   line-height: 1.75;
@@ -1117,17 +1110,6 @@ select:focus {
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-}
-
-.answer-again-btn {
-  margin-top: 16px;
-  padding: 10px 16px;
-  border: 1px solid var(--green);
-  border-radius: 9px;
-  color: var(--green);
-  background: #fff;
-  font-weight: 800;
-  cursor: pointer;
 }
 
 .result-share-panel {
