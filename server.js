@@ -260,6 +260,8 @@ const CACHE_TTL = 30000;
 const DETAIL_CACHE_TTL = 10000;
 const LIST_CACHE_TTL = 15000;
 let listCache = { data: null, timestamp: 0 };
+let listCachePromise = null;
+let listCacheVersion = 0;
 const COMMENTS_LIMIT = 100;
 const VOTES_STATS_LIMIT = 5000;
 const MBTI_TYPES = ["INTJ", "INTP", "ENTJ", "ENTP", "INFJ", "INFP", "ENFJ", "ENFP", "ISTJ", "ISFJ", "ESTJ", "ESFJ", "ISTP", "ISFP", "ESTP", "ESFP"];
@@ -300,6 +302,11 @@ const voteDocumentId = (questionId, voterId) => crypto
   .createHash("sha256")
   .update(`${String(questionId)}\u0000${String(voterId)}`)
   .digest("hex");
+
+const hasVoted = async (questionId, voterId) => {
+  const voteDoc = await firestore.collection(V_COLL).doc(voteDocumentId(questionId, voterId)).get();
+  return voteDoc.exists;
+};
 
 const getVoterId = (req, res) => {
   const cookieHeader = String(req.headers.cookie || "");
@@ -386,7 +393,11 @@ const getCachedStats = (qId) => {
   return cached && Date.now() - cached.timestamp < CACHE_TTL ? cached.data : null;
 };
 const setCachedStats = (qId, data) => CACHE_STATS.set(qId, { data, timestamp: Date.now() });
-const invalidateListCache = () => { listCache = { data: null, timestamp: 0 }; };
+const invalidateListCache = () => {
+  listCache = { data: null, timestamp: 0 };
+  listCacheVersion += 1;
+  listCachePromise = null;
+};
 
 let contactTransporter = null;
 const getContactTransporter = () => {
@@ -453,20 +464,32 @@ app.post("/contact", async (req, res) => {
 
 const getAllQuestions = async ({ fresh = false } = {}) => {
   if (!fresh && listCache.data && Date.now() - listCache.timestamp < LIST_CACHE_TTL) return listCache.data;
-  const snapshot = await firestore.collection(Q_COLL).get();
-  const questions = snapshot.docs.map(doc => {
-    const data = doc.data();
-    return {
-      id: doc.id,
-      ...data,
-      commentCount: Number(data.commentCount || 0),
-      totalVotes: Number(data.totalVotes || 0),
-      views: Number(data.views || 0),
-      updatedAt: data.updatedAt || data.createdAt || ""
-    };
+  if (listCachePromise) return listCachePromise;
+
+  const requestVersion = listCacheVersion;
+  const request = firestore.collection(Q_COLL).get().then(snapshot => {
+    const questions = snapshot.docs.map(doc => {
+      const data = doc.data();
+      const { counts, ip, statsAggregate, statsAggregateVotes, ...publicData } = data;
+      return {
+        id: doc.id,
+        ...publicData,
+        commentCount: Number(data.commentCount || 0),
+        totalVotes: Number(data.totalVotes || 0),
+        views: Number(data.views || 0),
+        updatedAt: data.updatedAt || data.createdAt || ""
+      };
+    });
+    if (requestVersion === listCacheVersion) {
+      listCache = { data: questions, timestamp: Date.now() };
+    }
+    return questions;
+  }).finally(() => {
+    if (listCachePromise === request) listCachePromise = null;
   });
-  listCache = { data: questions, timestamp: Date.now() };
-  return questions;
+
+  listCachePromise = request;
+  return request;
 };
 
 // ===== 統計計算・データ正規化 =====
@@ -508,12 +531,22 @@ const calculatePercentages = counts => {
   return percentages;
 };
 
-const calculateStats = (votes, options = []) => {
-  const allVotesCount = votes.length;
-  const optionCounts = options.map(() => 0);
-  const maleCounts = options.map(() => 0);
-  const femaleCounts = options.map(() => 0);
-  const ageCounts = options.map(() => Object.fromEntries(AGE_GROUPS.map(age => [age, 0])));
+const createStatsAggregate = (options = []) => ({
+  optionCounts: options.map(() => 0),
+  maleCounts: options.map(() => 0),
+  femaleCounts: options.map(() => 0),
+  ageCounts: options.map(() => Object.fromEntries(AGE_GROUPS.map(age => [age, 0])))
+});
+
+const isValidStatsAggregate = (aggregate, options = []) => {
+  if (!aggregate || typeof aggregate !== "object") return false;
+  return ["optionCounts", "maleCounts", "femaleCounts", "ageCounts"]
+    .every(key => Array.isArray(aggregate[key]) && aggregate[key].length === options.length);
+};
+
+const buildStatsAggregate = (votes, options = []) => {
+  const aggregate = createStatsAggregate(options);
+  const { optionCounts, maleCounts, femaleCounts, ageCounts } = aggregate;
 
   votes.forEach(vote => {
     const index = Number(vote?.optionIndex);
@@ -528,6 +561,18 @@ const calculateStats = (votes, options = []) => {
       if (ageCounts[index][resolvedAge] !== undefined) ageCounts[index][resolvedAge] += 1;
     }
   });
+
+  return aggregate;
+};
+
+const calculateStatsFromAggregate = (aggregate, options = []) => {
+  const optionCounts = aggregate.optionCounts.map(value => Math.max(0, Number(value) || 0));
+  const maleCounts = aggregate.maleCounts.map(value => Math.max(0, Number(value) || 0));
+  const femaleCounts = aggregate.femaleCounts.map(value => Math.max(0, Number(value) || 0));
+  const ageCounts = aggregate.ageCounts.map(row => Object.fromEntries(
+    AGE_GROUPS.map(age => [age, Math.max(0, Number(row?.[age]) || 0)])
+  ));
+  const allVotesCount = optionCounts.reduce((sum, count) => sum + count, 0);
 
   const malePercentages = calculatePercentages(maleCounts);
   const femalePercentages = calculatePercentages(femaleCounts);
@@ -556,11 +601,42 @@ const calculateStats = (votes, options = []) => {
   return { genderStats, ageStats };
 };
 
+const incrementStatsAggregate = (aggregate, optionIndex, age, gender) => {
+  const next = {
+    optionCounts: [...aggregate.optionCounts],
+    maleCounts: [...aggregate.maleCounts],
+    femaleCounts: [...aggregate.femaleCounts],
+    ageCounts: aggregate.ageCounts.map(row => ({ ...row }))
+  };
+
+  next.optionCounts[optionIndex] = (Number(next.optionCounts[optionIndex]) || 0) + 1;
+  if (GENDER_ALIASES.male.includes(gender)) {
+    next.maleCounts[optionIndex] = (Number(next.maleCounts[optionIndex]) || 0) + 1;
+  }
+  if (GENDER_ALIASES.female.includes(gender)) {
+    next.femaleCounts[optionIndex] = (Number(next.femaleCounts[optionIndex]) || 0) + 1;
+  }
+  if (age && age !== "回答しない" && age !== "未回答" && next.ageCounts[optionIndex]?.[age] !== undefined) {
+    next.ageCounts[optionIndex][age] = (Number(next.ageCounts[optionIndex][age]) || 0) + 1;
+  }
+
+  return next;
+};
+
 const normalizeQuestionData = (data) => ({
   commentCount: Math.max(0, Number(data.commentCount) || 0),
   totalVotes: Math.max(0, Number(data.totalVotes) || 0),
   views: Math.max(0, Number(data.views) || 0),
   reports: Math.max(0, Number(data.reports) || 0)
+});
+
+const toVotingQuestionData = question => ({
+  id: question.id,
+  title: question.title,
+  description: question.description || "",
+  options: Array.isArray(question.options) ? question.options : [],
+  tags: Array.isArray(question.tags) ? question.tags : [],
+  voted: false
 });
 
 // -----------------------------------------------------------------------------
@@ -602,9 +678,10 @@ app.get("/questions", async (req, res) => {
       const snapshot = await query.get();
       questions = snapshot.docs.map(doc => {
         const data = doc.data();
+        const { counts, ip, statsAggregate, statsAggregateVotes, ...publicData } = data;
         return {
           id: doc.id,
-          ...data,
+          ...publicData,
           commentCount: Number(data.commentCount || 0),
           totalVotes: Number(data.totalVotes || 0),
           views: Number(data.views || 0),
@@ -732,18 +809,36 @@ app.post("/questions", async (req, res) => {
 app.get("/questions/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    const voterId = getVoterId(req, res);
+    const votedPromise = hasVoted(id, voterId);
     const cachedDetail = DETAIL_CACHE.get(id);
     if (cachedDetail && Date.now() - cachedDetail.timestamp < DETAIL_CACHE_TTL) {
-      res.set("Cache-Control", "no-cache");
-      return res.json(cachedDetail.data);
+      const voted = await votedPromise;
+      res.set("Cache-Control", "private, no-store");
+      return res.json(voted ? { ...cachedDetail.data, voted } : toVotingQuestionData(cachedDetail.data));
     }
     const doc = await firestore.collection(Q_COLL).doc(id).get();
     if (!doc.exists) return sendError(res, "アンケートが見つかりません");
 
     const q = { id: doc.id, ...doc.data() };
     Object.assign(q, normalizeQuestionData(q));
+    const voted = await votedPromise;
+
+    if (!voted) {
+      res.set("Cache-Control", "private, no-store");
+      return res.json(toVotingQuestionData(q));
+    }
 
     let statsData = getCachedStats(id);
+    const aggregateIsCurrent = isValidStatsAggregate(q.statsAggregate, q.options)
+      && Number(q.statsAggregateVotes) === q.totalVotes;
+    let statsAggregate = aggregateIsCurrent ? q.statsAggregate : null;
+
+    if (!statsData && statsAggregate) {
+      statsData = calculateStatsFromAggregate(statsAggregate, q.options);
+      setCachedStats(id, statsData);
+    }
+
     const [commentsSnapshot, votesSnapshot] = await Promise.all([
       firestore.collection(C_COLL).where("questionId", "==", id).orderBy("createdAt", "asc").limit(COMMENTS_LIMIT).get(),
       statsData ? Promise.resolve(null) : firestore.collection(V_COLL).where("questionId", "==", id).limit(VOTES_STATS_LIMIT).get()
@@ -751,14 +846,25 @@ app.get("/questions/:id", async (req, res) => {
     q.comments = commentsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
     if (!statsData) {
-      statsData = calculateStats(votesSnapshot.docs.map(d => d.data()), q.options);
+      statsAggregate = buildStatsAggregate(votesSnapshot.docs.map(d => d.data()), q.options);
+      statsData = calculateStatsFromAggregate(statsAggregate, q.options);
       setCachedStats(id, statsData);
+      if (votesSnapshot.size === q.totalVotes) {
+        await doc.ref.update({
+          statsAggregate,
+          statsAggregateVotes: q.totalVotes
+        });
+      }
     }
 
+    delete q.statsAggregate;
+    delete q.statsAggregateVotes;
+    delete q.counts;
+    delete q.ip;
     const detailData = { ...q, ...statsData };
     DETAIL_CACHE.set(id, { data: detailData, timestamp: Date.now() });
-    res.set("Cache-Control", "no-cache");
-    res.json(detailData);
+    res.set("Cache-Control", "private, no-store");
+    res.json({ ...detailData, voted });
   } catch (error) {
     console.error("Firestore error:", error);
     sendError(res, "データの取得に失敗しました", 500);
@@ -784,8 +890,7 @@ app.get("/check-vote/:id", async (req, res) => {
   try {
     const questionId = String(req.params.id);
     const voterId = getVoterId(req, res);
-    const voteDoc = await firestore.collection(V_COLL).doc(voteDocumentId(questionId, voterId)).get();
-    res.json({ voted: voteDoc.exists });
+    res.json({ voted: await hasVoted(questionId, voterId) });
   } catch (error) {
     console.error("====== 投票チェックエラー ======", error);
     res.status(500).json({ error: true, voted: false });
@@ -824,22 +929,41 @@ const handleVote = async (req, res) => {
       if (existingVote.exists) return false;
 
       const data = sfDoc.data();
+      const optionIndex = Number(index);
+      if (!Number.isInteger(optionIndex) || optionIndex < 0 || optionIndex >= (data.options || []).length) {
+        throw new Error("Invalid option index");
+      }
       const counts = data.counts || {};
       
       // 既存の投票数やコメントデータはそのまま残して上乗せする
       counts[`age_${selectedAge}`] = (counts[`age_${selectedAge}`] || 0) + 1;
       counts[`gender_${selectedGender}`] = (counts[`gender_${selectedGender}`] || 0) + 1;
-      counts[`option_${index}`] = (counts[`option_${index}`] || 0) + 1;
+      counts[`option_${optionIndex}`] = (counts[`option_${optionIndex}`] || 0) + 1;
 
-      transaction.update(targetRef, { 
+      const questionUpdate = {
         totalVotes: (data.totalVotes || 0) + 1, 
         counts,
         updatedAt: nowJSTString()
-      });
+      };
+      if (
+        isValidStatsAggregate(data.statsAggregate, data.options)
+        && Number(data.statsAggregateVotes) === Number(data.totalVotes || 0)
+      ) {
+        questionUpdate.statsAggregate = incrementStatsAggregate(
+          data.statsAggregate,
+          optionIndex,
+          selectedAge,
+          selectedGender
+        );
+        questionUpdate.statsAggregateVotes = Number(data.totalVotes || 0) + 1;
+      } else {
+        questionUpdate.statsAggregateVotes = -1;
+      }
+      transaction.update(targetRef, questionUpdate);
 
       transaction.set(voteLogRef, {
         questionId: id, 
-        optionIndex: Number(index), 
+        optionIndex,
         age: selectedAge, 
         gender: selectedGender, 
         ip: ip, 

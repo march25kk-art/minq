@@ -465,11 +465,7 @@ async function loadCombinedQuestion() {
       body: JSON.stringify({ id })
     }).catch(() => {});
 
-    const [checkRes, questionRes] = await Promise.all([
-      fetch(`/check-vote/${encodeURIComponent(id)}`),
-      fetch(`/questions/${encodeURIComponent(id)}`)
-    ]);
-    const check = await checkRes.json();
+    const questionRes = await fetch(`/questions/${encodeURIComponent(id)}`, { cache: "no-store" });
     const q = await questionRes.json();
     if (q.error) throw new Error(q.message || "not found");
 
@@ -487,7 +483,7 @@ async function loadCombinedQuestion() {
     if (ogTitle) ogTitle.content = pageTitle;
     if (ogDescription) ogDescription.content = pageDescription;
     if (ogUrl) ogUrl.content = canonicalUrl;
-    if (check.voted) renderResultsScreen(div, q, id);
+    if (q.voted) renderResultsScreen(div, q, id);
     else renderVotingScreen(div, q, id);
   } catch (err) {
     console.error(err);
