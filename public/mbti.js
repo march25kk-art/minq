@@ -152,6 +152,7 @@ async function renderResult() {
   $("mbtiShareButton").dataset.type = type;
   $("mbtiShareButton").dataset.name = name;
   show("mbtiResult");
+  window.renderDiagnosisRecommendations?.("mbtiRecommendations", "mbti.html");
   if (typeof gtag === "function") gtag("event", "mbti_complete", { mbti_type: type });
   await saveResultAndLoadStats(type);
 }

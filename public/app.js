@@ -1,9 +1,9 @@
 const TAGS = [
   "ニュース", "政治", "投資", "お金", "仕事", "恋愛", "ゲーム", "食べ物", "生活", "勉強",
   "音楽", "趣味", "自転車・バイク", "美容・コスメ", "科学", "動物", "ペット", "季節",
-  "AI", "環境", "法律", "相談", "歴史", "本・読書", "映画", "ドラマ", "アニメ", "料理", "心理",
+  "AI", "環境", "法律", "相談", "歴史", "本・読書", "映画", "ドラマ", "アニメ", "漫画", "料理", "心理",
   "日常", "旅行", "教育", "海外", "社会", "悩み", "子育て・育児", "飲食店",
-  "医療", "健康", "ダイエット", "住まい・不動産", "人間関係", "酒", "ファッション",
+  "医療", "介護", "健康", "ダイエット", "住まい・不動産", "人間関係", "酒", "ファッション",
   "ビジネス", "テクノロジー", "スポーツ", "エンタメ", "アート", "おもちゃ",
   "デザイン", "アダルト", "暇つぶし", "ギャンブル", "ストレス", "その他"
 ];
@@ -671,11 +671,17 @@ function renderResultsScreen(div, q, id) {
       </div>
     </section>
 
+    <section id="questionRecommendations" class="resultCard result-wide-card result-recommendations" hidden>
+      <h2>あなたにおすすめのアンケート</h2>
+      <div class="recommendation-grid"></div>
+    </section>
+
     <section class="result-answer-cta">
       <div><strong>あなたも質問を作ってみませんか？</strong><p>みんなの考えを知ることで、新しい発見があるかもしれません。</p></div>
       <button class="primary-btn" type="button" onclick="location.href='create.html'">質問を作成する <span>›</span></button>
     </section>
   `;
+  window.renderQuestionRecommendations?.("questionRecommendations", q, id);
   window.mountAdSenseAds?.(div);
 }
 

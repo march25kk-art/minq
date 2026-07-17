@@ -186,6 +186,7 @@ async function renderResult() {
   const hint = document.createElement("p"); hint.textContent = advice;
   descriptionBox.append(p, strong, hint);
   show("diagnosisResult");
+  window.renderDiagnosisRecommendations?.("diagnosisRecommendations", config.slug);
   if (typeof gtag === "function") gtag("event", "diagnosis_complete", { diagnosis_kind: kind, diagnosis_type: type });
   await saveAndLoadStats(type);
 }
