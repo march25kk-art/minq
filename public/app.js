@@ -140,11 +140,7 @@ window.addEventListener("DOMContentLoaded", () => {
       tagSelect.appendChild(new Option("カテゴリを選択してください（任意）", ""));
       TAGS.forEach(tag => tagSelect.appendChild(new Option(tag, tag)));
     }
-    document.getElementById("title")?.addEventListener("input", renderQuestionPreview);
-    document.getElementById("description")?.addEventListener("input", renderQuestionPreview);
-    document.getElementById("tags")?.addEventListener("change", renderQuestionPreview);
     document.getElementById("questionImage")?.addEventListener("change", handleQuestionImage);
-    renderQuestionPreview();
   }
 });
 
@@ -414,7 +410,6 @@ function renderOptions() {
     input.placeholder = `選択肢 ${index + 1}`;
     input.addEventListener("input", e => {
       state.options[index] = e.target.value;
-      renderQuestionPreview();
     });
 
     const del = document.createElement("button");
@@ -426,7 +421,6 @@ function renderOptions() {
     row.append(input, del);
     div.appendChild(row);
   });
-  renderQuestionPreview();
 }
 
 function addOption() {
@@ -439,27 +433,6 @@ function removeOption(index) {
   if (state.options.length <= 2) return alert("選択肢は2つ以上必要です。");
   state.options.splice(index, 1);
   renderOptions();
-}
-
-function renderQuestionPreview() {
-  const preview = document.getElementById("questionPreview");
-  if (!preview) return;
-
-  const title = document.getElementById("title")?.value.trim() || "質問タイトル";
-  const description = document.getElementById("description")?.value.trim() || "";
-  const tag = document.getElementById("tags")?.value || "";
-  const options = state.options.map(value => value.trim()).filter(Boolean);
-  const displayOptions = options.length ? options : ["選択肢 1", "選択肢 2"];
-
-  preview.innerHTML = `
-    ${state.questionImage ? `<img class="question-preview-image" src="${state.questionImage}" alt="">` : ""}
-    ${tag ? `<span class="question-preview-tag">${sanitize(tag)}</span>` : ""}
-    <h3>${sanitize(title)}</h3>
-    ${description ? `<p>${sanitize(description)}</p>` : ""}
-    <div class="question-preview-options">
-      ${displayOptions.map(option => `<span><i></i>${sanitize(option)}</span>`).join("")}
-    </div>
-  `;
 }
 
 function compressedImageDataUrl(file) {
@@ -511,6 +484,8 @@ async function handleQuestionImage(event) {
   const input = event.currentTarget;
   const file = input.files?.[0];
   if (!file) return clearQuestionImage();
+  const fileName = document.getElementById("questionImageName");
+  if (fileName) fileName.textContent = file.name;
 
   try {
     state.questionImage = await compressedImageDataUrl(file);
@@ -518,7 +493,6 @@ async function handleQuestionImage(event) {
     const image = preview?.querySelector("img");
     if (image) image.src = state.questionImage;
     if (preview) preview.hidden = false;
-    renderQuestionPreview();
   } catch (error) {
     input.value = "";
     state.questionImage = "";
@@ -530,9 +504,10 @@ function clearQuestionImage() {
   state.questionImage = "";
   const input = document.getElementById("questionImage");
   const preview = document.getElementById("questionImagePreview");
+  const fileName = document.getElementById("questionImageName");
   if (input) input.value = "";
   if (preview) preview.hidden = true;
-  renderQuestionPreview();
+  if (fileName) fileName.textContent = "選択されていません";
 }
 
 async function postQuestion() {
