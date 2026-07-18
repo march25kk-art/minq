@@ -129,16 +129,39 @@ const SITEMAP_STATIC_PAGES = [
   ...Object.keys(DIAGNOSIS_PAGES)
 ];
 
-app.get("/sitemap.xml", (_req, res) => {
+const escapeXml = value => String(value)
+  .replace(/&/g, "&amp;")
+  .replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;")
+  .replace(/'/g, "&apos;");
+
+const sitemapDate = value => {
+  if (!value) return "";
+  const date = typeof value?.toDate === "function" ? value.toDate() : new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString();
+};
+
+app.get("/sitemap.xml", async (_req, res) => {
   try {
-    let sitemap = fs.readFileSync(path.join(__dirname, "public", "sitemap.xml"), "utf8");
-    const missingPages = SITEMAP_STATIC_PAGES.filter(page => !sitemap.includes(`<loc>https://minnano-question.com${page}</loc>`));
-    const entries = missingPages.map(page => `<url><loc>https://minnano-question.com${page}</loc><changefreq>weekly</changefreq><priority>${page === "/" ? "1.0" : "0.8"}</priority></url>`).join("");
-    sitemap = sitemap.replace("</urlset>", `${entries}</urlset>`);
+    const snapshot = await firestore.collection(Q_COLL).get();
+    const staticEntries = SITEMAP_STATIC_PAGES.map(page =>
+      `<url><loc>${escapeXml(`https://minnano-question.com${page}`)}</loc><changefreq>weekly</changefreq><priority>${page === "/" ? "1.0" : "0.8"}</priority></url>`
+    ).join("");
+    const questionEntries = snapshot.docs.map(doc => {
+      const data = doc.data();
+      const lastmod = sitemapDate(data.updatedAt || data.createdAt);
+      const loc = `https://minnano-question.com/question?id=${encodeURIComponent(doc.id)}`;
+      return `<url><loc>${escapeXml(loc)}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ""}<changefreq>daily</changefreq><priority>0.7</priority></url>`;
+    }).join("");
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${staticEntries}${questionEntries}</urlset>`;
     res.type("application/xml").set("Cache-Control", "public, max-age=3600").send(sitemap);
   } catch (error) {
     console.error("Sitemap load failed:", error);
-    res.status(500).type("text/plain").send("Sitemap unavailable");
+    res
+      .type("application/xml")
+      .set("Cache-Control", "no-cache")
+      .sendFile(path.join(__dirname, "public", "sitemap.xml"));
   }
 });
 
@@ -192,6 +215,34 @@ app.get("/question", async (req, res) => {
     html = html.replace(/<meta property="og:title" id="ogTitle" content="[^"]*">/, `<meta property="og:title" id="ogTitle" content="${safeTitle} | みんQ">`);
     html = html.replace(/<meta property="og:description" id="ogDescription" content="[^"]*">/, `<meta property="og:description" id="ogDescription" content="${safeDescription}">`);
     html = html.replace(/<meta property="og:url" id="ogUrl" content="[^"]*">/, `<meta property="og:url" id="ogUrl" content="${canonicalUrl}">`);
+
+    const structuredData = {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: title,
+      description,
+      url: canonicalUrl,
+      inLanguage: "ja",
+      isPartOf: {
+        "@type": "WebSite",
+        name: "みんQ",
+        url: "https://minnano-question.com/"
+      },
+      mainEntity: {
+        "@type": "Question",
+        name: title,
+        text: description,
+        suggestedAnswer: (Array.isArray(q.options) ? q.options : []).map(option => ({
+          "@type": "Answer",
+          text: decodeStoredText(typeof option === "string" ? option : option?.text || "")
+        })).filter(answer => answer.text)
+      }
+    };
+    const structuredDataJson = JSON.stringify(structuredData).replace(/</g, "\\u003c");
+    html = html.replace(
+      /<script id="questionStructuredData" type="application\/ld\+json">[\s\S]*?<\/script>/,
+      `<script id="questionStructuredData" type="application/ld+json">${structuredDataJson}</script>`
+    );
 
     const optionItems = (Array.isArray(q.options) ? q.options : []).map(option => {
       const optionValue = typeof option === "string" ? option : option?.text || "";
