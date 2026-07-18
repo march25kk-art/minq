@@ -586,8 +586,6 @@ function renderAgeBreakdown(options, q) {
   `).join("");
 }
 
-const questionResultShareData = new Map();
-
 function renderResultsScreen(div, q, id) {
   const total = Number(q.totalVotes || 0);
   const options = q.options || [];
@@ -599,14 +597,6 @@ function renderResultsScreen(div, q, id) {
     statPercent(q.genderStats?.[index]?.rawPercent) > statPercent(q.genderStats?.[best]?.rawPercent) ? index : best, 0);
   const topOption = options[topIndex] ? optionText(options[topIndex]) : "まだ回答がありません";
   const topPercent = options[topIndex] ? statPercent(q.genderStats?.[topIndex]?.rawPercent) : 0;
-  questionResultShareData.set(String(id), {
-    title: plain(q.title),
-    total,
-    options: options.map((option, index) => ({
-      label: optionText(option),
-      percent: statPercent(q.genderStats?.[index]?.rawPercent)
-    }))
-  });
   div.classList.add("results-dashboard");
 
   div.innerHTML = `
@@ -618,7 +608,7 @@ function renderResultsScreen(div, q, id) {
       ${q.description ? `<p>${sanitize(plain(q.description))}</p>` : ""}
       <div class="result-meta-share-row">
         <p class="question-meta result-meta"><span>● ${total}回答</span><span>◇ ${Number(q.commentCount || 0)}コメント</span><span>◉ ${Number(q.views || 0)}閲覧</span></p>
-        <div class="result-share-panel" data-question-id="${sanitize(id)}" data-share-url="${sanitize(shareUrl)}" data-share-text="${sanitize(shareText)}">
+        <div class="result-share-panel" data-share-url="${sanitize(shareUrl)}" data-share-text="${sanitize(shareText)}">
           <div class="result-share-actions">
           <a class="result-share-btn share-x" href="https://twitter.com/intent/tweet?url=${encodedShareUrl}&text=${encodedShareText}" target="_blank" rel="noopener noreferrer" aria-label="Xでシェア">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.451-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"/></svg>
@@ -631,9 +621,6 @@ function renderResultsScreen(div, q, id) {
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8.5V6.8c0-.8.5-1 1-1h2.8V2.1L14.6 2C11.4 2 10 3.9 10 6.5v2H7v4h3V22h4v-9.5h3.4l.6-4H14Z"/></svg>
           </a>
           <a class="result-share-btn share-threads" href="https://www.threads.net/intent/post?text=${encodedShareText}%20${encodedShareUrl}" target="_blank" rel="noopener noreferrer" aria-label="Threadsでシェア"><span class="threads-mark">@</span></a>
-          <button class="result-share-btn share-result-image" type="button" onclick="shareQuestionResultImage(this)" aria-label="全体の回答結果を画像でシェア">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 3H5a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3Zm1 15a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1.2l4.1-4.1 2.8 2.8a1 1 0 0 0 1.4 0l1.2-1.2L20 17.8V18Zm0-2.4-5.8-3.1a1 1 0 0 0-1.2.2l-1.4 1.4-2.8-2.8a1 1 0 0 0-1.4 0L4 14.7V6a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v9.6ZM15.5 7a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"/></svg>
-          </button>
           <button class="result-share-btn share-copy" type="button" onclick="copyResultShare(this)" aria-label="シェアURLをコピー">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7V5a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-2v3a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3h3Zm2 0h4a3 3 0 0 1 3 3v4h2a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-8a1 1 0 0 0-1 1v2Zm-5 2a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H5Z"/></svg><span>コピー</span>
           </button>
@@ -732,108 +719,6 @@ async function copyResultShare(button) {
 async function shareResultToInstagram(button) {
   window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
   await copyResultShare(button);
-}
-
-function wrapCanvasText(context, text, maxWidth) {
-  const lines = [];
-  let line = "";
-  [...String(text)].forEach(char => {
-    const next = line + char;
-    if (line && context.measureText(next).width > maxWidth) {
-      lines.push(line);
-      line = char;
-    } else {
-      line = next;
-    }
-  });
-  if (line) lines.push(line);
-  return lines;
-}
-
-function createQuestionResultImage(data) {
-  const rowHeight = 74;
-  const canvas = document.createElement("canvas");
-  canvas.width = 1200;
-  canvas.height = Math.max(630, 429 + data.options.length * rowHeight);
-  const context = canvas.getContext("2d");
-  const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
-  gradient.addColorStop(0, "#f4fff7");
-  gradient.addColorStop(1, "#f8f5ff");
-  context.fillStyle = gradient;
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = "#ffffff";
-  context.shadowColor = "rgba(31, 50, 40, .12)";
-  context.shadowBlur = 32;
-  context.fillRect(60, 50, 1080, canvas.height - 100);
-  context.shadowColor = "transparent";
-
-  context.fillStyle = "#159855";
-  context.font = "900 34px sans-serif";
-  context.fillText("みんQ アンケート結果", 110, 115);
-  context.fillStyle = "#17251d";
-  context.font = "900 48px sans-serif";
-  const titleLines = wrapCanvasText(context, data.title, 980).slice(0, 2);
-  titleLines.forEach((line, index) => context.fillText(line, 110, 185 + index * 58));
-  const rowsTop = 185 + titleLines.length * 58 + 28;
-
-  data.options.forEach((option, index) => {
-    const y = rowsTop + index * rowHeight;
-    context.fillStyle = "#27352d";
-    context.font = "700 27px sans-serif";
-    const label = wrapCanvasText(context, option.label, 720)[0] || "";
-    context.fillText(label, 110, y);
-    context.fillStyle = "#159855";
-    context.font = "900 31px sans-serif";
-    context.textAlign = "right";
-    context.fillText(`${option.percent}%`, 1090, y);
-    context.textAlign = "left";
-    context.fillStyle = "#e7eee9";
-    context.fillRect(110, y + 17, 980, 18);
-    context.fillStyle = CHART_COLORS[index % CHART_COLORS.length];
-    context.fillRect(110, y + 17, 9.8 * option.percent, 18);
-  });
-
-  const footerY = canvas.height - 82;
-  context.fillStyle = "#58645d";
-  context.font = "600 25px sans-serif";
-  context.fillText(`全${data.total}回答　性別・年代別の詳しい統計はサイトで`, 110, footerY);
-  context.fillStyle = "#159855";
-  context.font = "800 24px sans-serif";
-  context.textAlign = "right";
-  context.fillText("minnano-question.com", 1090, footerY);
-  context.textAlign = "left";
-  return new Promise(resolve => canvas.toBlob(resolve, "image/png"));
-}
-
-async function shareQuestionResultImage(button) {
-  const panel = button.closest(".result-share-panel");
-  const data = questionResultShareData.get(panel?.dataset.questionId);
-  if (!data) return showShareFeedback(button, "画像を作成できませんでした");
-  button.disabled = true;
-  try {
-    const blob = await createQuestionResultImage(data);
-    const file = new File([blob], "minq-survey-result.png", { type: "image/png" });
-    const shareData = {
-      title: `${data.title} | みんQ`,
-      text: panel.dataset.shareText,
-      url: panel.dataset.shareUrl,
-      files: [file]
-    };
-    if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
-      await navigator.share(shareData);
-      return;
-    }
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = file.name;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-    showShareFeedback(button, "✓ 結果画像を保存しました");
-  } catch (error) {
-    if (error.name !== "AbortError") showShareFeedback(button, "画像を作成できませんでした");
-  } finally {
-    button.disabled = false;
-  }
 }
 
 async function voteAndReload(id) {

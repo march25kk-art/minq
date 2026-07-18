@@ -230,8 +230,7 @@ $("diagnosisIntroShareButton").addEventListener("click", () => {
     diagnosis: config.title,
     result: config.title,
     catchText: config.lead,
-    text: config.introShare,
-    allowImage: false
+    text: config.introShare
   });
 });
 $("diagnosisShareButton").addEventListener("click", () => {

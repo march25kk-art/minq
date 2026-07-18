@@ -1171,8 +1171,6 @@ select:focus {
 .line-logo { font-size: 8px; letter-spacing: -.6px; }
 .share-facebook { background: #1877f2; }
 .share-threads { background: #111; }
-.share-result-image { background: linear-gradient(135deg, #8067d4, #159855); }
-.share-result-image:disabled { opacity: .55; cursor: wait; }
 .threads-mark { font-size: 21px; font-weight: 700; line-height: 1; }
 .share-copy { width: auto; min-width: 74px; padding: 0 11px; color: #39443e; border: 1px solid #dce4df; background: #fff; }
 .share-feedback { position: absolute; right: 16px; bottom: -23px; color: #087b43; font-size: 11px; font-weight: 700; }
@@ -1198,11 +1196,8 @@ select:focus {
 .diagnosis-share-service.share-line b { font-size: 13px; }
 .diagnosis-share-service.share-threads b { font-size: 29px; }
 .diagnosis-share-service svg { width: 28px; height: 28px; fill: currentColor; }
-.diagnosis-share-image, .diagnosis-share-copy { width: 100%; min-height: 48px; margin-top: 10px; border-radius: 24px; font: inherit; font-weight: 800; cursor: pointer; }
-.diagnosis-share-image { border: 0; color: #fff; background: linear-gradient(135deg, #8067d4, #159855); }
-.diagnosis-share-image:disabled { opacity: .6; cursor: wait; }
+.diagnosis-share-copy { width: 100%; min-height: 48px; margin-top: 10px; border-radius: 24px; font: inherit; font-weight: 800; cursor: pointer; }
 .diagnosis-share-copy { border: 1px solid #dce4df; color: #39443e; background: #fff; }
-.diagnosis-share-note { margin: 14px 4px 0; color: var(--muted); font-size: 11px; line-height: 1.6; text-align: left; }
 .diagnosis-share-feedback { min-height: 18px; margin: 8px 4px 0; color: #087b43; font-size: 12px; font-weight: 700; text-align: left; }
 
 .result-summary-grid {

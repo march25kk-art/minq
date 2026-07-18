@@ -224,8 +224,7 @@ function shareDiagnosis() {
     diagnosis: "16タイプ性格診断",
     result: "16タイプ性格診断",
     catchText: "20の質問から、あなたの性格傾向を16タイプで診断します。",
-    text,
-    allowImage: false
+    text
   });
 }
 
