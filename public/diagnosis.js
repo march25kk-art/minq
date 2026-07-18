@@ -97,6 +97,8 @@ function setupPage() {
 
 function show(view) {
   ["diagnosisStart", "diagnosisQuiz", "diagnosisResult"].forEach(id => { $(id).hidden = id !== view; });
+  const seoContent = $("diagnosisSeoContent");
+  if (seoContent) seoContent.hidden = view !== "diagnosisStart";
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 

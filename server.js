@@ -2,6 +2,7 @@ const express = require("express");
 const { firestore } = require("./firebase");
 const { FieldValue } = require("firebase-admin/firestore");
 const { updateSitemap } = require('./generateSitemap');
+const { renderDiagnosisSeoContent } = require("./diagnosisSeo");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
@@ -117,7 +118,8 @@ Object.entries(DIAGNOSIS_PAGES).forEach(([route, page]) => {
       .replaceAll("{{SLUG}}", page.slug)
       .replaceAll("{{TITLE}}", page.title)
       .replaceAll("{{DESCRIPTION}}", page.description)
-      .replaceAll("{{THEME}}", page.theme);
+      .replaceAll("{{THEME}}", page.theme)
+      .replace("<!-- DIAGNOSIS_SEO_CONTENT -->", renderDiagnosisSeoContent(page));
     res.send(injectAdSenseHeadScript(html));
   });
 });
