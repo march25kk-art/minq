@@ -205,22 +205,17 @@ async function saveResultAndLoadStats(type) {
   }
 }
 
-async function shareResult() {
+function shareResult() {
   const type = $("mbtiShareButton").dataset.type;
   const name = $("mbtiShareButton").dataset.name;
   const text = `みんQの16タイプ性格診断で「${type} ${name}」でした！`;
-  try {
-    if (navigator.share) {
-      await navigator.share({ title: "16タイプ性格診断 | みんQ", text, url: location.href });
-    } else {
-      await navigator.clipboard.writeText(`${text}\n${location.href}`);
-      const original = $("mbtiShareButton").textContent;
-      $("mbtiShareButton").textContent = "コピーしました";
-      setTimeout(() => { $("mbtiShareButton").textContent = original; }, 1800);
-    }
-  } catch (error) {
-    if (error.name !== "AbortError") location.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(location.href)}`;
-  }
+  window.ResultShare.open({
+    diagnosis: "16タイプ性格診断",
+    result: `${type} ${name}`,
+    catchText: $("mbtiCatch").textContent,
+    accent: "#6046b4",
+    text
+  });
 }
 
 async function shareDiagnosis() {

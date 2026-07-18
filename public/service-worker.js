@@ -1,9 +1,10 @@
-const CACHE_NAME = "minq-shell-v33";
+const CACHE_NAME = "minq-shell-v34";
 const APP_SHELL = [
   "/",
   "/style.css",
   "/app.js",
   "/recommendations.js",
+  "/result-share.js",
   "/mbti.html",
   "/mbti.js",
   "/diagnosis.js",

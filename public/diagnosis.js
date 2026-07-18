@@ -239,4 +239,13 @@ $("diagnosisStartButton").addEventListener("click", startQuiz);
 $("diagnosisBackButton").addEventListener("click", goBack);
 $("diagnosisRetryButton").addEventListener("click", startQuiz);
 $("diagnosisIntroShareButton").addEventListener("click", event => share(config.introShare, event.currentTarget));
-$("diagnosisShareButton").addEventListener("click", event => share(`みんQの${config.title}で「${latestResult.name}」でした！`, event.currentTarget));
+$("diagnosisShareButton").addEventListener("click", () => {
+  const text = `みんQの${config.title}で「${latestResult.name}」でした！`;
+  window.ResultShare.open({
+    diagnosis: config.title,
+    result: latestResult.name,
+    catchText: $("diagnosisCatch").textContent,
+    accent: getComputedStyle(document.body).getPropertyValue("--diagnosis-accent").trim() || "#765ac8",
+    text
+  });
+});
