@@ -1079,6 +1079,13 @@ select:focus {
   margin: 24px auto 54px;
 }
 
+.results-dashboard,
+.results-dashboard > *,
+.results-dashboard .resultCard,
+.results-dashboard .detailCard {
+  min-width: 0;
+}
+
 .results-dashboard .resultCard,
 .results-dashboard .detailCard {
   border-color: #e6ebe8;
@@ -1094,6 +1101,11 @@ select:focus {
   display: flex;
   align-items: center;
   gap: 14px;
+}
+
+.result-title-row .createTitle {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .result-question-icon {
@@ -1120,6 +1132,7 @@ select:focus {
 }
 
 .result-meta {
+  min-width: 0;
   margin: 0;
   color: #4f575f;
 }
@@ -1211,6 +1224,11 @@ select:focus {
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 24px;
+}
+
+.result-card-heading h2 {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .results-dashboard .resultCard h2 {
@@ -1416,7 +1434,7 @@ select:focus {
 
 .result-comment-list .comment {
   display: grid;
-  grid-template-columns: 42px 1fr;
+  grid-template-columns: 42px minmax(0, 1fr);
   gap: 12px;
   margin: 0;
   padding: 20px 4px;
@@ -1439,6 +1457,10 @@ select:focus {
 .comment-author { font-weight: 800; }
 .comment-author span { margin-left: 8px; color: #858b91; font-size: 12px; font-weight: 500; }
 .result-comment-list .comment p { margin: 7px 0 0; line-height: 1.65; }
+.result-comment-list .comment p,
+.comment-author {
+  overflow-wrap: anywhere;
+}
 .empty-comments { margin: 22px 0 0; color: var(--muted); }
 
 .result-answer-cta {
@@ -1797,8 +1819,13 @@ select:focus {
   .result-question-icon { width: 36px; height: 36px; }
   .result-question-card .createTitle { font-size: 22px !important; }
   .result-meta-share-row { align-items: stretch; flex-direction: column; gap: 14px; }
+  .result-meta {
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    white-space: normal;
+  }
   .result-share-panel { width: 100%; }
-  .result-share-actions { width: 100%; flex-wrap: nowrap; justify-content: flex-end; gap: 3px; }
+  .result-share-actions { width: 100%; flex-wrap: wrap; justify-content: flex-start; gap: 6px; }
   .result-share-btn { width: 32px; height: 34px; min-width: 32px; flex: 0 0 32px; }
   .result-share-btn.share-copy { width: auto; min-width: 68px; flex: 0 0 auto; padding: 0 9px; }
   .result-share-btn svg { width: 16px; height: 16px; }
