@@ -218,21 +218,15 @@ function shareResult() {
   });
 }
 
-async function shareDiagnosis() {
-  const button = $("mbtiIntroShareButton");
+function shareDiagnosis() {
   const text = "20の質問でわかる、みんQの16タイプ性格診断をやってみよう！";
-  try {
-    if (navigator.share) {
-      await navigator.share({ title: "16タイプ性格診断 | みんQ", text, url: location.href });
-    } else {
-      await navigator.clipboard.writeText(`${text}\n${location.href}`);
-      const original = button.textContent;
-      button.textContent = "リンクをコピーしました";
-      setTimeout(() => { button.textContent = original; }, 1800);
-    }
-  } catch (error) {
-    if (error.name !== "AbortError") location.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(location.href)}`;
-  }
+  window.ResultShare.open({
+    diagnosis: "16タイプ性格診断",
+    result: "16タイプ性格診断",
+    catchText: "20の質問から、あなたの性格傾向を16タイプで診断します。",
+    text,
+    allowImage: false
+  });
 }
 
 $("mbtiStartButton").addEventListener("click", startQuiz);

@@ -133,9 +133,9 @@
         <a class="diagnosis-share-service share-line" href="https://social-plugins.line.me/lineit/share?url=${encodedUrl}" target="_blank" rel="noopener noreferrer"><b>LINE</b><span>LINE</span></a>
         <a class="diagnosis-share-service share-facebook" href="https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}" target="_blank" rel="noopener noreferrer"><b>f</b><span>Facebook</span></a>
       </div>
-      <button class="diagnosis-share-image" type="button"><span aria-hidden="true">▧</span> 結果画像付きでシェア</button>
+      ${payload.allowImage === false ? "" : '<button class="diagnosis-share-image" type="button"><span aria-hidden="true">▧</span> 結果画像付きでシェア</button>'}
       <button class="diagnosis-share-copy" type="button">シェア文とURLをコピー</button>
-      <p class="diagnosis-share-note">画像付きシェアは、対応端末では共有先を選べます。未対応の場合は画像を保存します。</p>
+      ${payload.allowImage === false ? "" : '<p class="diagnosis-share-note">画像付きシェアは、対応端末では共有先を選べます。未対応の場合は画像を保存します。</p>'}
       <p class="diagnosis-share-feedback" role="status" aria-live="polite"></p>`;
     document.body.append(dialog);
     dialog.querySelector(".diagnosis-share-close").addEventListener("click", () => close(dialog));
@@ -144,7 +144,7 @@
       await writeClipboard(`${text}\n${url}`);
       showFeedback(dialog, "コピーしました。");
     });
-    dialog.querySelector(".diagnosis-share-image").addEventListener("click", () => shareImage(dialog, { ...payload, text, url }));
+    dialog.querySelector(".diagnosis-share-image")?.addEventListener("click", () => shareImage(dialog, { ...payload, text, url }));
     dialog.querySelectorAll("a").forEach(link => link.addEventListener("click", () => setTimeout(() => close(dialog), 150)));
     dialog.showModal();
   }

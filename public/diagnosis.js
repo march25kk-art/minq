@@ -221,24 +221,19 @@ async function saveAndLoadStats(type) {
   }
 }
 
-async function share(text, button) {
-  try {
-    if (navigator.share) await navigator.share({ title: `${config.title} | みんQ`, text, url: location.href });
-    else {
-      await navigator.clipboard.writeText(`${text}\n${location.href}`);
-      const original = button.textContent; button.textContent = "リンクをコピーしました";
-      setTimeout(() => { button.textContent = original; }, 1800);
-    }
-  } catch (error) {
-    if (error.name !== "AbortError") location.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(location.href)}`;
-  }
-}
-
 setupPage();
 $("diagnosisStartButton").addEventListener("click", startQuiz);
 $("diagnosisBackButton").addEventListener("click", goBack);
 $("diagnosisRetryButton").addEventListener("click", startQuiz);
-$("diagnosisIntroShareButton").addEventListener("click", event => share(config.introShare, event.currentTarget));
+$("diagnosisIntroShareButton").addEventListener("click", () => {
+  window.ResultShare.open({
+    diagnosis: config.title,
+    result: config.title,
+    catchText: config.lead,
+    text: config.introShare,
+    allowImage: false
+  });
+});
 $("diagnosisShareButton").addEventListener("click", () => {
   const text = `みんQの${config.title}で「${latestResult.name}」でした！`;
   window.ResultShare.open({
