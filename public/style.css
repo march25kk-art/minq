@@ -205,7 +205,10 @@ button { cursor: pointer; }
   .mbti-answers.four-options .mbti-answer { min-height: 60px; padding: 8px 9px; gap: 7px; }
   .mbti-answers.four-options .mbti-answer span { flex-basis: 28px; width: 28px; height: 28px; font-size: 12px; }
   .mbti-answers.four-options .mbti-answer b { font-size: 12px; }
-  .mbti-profile-fields, .mbti-stats-demographics { grid-template-columns: 1fr; }
+  .mbti-profile-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 12px; }
+  .mbti-profile-fields label { min-width: 0; }
+  .mbti-profile-fields select { min-width: 0; padding: 0 9px; font-size: 14px; }
+  .mbti-stats-demographics { grid-template-columns: 1fr; }
   .mbti-stats-grid { display: block; }
   .mbti-stat-row { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; margin-top: 14px; font-size: 12px; }
   .mbti-stat-row:first-child { margin-top: 0; }
