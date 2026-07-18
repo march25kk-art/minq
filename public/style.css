@@ -974,6 +974,140 @@ select:focus {
 .deleteBtn { min-width: 70px; }
 .submitBtn { margin-top: 22px; width: 100%; }
 
+.question-image-field {
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px dashed #cbd8d0;
+  border-radius: 12px;
+  background: #f8fbf9;
+}
+
+.question-image-field > label {
+  display: block;
+  font-weight: 850;
+}
+
+.question-image-field > input {
+  margin-top: 10px;
+  padding: 10px;
+  background: #fff;
+}
+
+.question-image-field > p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.question-image-preview {
+  margin-top: 12px;
+}
+
+.question-image-preview img,
+.question-image,
+.question-preview-image {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.question-image-preview img {
+  max-height: 320px;
+}
+
+.question-image-preview .text-btn {
+  margin-top: 8px;
+  color: #b33434;
+}
+
+.create-preview-section {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.create-preview-heading {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.create-preview-heading h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.create-preview-heading span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.question-preview {
+  padding: 20px;
+  border: 1px solid #dfe8e2;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(29, 48, 37, .06);
+}
+
+.question-preview-image {
+  max-height: 300px;
+  margin-bottom: 15px;
+}
+
+.question-preview-tag {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  color: var(--green-dark);
+  background: var(--green-soft);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.question-preview h3 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 20px;
+}
+
+.question-preview p {
+  margin: 9px 0 0;
+  color: #5e6661;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.question-preview-options {
+  margin-top: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.question-preview-options span {
+  min-width: 0;
+  padding: 11px 13px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fafcfb;
+}
+
+.question-preview-options i {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  border: 2px solid #aab8b0;
+  border-radius: 50%;
+}
+
 .vote-actions {
   display: flex;
   flex-direction: column;
@@ -1129,6 +1263,39 @@ select:focus {
   margin: 18px 0 0;
   color: #333940;
   line-height: 1.75;
+}
+
+.result-question-card .question-image,
+.detailCard > .question-image {
+  max-height: 520px;
+  margin-top: 20px;
+}
+
+.result-one-line-summary {
+  margin-top: 20px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  border: 1px solid #d8ebdf;
+  border-radius: 14px;
+  background: linear-gradient(110deg, #edf9f2, #fbfefc);
+}
+
+.result-one-line-summary > span {
+  font-size: 23px;
+  line-height: 1;
+}
+
+.result-one-line-summary strong {
+  color: #17643d;
+  font-size: 15px;
+}
+
+.result-one-line-summary p {
+  margin: 6px 0 0;
+  color: #35423b;
+  line-height: 1.7;
 }
 
 .result-meta {
@@ -1460,6 +1627,34 @@ select:focus {
 .result-comment-list .comment p,
 .comment-author {
   overflow-wrap: anywhere;
+}
+
+.comment-like-btn {
+  min-height: 32px;
+  margin-top: 10px;
+  padding: 5px 11px;
+  border: 1px solid #dce5df;
+  border-radius: 999px;
+  color: #58635c;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.comment-like-btn span {
+  color: #e25b76;
+  font-size: 15px;
+}
+
+.comment-like-btn.is-liked {
+  color: #b82f50;
+  border-color: #f0bdca;
+  background: #fff5f7;
+}
+
+.comment-like-btn:disabled {
+  cursor: wait;
+  opacity: .65;
 }
 .empty-comments { margin: 22px 0 0; color: var(--muted); }
 
@@ -1837,4 +2032,7 @@ select:focus {
   .comment-compose .commentBtn { width: 100%; }
   .result-answer-cta { align-items: stretch; flex-direction: column; padding: 22px; }
   .result-answer-cta .primary-btn { width: 100%; }
+  .create-preview-heading { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .question-preview { padding: 16px; }
+  .result-one-line-summary { padding: 17px; }
 }

@@ -19,6 +19,7 @@ const state = {
   currentTag: "",
   currentSort: "update",
   options: ["", ""],
+  questionImage: "",
   latestQuestions: [],
   showAllTags: false,
   loadController: null
@@ -111,6 +112,12 @@ function optionText(option) {
   return plain(typeof option === "string" ? option : option?.text || "");
 }
 
+function questionImageMarkup(image, className = "question-image") {
+  const value = String(image || "");
+  if (!/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(value)) return "";
+  return `<img class="${className}" src="${value}" alt="アンケートの添付画像">`;
+}
+
 function createQueryParams(params) {
   return new URLSearchParams(params).toString();
 }
@@ -133,6 +140,11 @@ window.addEventListener("DOMContentLoaded", () => {
       tagSelect.appendChild(new Option("カテゴリを選択してください（任意）", ""));
       TAGS.forEach(tag => tagSelect.appendChild(new Option(tag, tag)));
     }
+    document.getElementById("title")?.addEventListener("input", renderQuestionPreview);
+    document.getElementById("description")?.addEventListener("input", renderQuestionPreview);
+    document.getElementById("tags")?.addEventListener("change", renderQuestionPreview);
+    document.getElementById("questionImage")?.addEventListener("change", handleQuestionImage);
+    renderQuestionPreview();
   }
 });
 
@@ -402,6 +414,7 @@ function renderOptions() {
     input.placeholder = `選択肢 ${index + 1}`;
     input.addEventListener("input", e => {
       state.options[index] = e.target.value;
+      renderQuestionPreview();
     });
 
     const del = document.createElement("button");
@@ -413,6 +426,7 @@ function renderOptions() {
     row.append(input, del);
     div.appendChild(row);
   });
+  renderQuestionPreview();
 }
 
 function addOption() {
@@ -425,6 +439,100 @@ function removeOption(index) {
   if (state.options.length <= 2) return alert("選択肢は2つ以上必要です。");
   state.options.splice(index, 1);
   renderOptions();
+}
+
+function renderQuestionPreview() {
+  const preview = document.getElementById("questionPreview");
+  if (!preview) return;
+
+  const title = document.getElementById("title")?.value.trim() || "質問タイトル";
+  const description = document.getElementById("description")?.value.trim() || "";
+  const tag = document.getElementById("tags")?.value || "";
+  const options = state.options.map(value => value.trim()).filter(Boolean);
+  const displayOptions = options.length ? options : ["選択肢 1", "選択肢 2"];
+
+  preview.innerHTML = `
+    ${state.questionImage ? `<img class="question-preview-image" src="${state.questionImage}" alt="">` : ""}
+    ${tag ? `<span class="question-preview-tag">${sanitize(tag)}</span>` : ""}
+    <h3>${sanitize(title)}</h3>
+    ${description ? `<p>${sanitize(description)}</p>` : ""}
+    <div class="question-preview-options">
+      ${displayOptions.map(option => `<span><i></i>${sanitize(option)}</span>`).join("")}
+    </div>
+  `;
+}
+
+function compressedImageDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    if (!/^image\/(?:jpeg|png|webp)$/.test(file.type)) {
+      reject(new Error("JPEG・PNG・WebP画像を選択してください。"));
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      reject(new Error("元画像は10MB以下にしてください。"));
+      return;
+    }
+
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const maxSide = 1200;
+      const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const context = canvas.getContext("2d");
+      context.fillStyle = "#fff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+      let quality = 0.84;
+      let dataUrl = canvas.toDataURL("image/jpeg", quality);
+      while (dataUrl.length > 790000 && quality > 0.5) {
+        quality -= 0.08;
+        dataUrl = canvas.toDataURL("image/jpeg", quality);
+      }
+      if (dataUrl.length > 820000) {
+        reject(new Error("画像を十分に圧縮できませんでした。別の画像をお試しください。"));
+        return;
+      }
+      resolve(dataUrl);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("画像を読み込めませんでした。"));
+    };
+    image.src = objectUrl;
+  });
+}
+
+async function handleQuestionImage(event) {
+  const input = event.currentTarget;
+  const file = input.files?.[0];
+  if (!file) return clearQuestionImage();
+
+  try {
+    state.questionImage = await compressedImageDataUrl(file);
+    const preview = document.getElementById("questionImagePreview");
+    const image = preview?.querySelector("img");
+    if (image) image.src = state.questionImage;
+    if (preview) preview.hidden = false;
+    renderQuestionPreview();
+  } catch (error) {
+    input.value = "";
+    state.questionImage = "";
+    alert(error.message || "画像を処理できませんでした。");
+  }
+}
+
+function clearQuestionImage() {
+  state.questionImage = "";
+  const input = document.getElementById("questionImage");
+  const preview = document.getElementById("questionImagePreview");
+  if (input) input.value = "";
+  if (preview) preview.hidden = true;
+  renderQuestionPreview();
 }
 
 async function postQuestion() {
@@ -441,7 +549,7 @@ async function postQuestion() {
   const res = await fetch("/questions", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, description, tags: tag ? [tag] : [], options })
+    body: JSON.stringify({ title, description, image: state.questionImage, tags: tag ? [tag] : [], options })
   });
   const data = await res.json();
   if (data.error) return alert(data.message || "投稿に失敗しました。");
@@ -496,6 +604,7 @@ function renderVotingScreen(div, q, id) {
     <section class="detailCard">
       <h1 class="createTitle">${sanitize(plain(q.title))}</h1>
       ${q.description ? `<p>${sanitize(plain(q.description))}</p>` : ""}
+      ${questionImageMarkup(q.image)}
       <div class="optionsArea">
         ${(q.options || []).map((option, index) => `
           <label class="optionCard">
@@ -586,6 +695,38 @@ function renderAgeBreakdown(options, q) {
   `).join("");
 }
 
+function createResultSummary(options, q, total) {
+  if (!total || !options.length) return "まだ回答がありません。最初の回答を待っています。";
+
+  const rows = options.map((option, index) => ({
+    label: optionText(option),
+    percent: statPercent(q.genderStats?.[index]?.rawPercent)
+  })).sort((a, b) => b.percent - a.percent);
+  const top = rows[0];
+  const second = rows[1] || { percent: 0 };
+  const lead = top.percent - second.percent;
+
+  let summary;
+  if (total < 10) {
+    summary = `「${top.label}」が${top.percent}%で現在トップです。まだ回答数が少ないため、今後傾向が変わる可能性があります。`;
+  } else if (lead <= 3) {
+    summary = `上位の回答がほぼ同率で、意見が大きく分かれています。現在は「${top.label}」が${top.percent}%です。`;
+  } else if (top.percent >= 60) {
+    summary = `「${top.label}」が${top.percent}%を占め、多くの人から支持されています。`;
+  } else {
+    summary = `「${top.label}」が${top.percent}%で最多です。2位とは${lead}ポイントの差があります。`;
+  }
+
+  const genderGap = options.reduce((best, option, index) => {
+    const male = statPercent(q.genderStats?.[index]?.male);
+    const female = statPercent(q.genderStats?.[index]?.female);
+    const gap = Math.abs(male - female);
+    return gap > best.gap ? { gap, label: optionText(option) } : best;
+  }, { gap: 0, label: "" });
+  if (genderGap.gap >= 20) summary += ` また「${genderGap.label}」は男女で${genderGap.gap}ポイントの差があります。`;
+  return summary;
+}
+
 function renderResultsScreen(div, q, id) {
   const total = Number(q.totalVotes || 0);
   const options = q.options || [];
@@ -597,15 +738,17 @@ function renderResultsScreen(div, q, id) {
     statPercent(q.genderStats?.[index]?.rawPercent) > statPercent(q.genderStats?.[best]?.rawPercent) ? index : best, 0);
   const topOption = options[topIndex] ? optionText(options[topIndex]) : "まだ回答がありません";
   const topPercent = options[topIndex] ? statPercent(q.genderStats?.[topIndex]?.rawPercent) : 0;
+  const resultSummary = createResultSummary(options, q, total);
   div.classList.add("results-dashboard");
 
   div.innerHTML = `
     <section class="detailCard result-question-card">
-      <div class="result-title-row">
+        <div class="result-title-row">
         <span class="result-question-icon">Q</span>
         <h1 class="createTitle">${sanitize(plain(q.title))}</h1>
-      </div>
-      ${q.description ? `<p>${sanitize(plain(q.description))}</p>` : ""}
+        </div>
+        ${q.description ? `<p>${sanitize(plain(q.description))}</p>` : ""}
+        ${questionImageMarkup(q.image)}
       <div class="result-meta-share-row">
         <p class="question-meta result-meta"><span>● ${total}回答</span><span>◇ ${Number(q.commentCount || 0)}コメント</span><span>◉ ${Number(q.views || 0)}閲覧</span></p>
         <div class="result-share-panel" data-share-url="${sanitize(shareUrl)}" data-share-text="${sanitize(shareText)}">
@@ -628,7 +771,12 @@ function renderResultsScreen(div, q, id) {
           <span class="share-feedback" role="status" aria-live="polite"></span>
         </div>
       </div>
-    </section>
+      </section>
+
+      <section class="result-one-line-summary">
+        <span aria-hidden="true">💡</span>
+        <div><strong>結果の一言サマリー</strong><p>${sanitize(resultSummary)}</p></div>
+      </section>
 
     <section class="resultGrid-top result-summary-grid">
       <div class="resultCard overall-result-card">
@@ -663,10 +811,16 @@ function renderResultsScreen(div, q, id) {
       </div>
       <div id="commentList" class="result-comment-list">
         ${(q.comments || []).map((comment, index) => `
-          <div class="comment">
-            <span class="comment-avatar">${index + 1}</span>
-            <div><div class="comment-author">${sanitize(plain(comment.name) || "みんQユーザー")} <span>${sanitize(comment.createdAt || "")}</span></div><p>${sanitize(plain(comment.text))}</p></div>
-          </div>
+            <div class="comment" data-comment-id="${sanitize(comment.id)}">
+              <span class="comment-avatar">${index + 1}</span>
+              <div>
+                <div class="comment-author">${sanitize(plain(comment.name) || "みんQユーザー")} <span>${sanitize(comment.createdAt || "")}</span></div>
+                <p>${sanitize(plain(comment.text))}</p>
+                <button class="comment-like-btn" type="button" onclick="likeComment(this, '${sanitize(comment.id)}', '${sanitize(id)}')">
+                  <span aria-hidden="true">♡</span> 共感 <b>${Math.max(0, Number(comment.likeCount) || 0)}</b>
+                </button>
+              </div>
+            </div>
         `).join("") || '<p class="empty-comments">まだコメントはありません。最初の意見を投稿してみましょう。</p>'}
       </div>
     </section>
@@ -681,6 +835,13 @@ function renderResultsScreen(div, q, id) {
       <button class="primary-btn" type="button" onclick="location.href='create.html'">質問を作成する <span>›</span></button>
     </section>
   `;
+  div.querySelectorAll(".comment-like-btn").forEach(button => {
+    const commentId = button.closest("[data-comment-id]")?.dataset.commentId;
+    if (!commentId || localStorage.getItem(`minq:comment-like:${commentId}`) !== "1") return;
+    button.classList.add("is-liked");
+    const icon = button.querySelector("span");
+    if (icon) icon.textContent = "♥";
+  });
   window.renderQuestionRecommendations?.("questionRecommendations", q, id);
   window.mountAdSenseAds?.(div);
 }
@@ -762,7 +923,7 @@ async function addCommentAndReload(id) {
     const data = await res.json();
     if (data.error) return alert(data.message || "コメント投稿に失敗しました。");
 
-    appendPostedComment(data.comment || { text, name });
+    appendPostedComment(data.comment || { text, name }, id);
     const textInput = document.getElementById("commentText");
     const nameInput = document.getElementById("commentName");
     if (textInput) textInput.value = "";
@@ -778,7 +939,7 @@ async function addCommentAndReload(id) {
   }
 }
 
-function appendPostedComment(comment) {
+function appendPostedComment(comment, questionId) {
   const list = document.getElementById("commentList");
   if (!list) return;
 
@@ -786,6 +947,7 @@ function appendPostedComment(comment) {
   const number = list.querySelectorAll(".comment").length + 1;
   const item = document.createElement("div");
   item.className = "comment";
+  if (comment.id) item.dataset.commentId = comment.id;
 
   const avatar = document.createElement("span");
   avatar.className = "comment-avatar";
@@ -802,6 +964,14 @@ function appendPostedComment(comment) {
   const message = document.createElement("p");
   message.textContent = comment.text || "";
   body.append(author, message);
+  if (comment.id) {
+    const likeButton = document.createElement("button");
+    likeButton.type = "button";
+    likeButton.className = "comment-like-btn";
+    likeButton.innerHTML = '<span aria-hidden="true">♡</span> 共感 <b>0</b>';
+    likeButton.onclick = () => likeComment(likeButton, comment.id, questionId);
+    body.appendChild(likeButton);
+  }
   item.append(avatar, body);
   list.appendChild(item);
 
@@ -811,6 +981,34 @@ function appendPostedComment(comment) {
   if (countBadge) countBadge.textContent = `${updatedCount}件`;
   const metaComment = document.querySelector(".result-meta span:nth-child(2)");
   if (metaComment) metaComment.textContent = `◇ ${updatedCount}コメント`;
+}
+
+async function likeComment(button, commentId, questionId) {
+  if (!button || button.disabled) return;
+  const storageKey = `minq:comment-like:${commentId}`;
+  if (localStorage.getItem(storageKey) === "1") {
+    button.classList.add("is-liked");
+    return;
+  }
+
+  button.disabled = true;
+  try {
+    const res = await fetch(`/comments/${encodeURIComponent(commentId)}/like`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ questionId })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.message || "共感を保存できませんでした。");
+    button.querySelector("b").textContent = String(Math.max(0, Number(data.likeCount) || 0));
+    button.querySelector("span").textContent = "♥";
+    button.classList.add("is-liked");
+    localStorage.setItem(storageKey, "1");
+  } catch (error) {
+    alert(error.message || "共感を保存できませんでした。");
+  } finally {
+    button.disabled = false;
+  }
 }
 
 async function reportQuestion(id) {

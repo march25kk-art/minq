@@ -9,7 +9,7 @@ const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 
 const app = express();
-app.use(express.json({ limit: "32kb" }));
+app.use(express.json({ limit: "900kb" }));
 
 const decodeStoredText = (value = "") => String(value)
   .replace(/&amp;/g, "&")
@@ -302,6 +302,7 @@ const IS_PRODUCTION = process.env.NODE_ENV === 'production' || process.env.FIREB
 const Q_COLL = IS_PRODUCTION ? 'questions' : 'questions_dev';
 const V_COLL = IS_PRODUCTION ? 'votes' : 'votes_dev';
 const C_COLL = IS_PRODUCTION ? 'comments' : 'comments_dev';
+const CL_COLL = IS_PRODUCTION ? 'commentLikes' : 'commentLikes_dev';
 const R_COLL = IS_PRODUCTION ? 'reportsLog' : 'reportsLog_dev';
 const MBTI_COLL = IS_PRODUCTION ? 'mbtiResults' : 'mbtiResults_dev';
 const DIAGNOSIS_COLL = IS_PRODUCTION ? 'diagnosisResults' : 'diagnosisResults_dev';
@@ -340,6 +341,16 @@ const questionCooldown = {};
 const commentCooldown = {};
 const actionAttempts = new Map();
 const recentSubmissions = new Map();
+const QUESTION_IMAGE_MAX_BYTES = 600 * 1024;
+
+const normalizeQuestionImage = value => {
+  const image = String(value || "");
+  if (!image) return "";
+  const match = image.match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
+  if (!match) return null;
+  const byteLength = Buffer.byteLength(match[2], "base64");
+  return byteLength > 0 && byteLength <= QUESTION_IMAGE_MAX_BYTES ? image : null;
+};
 
 // ===== ユーティリティ関数 =====
 const escapeHTML = (str = "") => String(str)
@@ -523,7 +534,7 @@ const getAllQuestions = async ({ fresh = false } = {}) => {
   const request = firestore.collection(Q_COLL).get().then(snapshot => {
     const questions = snapshot.docs.map(doc => {
       const data = doc.data();
-      const { counts, ip, statsAggregate, statsAggregateVotes, ...publicData } = data;
+      const { counts, ip, statsAggregate, statsAggregateVotes, image, ...publicData } = data;
       return {
         id: doc.id,
         ...publicData,
@@ -687,6 +698,7 @@ const toVotingQuestionData = question => ({
   id: question.id,
   title: question.title,
   description: question.description || "",
+  image: question.image || "",
   options: Array.isArray(question.options) ? question.options : [],
   tags: Array.isArray(question.tags) ? question.tags : [],
   voted: false
@@ -731,7 +743,7 @@ app.get("/questions", async (req, res) => {
       const snapshot = await query.get();
       questions = snapshot.docs.map(doc => {
         const data = doc.data();
-        const { counts, ip, statsAggregate, statsAggregateVotes, ...publicData } = data;
+        const { counts, ip, statsAggregate, statsAggregateVotes, image, ...publicData } = data;
         return {
           id: doc.id,
           ...publicData,
@@ -796,6 +808,7 @@ app.post("/questions", async (req, res) => {
   try {
     let { title, options, tags } = req.body;
     const description = String(req.body.description || "").trim();
+    const image = normalizeQuestionImage(req.body.image);
     title = String(title || "").trim();
 
     if (!title || !options || !Array.isArray(options) || options.length < 2) {
@@ -803,6 +816,7 @@ app.post("/questions", async (req, res) => {
     }
     if (title.length > 120) return sendError(res, "タイトルは120文字以内で入力してください");
     if (description.length > 1000) return sendError(res, "説明は1000文字以内で入力してください");
+    if (image === null) return sendError(res, "画像は600KB以下のJPEG・PNG・WebPを使用してください", 400);
     if (options.length > 10 || options.some(option => String(option).trim().length > 200)) {
       return sendError(res, "選択肢は10件以内・各200文字以内で入力してください");
     }
@@ -831,6 +845,7 @@ app.post("/questions", async (req, res) => {
     const newQuestion = {
       title: escapeHTML(title),
       description: escapeHTML(description),
+      image,
       options: options.map(o => escapeHTML(String(o).trim())),
       tags: Array.isArray(tags) ? tags.map(t => escapeHTML(String(t).trim())) : [],
       createdAt: timeStr,
@@ -1112,8 +1127,8 @@ const saveComment = async (req, res) => {
     commentCooldown[ip] = now;
 
     const timeStr = nowJSTString();
-    await firestore.collection(C_COLL).add({
-      questionId: String(id), text: escapeHTML(text), name: name ? escapeHTML(name) : "", age: age || UNANSWERED, gender: gender || UNANSWERED, createdAt: timeStr, ip
+    const commentRef = await firestore.collection(C_COLL).add({
+      questionId: String(id), text: escapeHTML(text), name: name ? escapeHTML(name) : "", age: age || UNANSWERED, gender: gender || UNANSWERED, createdAt: timeStr, likeCount: 0, ip
     });
     rememberSubmission(ip, "comment", `${id}|${text}`);
     
@@ -1127,9 +1142,11 @@ const saveComment = async (req, res) => {
     res.json({
       success: true,
       comment: {
+        id: commentRef.id,
         text,
         name,
-        createdAt: timeStr
+        createdAt: timeStr,
+        likeCount: 0
       }
     });
   } catch (error) {
@@ -1138,6 +1155,56 @@ const saveComment = async (req, res) => {
   }
 };
 app.post(["/comment", "/questions/:id/comment"], saveComment);
+
+app.post("/comments/:commentId/like", async (req, res) => {
+  const commentId = String(req.params.commentId || "");
+  const questionId = String(req.body?.questionId || "");
+  if (!commentId || !questionId) return sendError(res, "コメントを確認できません", 400);
+
+  const ip = getIp(req);
+  if (!allowAction(ip, "comment-like", 30, 10 * 60 * 1000)) {
+    return sendError(res, "短時間の共感操作が多すぎます", 429);
+  }
+
+  try {
+    const voterId = getVoterId(req, res);
+    const commentRef = firestore.collection(C_COLL).doc(commentId);
+    const likeId = crypto
+      .createHash("sha256")
+      .update(`${commentId}\u0000${voterId}`)
+      .digest("hex");
+    const likeRef = firestore.collection(CL_COLL).doc(likeId);
+
+    const result = await firestore.runTransaction(async transaction => {
+      const [commentDoc, likeDoc] = await Promise.all([
+        transaction.get(commentRef),
+        transaction.get(likeRef)
+      ]);
+      if (!commentDoc.exists || String(commentDoc.data().questionId) !== questionId) {
+        throw new Error("COMMENT_NOT_FOUND");
+      }
+
+      const likeCount = Math.max(0, Number(commentDoc.data().likeCount) || 0);
+      if (likeDoc.exists) return { alreadyLiked: true, likeCount };
+
+      transaction.set(likeRef, {
+        commentId,
+        questionId,
+        voterId,
+        createdAt: new Date().toISOString()
+      });
+      transaction.update(commentRef, { likeCount: likeCount + 1 });
+      return { alreadyLiked: false, likeCount: likeCount + 1 };
+    });
+
+    DETAIL_CACHE.delete(questionId);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    if (error.message === "COMMENT_NOT_FOUND") return sendError(res, "コメントが見つかりません", 404);
+    console.error("Comment like error:", error);
+    sendError(res, "共感を保存できませんでした", 500);
+  }
+});
 
 // 性格診断の回答保存と、全体・属性別のタイプ割合
 app.post("/mbti/result", async (req, res) => {
@@ -1268,6 +1335,10 @@ app.post("/admin/delete-comment", async (req, res) => {
 
   try {
     await firestore.collection(C_COLL).doc(String(id)).delete();
+    const likes = await firestore.collection(CL_COLL).where("commentId", "==", String(id)).get();
+    const likesBatch = firestore.batch();
+    likes.docs.forEach(doc => likesBatch.delete(doc.ref));
+    await likesBatch.commit();
     DETAIL_CACHE.clear();
     res.json({ success: true });
   } catch (error) {
@@ -1285,7 +1356,7 @@ app.post("/admin/delete", async (req, res) => {
     await firestore.collection(Q_COLL).doc(questionId).delete();
     invalidateListCache();
 
-    for (const col of [C_COLL, V_COLL, R_COLL]) {
+    for (const col of [C_COLL, CL_COLL, V_COLL, R_COLL]) {
       const snapshot = await firestore.collection(col).where("questionId", "==", questionId).get();
       const batch = firestore.batch();
       snapshot.docs.forEach(doc => batch.delete(doc.ref));

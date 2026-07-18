@@ -11,8 +11,8 @@
     gtag('config', 'G-FWPQD3EYNB');
   </script>
   <title>質問を作成 - みんQ</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="app.js" defer></script>
+  <link rel="stylesheet" href="style.css?v=26">
+  <script src="app.js?v=14" defer></script>
 </head>
 <body>
   <header>
@@ -27,9 +27,25 @@
       <h1 class="createTitle">質問を作成する</h1>
       <input id="title" maxlength="120" placeholder="タイトル（必須）">
       <textarea id="description" maxlength="1000" placeholder="説明（任意）"></textarea>
+      <div class="question-image-field">
+        <label for="questionImage">画像（任意・1枚まで）</label>
+        <input id="questionImage" type="file" accept="image/jpeg,image/png,image/webp">
+        <p>JPEG・PNG・WebPに対応。投稿時に自動で縮小されます。</p>
+        <div id="questionImagePreview" class="question-image-preview" hidden>
+          <img alt="添付画像のプレビュー">
+          <button type="button" class="text-btn" onclick="clearQuestionImage()">画像を削除</button>
+        </div>
+      </div>
       <select id="tags"></select>
       <div id="options"></div>
       <button type="button" class="subBtn" onclick="addOption()">選択肢を追加</button>
+      <section class="create-preview-section" aria-labelledby="createPreviewHeading">
+        <div class="create-preview-heading">
+          <h2 id="createPreviewHeading">投稿プレビュー</h2>
+          <span>入力内容がここに反映されます</span>
+        </div>
+        <div id="questionPreview" class="question-preview"></div>
+      </section>
       <button type="button" class="submitBtn" onclick="postQuestion()">アンケートを投稿する</button>
     </form>
   </main>
