@@ -111,8 +111,18 @@ const DIAGNOSIS_PAGES = {
   "/job-change-readiness-diagnosis": { kind: "jobChange", slug: "job-change-readiness-diagnosis", title: "転職適性診断", description: "転職理由やキャリアの準備状況から、今の転職適性を20の質問でチェックします。", theme: "#67727d" }
 };
 
+app.use((req, res, next) => {
+  if (req.method !== "GET" || !req.path.endsWith("/")) return next();
+  const normalizedPath = req.path.replace(/\/+$/, "");
+  if (!DIAGNOSIS_PAGES[normalizedPath]) return next();
+  return res.redirect(301, normalizedPath);
+});
+
 Object.entries(DIAGNOSIS_PAGES).forEach(([route, page]) => {
-  app.get([route, `${route}.html`], (_req, res) => {
+  // 診断ページは拡張子なし・末尾スラッシュなしのURLへ統一する。
+  // canonicalだけに頼らず、重複URL自体を301で正規URLへ集約する。
+  app.get(`${route}.html`, (_req, res) => res.redirect(301, route));
+  app.get(route, (_req, res) => {
     const html = fs.readFileSync(path.join(__dirname, "public", "diagnosis.html"), "utf8")
       .replaceAll("{{KIND}}", page.kind)
       .replaceAll("{{SLUG}}", page.slug)
@@ -123,7 +133,29 @@ Object.entries(DIAGNOSIS_PAGES).forEach(([route, page]) => {
     res.send(injectAdSenseHeadScript(html));
   });
 });
-app.get("/diagnosis.html", (_req, res) => res.redirect(302, "/"));
+app.get("/diagnosis.html", (_req, res) => res.redirect(301, "/"));
+
+// express.static の extensions オプションにより、拡張子なしURLでも同じHTMLが
+// 200で配信されるため、サイト内で採用している正規URLへ301で統一する。
+const STATIC_HTML_CANONICAL_PATHS = [
+  "about",
+  "contact",
+  "create",
+  "mbti",
+  "operator",
+  "privacy",
+  "terms"
+];
+
+STATIC_HTML_CANONICAL_PATHS.forEach(page => {
+  app.get(`/${page}`, (_req, res) => res.redirect(301, `/${page}.html`));
+});
+
+// テンプレートだけの question.html が直接200で公開されないようにする。
+app.get("/question.html", (req, res) => {
+  const id = String(req.query.id || "").trim();
+  return res.redirect(301, id ? `/question?id=${encodeURIComponent(id)}` : "/");
+});
 
 const SITEMAP_STATIC_PAGES = [
   "/",
