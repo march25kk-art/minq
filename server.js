@@ -208,7 +208,7 @@ app.get("/question", async (req, res) => {
 
     // idが無ければ通常のHTMLを返す
     if (!id) {
-      return res.redirect(302, "/");
+      return res.redirect(301, "/");
     }
 
     // 一覧・詳細で取得済みなら再利用し、ページ遷移時のFirestore重複読込を避ける
