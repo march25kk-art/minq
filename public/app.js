@@ -702,6 +702,49 @@ function createResultSummary(options, q, total) {
   return summary;
 }
 
+function renderResultComments(comments, questionId) {
+  const visibleComments = Array.isArray(comments) ? comments : [];
+  const visibleCommentIds = new Set(visibleComments.map(comment => String(comment.id || "")));
+  const repliesByParent = new Map();
+  visibleComments.forEach(comment => {
+    if (!comment.parentCommentId) return;
+    const replies = repliesByParent.get(String(comment.parentCommentId)) || [];
+    replies.push(comment);
+    repliesByParent.set(String(comment.parentCommentId), replies);
+  });
+
+  const renderComment = (comment, index, isReply = false) => {
+    const commentId = String(comment.id || "");
+    const replies = repliesByParent.get(commentId) || [];
+    return `
+      <div class="comment${isReply ? " comment-reply" : ""}" data-comment-id="${sanitize(commentId)}">
+        <span class="comment-avatar">${isReply ? "↳" : index + 1}</span>
+        <div class="comment-body">
+          <div class="comment-author">${sanitize(plain(comment.name) || "みんQユーザー")} <span>${sanitize(comment.createdAt || "")}</span></div>
+          <p>${sanitize(plain(comment.text))}</p>
+          <div class="comment-actions">
+            <button class="comment-like-btn" type="button" onclick="likeComment(this, '${sanitize(commentId)}', '${sanitize(questionId)}')">
+              <span aria-hidden="true">♡</span> 共感 <b>${Math.max(0, Number(comment.likeCount) || 0)}</b>
+            </button>
+            <button class="comment-action-btn" type="button" onclick="toggleCommentReply(this)">返信</button>
+            <button class="comment-action-btn comment-report-btn" type="button" onclick="reportComment(this, '${sanitize(commentId)}', '${sanitize(questionId)}')">通報</button>
+          </div>
+          <div class="comment-reply-form" hidden>
+            <input class="comment-reply-name" type="text" maxlength="30" placeholder="名前（任意）">
+            <textarea class="comment-reply-text" maxlength="1000" placeholder="返信を入力してください"></textarea>
+            <div><button class="comment-action-btn" type="button" onclick="toggleCommentReply(this)">キャンセル</button><button class="commentBtn" type="button" onclick="submitCommentReply(this, '${sanitize(commentId)}', '${sanitize(questionId)}')">返信する</button></div>
+          </div>
+          ${replies.map((reply, replyIndex) => renderComment(reply, replyIndex, true)).join("")}
+        </div>
+      </div>`;
+  };
+
+  return visibleComments
+    .filter(comment => !comment.parentCommentId || !visibleCommentIds.has(String(comment.parentCommentId)))
+    .map((comment, index) => renderComment(comment, index))
+    .join("") || '<p class="empty-comments">まだコメントはありません。最初の意見を投稿してみましょう。</p>';
+}
+
 function renderResultsScreen(div, q, id) {
   const total = Number(q.totalVotes || 0);
   const options = q.options || [];
@@ -785,18 +828,7 @@ function renderResultsScreen(div, q, id) {
         <button class="commentBtn" type="button" onclick="addCommentAndReload('${sanitize(id)}')">投稿する</button>
       </div>
       <div id="commentList" class="result-comment-list">
-        ${(q.comments || []).map((comment, index) => `
-            <div class="comment" data-comment-id="${sanitize(comment.id)}">
-              <span class="comment-avatar">${index + 1}</span>
-              <div>
-                <div class="comment-author">${sanitize(plain(comment.name) || "みんQユーザー")} <span>${sanitize(comment.createdAt || "")}</span></div>
-                <p>${sanitize(plain(comment.text))}</p>
-                <button class="comment-like-btn" type="button" onclick="likeComment(this, '${sanitize(comment.id)}', '${sanitize(id)}')">
-                  <span aria-hidden="true">♡</span> 共感 <b>${Math.max(0, Number(comment.likeCount) || 0)}</b>
-                </button>
-              </div>
-            </div>
-        `).join("") || '<p class="empty-comments">まだコメントはありません。最初の意見を投稿してみましょう。</p>'}
+        ${renderResultComments(q.comments, id)}
       </div>
     </section>
 
@@ -816,6 +848,12 @@ function renderResultsScreen(div, q, id) {
     button.classList.add("is-liked");
     const icon = button.querySelector("span");
     if (icon) icon.textContent = "♥";
+  });
+  div.querySelectorAll(".comment-report-btn").forEach(button => {
+    const commentId = button.closest("[data-comment-id]")?.dataset.commentId;
+    if (!commentId || localStorage.getItem(`minq:comment-report:${commentId}`) !== "1") return;
+    button.classList.add("is-reported");
+    button.textContent = "通報済み";
   });
   window.renderQuestionRecommendations?.("questionRecommendations", q, id);
   window.mountAdSenseAds?.(div);
@@ -898,7 +936,8 @@ async function addCommentAndReload(id) {
     const data = await res.json();
     if (data.error) return alert(data.message || "コメント投稿に失敗しました。");
 
-    appendPostedComment(data.comment || { text, name }, id);
+    const q = await (await fetch(`/questions/${encodeURIComponent(id)}`, { cache: "no-store" })).json();
+    renderResultsScreen(document.getElementById("questionArea") || document.getElementById("detail"), q, id);
     const textInput = document.getElementById("commentText");
     const nameInput = document.getElementById("commentName");
     if (textInput) textInput.value = "";
@@ -981,6 +1020,77 @@ async function likeComment(button, commentId, questionId) {
     localStorage.setItem(storageKey, "1");
   } catch (error) {
     alert(error.message || "共感を保存できませんでした。");
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function toggleCommentReply(button) {
+  const comment = button.closest(".comment");
+  const form = comment?.querySelector(":scope > .comment-body > .comment-reply-form");
+  if (!form) return;
+  form.hidden = !form.hidden;
+  if (!form.hidden) form.querySelector(".comment-reply-text")?.focus();
+}
+
+async function submitCommentReply(button, parentCommentId, questionId) {
+  if (!button || button.disabled) return;
+  const form = button.closest(".comment-reply-form");
+  const text = form?.querySelector(".comment-reply-text")?.value.trim() || "";
+  const name = form?.querySelector(".comment-reply-name")?.value.trim() || "";
+  if (!text) return alert("返信を入力してください。");
+
+  button.disabled = true;
+  button.textContent = "返信中...";
+  try {
+    const res = await fetch(`/questions/${encodeURIComponent(questionId)}/comment`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, name, parentCommentId, age: "回答しない", gender: "回答しない" })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.message || "返信を投稿できませんでした。");
+    const q = await (await fetch(`/questions/${encodeURIComponent(questionId)}`, { cache: "no-store" })).json();
+    renderResultsScreen(document.getElementById("questionArea") || document.getElementById("detail"), q, questionId);
+  } catch (error) {
+    alert(error.message || "返信を投稿できませんでした。");
+  } finally {
+    button.disabled = false;
+    button.textContent = "返信する";
+  }
+}
+
+async function reportComment(button, commentId, questionId) {
+  if (!button || button.disabled) return;
+  const storageKey = `minq:comment-report:${commentId}`;
+  if (localStorage.getItem(storageKey) === "1") {
+    button.classList.add("is-reported");
+    button.textContent = "通報済み";
+    return;
+  }
+  if (!confirm("このコメントを通報しますか？")) return;
+
+  button.disabled = true;
+  try {
+    const res = await fetch(`/comments/${encodeURIComponent(commentId)}/report`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ questionId })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.message || "コメントを通報できませんでした。");
+    localStorage.setItem(storageKey, "1");
+    if (data.removed) {
+      const q = await (await fetch(`/questions/${encodeURIComponent(questionId)}`, { cache: "no-store" })).json();
+      renderResultsScreen(document.getElementById("questionArea") || document.getElementById("detail"), q, questionId);
+      alert("通報が5件に達したため、コメントを非表示にしました。");
+      return;
+    }
+    button.classList.add("is-reported");
+    button.textContent = "通報済み";
+    alert("コメントを通報しました。");
+  } catch (error) {
+    alert(error.message || "コメントを通報できませんでした。");
   } finally {
     button.disabled = false;
   }

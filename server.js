@@ -335,6 +335,7 @@ const Q_COLL = IS_PRODUCTION ? 'questions' : 'questions_dev';
 const V_COLL = IS_PRODUCTION ? 'votes' : 'votes_dev';
 const C_COLL = IS_PRODUCTION ? 'comments' : 'comments_dev';
 const CL_COLL = IS_PRODUCTION ? 'commentLikes' : 'commentLikes_dev';
+const CR_COLL = IS_PRODUCTION ? 'commentReports' : 'commentReports_dev';
 const R_COLL = IS_PRODUCTION ? 'reportsLog' : 'reportsLog_dev';
 const MBTI_COLL = IS_PRODUCTION ? 'mbtiResults' : 'mbtiResults_dev';
 const DIAGNOSIS_COLL = IS_PRODUCTION ? 'diagnosisResults' : 'diagnosisResults_dev';
@@ -943,7 +944,9 @@ app.get("/questions/:id", async (req, res) => {
       firestore.collection(C_COLL).where("questionId", "==", id).orderBy("createdAt", "asc").limit(COMMENTS_LIMIT).get(),
       statsData ? Promise.resolve(null) : firestore.collection(V_COLL).where("questionId", "==", id).limit(VOTES_STATS_LIMIT).get()
     ]);
-    q.comments = commentsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    q.comments = commentsSnapshot.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .filter(comment => !comment.hidden && (Number(comment.reportCount) || 0) < 5);
 
     if (!statsData) {
       statsAggregate = buildStatsAggregate(votesSnapshot.docs.map(d => d.data()), q.options);
@@ -1133,9 +1136,10 @@ app.get("/stats/:id", async (req, res) => {
 const saveComment = async (req, res) => {
   try {
     const id = req.params.id || req.body.id;
-    let { text, name, age, gender } = req.body;
+    let { text, name, age, gender, parentCommentId } = req.body;
     text = String(text || "").trim();
     name = String(name || "").trim();
+    parentCommentId = String(parentCommentId || "").trim();
 
     if (!text) return sendError(res, "コメントを入力してください");
     if (text.length > 1000) return sendError(res, "コメントは1000文字以内で入力してください");
@@ -1159,8 +1163,14 @@ const saveComment = async (req, res) => {
     commentCooldown[ip] = now;
 
     const timeStr = nowJSTString();
+    if (parentCommentId) {
+      const parentDoc = await firestore.collection(C_COLL).doc(parentCommentId).get();
+      if (!parentDoc.exists || String(parentDoc.data().questionId) !== String(id) || parentDoc.data().hidden) {
+        return sendError(res, "返信先のコメントが見つかりません", 404);
+      }
+    }
     const commentRef = await firestore.collection(C_COLL).add({
-      questionId: String(id), text: escapeHTML(text), name: name ? escapeHTML(name) : "", age: age || UNANSWERED, gender: gender || UNANSWERED, createdAt: timeStr, likeCount: 0, ip
+      questionId: String(id), parentCommentId: parentCommentId || null, text: escapeHTML(text), name: name ? escapeHTML(name) : "", age: age || UNANSWERED, gender: gender || UNANSWERED, createdAt: timeStr, likeCount: 0, reportCount: 0, hidden: false, ip
     });
     rememberSubmission(ip, "comment", `${id}|${text}`);
     
@@ -1178,7 +1188,8 @@ const saveComment = async (req, res) => {
         text,
         name,
         createdAt: timeStr,
-        likeCount: 0
+        likeCount: 0,
+        parentCommentId: parentCommentId || null
       }
     });
   } catch (error) {
@@ -1212,7 +1223,7 @@ app.post("/comments/:commentId/like", async (req, res) => {
         transaction.get(commentRef),
         transaction.get(likeRef)
       ]);
-      if (!commentDoc.exists || String(commentDoc.data().questionId) !== questionId) {
+      if (!commentDoc.exists || String(commentDoc.data().questionId) !== questionId || commentDoc.data().hidden) {
         throw new Error("COMMENT_NOT_FOUND");
       }
 
@@ -1235,6 +1246,52 @@ app.post("/comments/:commentId/like", async (req, res) => {
     if (error.message === "COMMENT_NOT_FOUND") return sendError(res, "コメントが見つかりません", 404);
     console.error("Comment like error:", error);
     sendError(res, "共感を保存できませんでした", 500);
+  }
+});
+
+app.post("/comments/:commentId/report", async (req, res) => {
+  const commentId = String(req.params.commentId || "");
+  const questionId = String(req.body?.questionId || "");
+  if (!commentId || !questionId) return sendError(res, "コメントを確認できません", 400);
+
+  const ip = getIp(req);
+  if (!allowAction(ip, "comment-report", 10, 10 * 60 * 1000)) {
+    return sendError(res, "短時間の通報操作が多すぎます", 429);
+  }
+
+  try {
+    const voterId = getVoterId(req, res);
+    const commentRef = firestore.collection(C_COLL).doc(commentId);
+    const reportId = crypto.createHash("sha256").update(`${commentId}\u0000${voterId}`).digest("hex");
+    const reportRef = firestore.collection(CR_COLL).doc(reportId);
+    const questionRef = firestore.collection(Q_COLL).doc(questionId);
+
+    const result = await firestore.runTransaction(async transaction => {
+      const [commentDoc, reportDoc] = await Promise.all([
+        transaction.get(commentRef),
+        transaction.get(reportRef)
+      ]);
+      if (!commentDoc.exists || String(commentDoc.data().questionId) !== questionId || commentDoc.data().hidden) {
+        throw new Error("COMMENT_NOT_FOUND");
+      }
+      if (reportDoc.exists) throw new Error("ALREADY_REPORTED");
+
+      const reportCount = Math.max(0, Number(commentDoc.data().reportCount) || 0) + 1;
+      const removed = reportCount >= 5;
+      transaction.set(reportRef, { commentId, questionId, voterId, createdAt: new Date().toISOString() });
+      transaction.update(commentRef, { reportCount, hidden: removed });
+      if (removed) transaction.update(questionRef, { commentCount: FieldValue.increment(-1) });
+      return { reportCount, removed };
+    });
+
+    DETAIL_CACHE.delete(questionId);
+    invalidateListCache();
+    res.json({ success: true, ...result });
+  } catch (error) {
+    if (error.message === "ALREADY_REPORTED") return sendError(res, "このコメントは通報済みです");
+    if (error.message === "COMMENT_NOT_FOUND") return sendError(res, "コメントが見つかりません", 404);
+    console.error("Comment report error:", error);
+    sendError(res, "コメントの通報に失敗しました", 500);
   }
 });
 
@@ -1368,8 +1425,10 @@ app.post("/admin/delete-comment", async (req, res) => {
   try {
     await firestore.collection(C_COLL).doc(String(id)).delete();
     const likes = await firestore.collection(CL_COLL).where("commentId", "==", String(id)).get();
+    const reports = await firestore.collection(CR_COLL).where("commentId", "==", String(id)).get();
     const likesBatch = firestore.batch();
     likes.docs.forEach(doc => likesBatch.delete(doc.ref));
+    reports.docs.forEach(doc => likesBatch.delete(doc.ref));
     await likesBatch.commit();
     DETAIL_CACHE.clear();
     res.json({ success: true });
@@ -1388,7 +1447,7 @@ app.post("/admin/delete", async (req, res) => {
     await firestore.collection(Q_COLL).doc(questionId).delete();
     invalidateListCache();
 
-    for (const col of [C_COLL, CL_COLL, V_COLL, R_COLL]) {
+    for (const col of [C_COLL, CL_COLL, CR_COLL, V_COLL, R_COLL]) {
       const snapshot = await firestore.collection(col).where("questionId", "==", questionId).get();
       const batch = firestore.batch();
       snapshot.docs.forEach(doc => batch.delete(doc.ref));
