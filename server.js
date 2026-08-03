@@ -298,7 +298,10 @@ app.get("/question", async (req, res) => {
 
     // description・canonical・OG情報を書き換える
     const canonicalUrl = `https://minnano-question.com/question?id=${encodeURIComponent(id)}`;
-    const ogImageUrl = `https://minnano-question.com/question-og/${encodeURIComponent(id)}.png`;
+    const shareVersion = Math.max(0, Number(q.totalVotes) || 0);
+    const requestedShareVersion = /^\d+$/.test(String(req.query.share || "")) ? String(req.query.share) : "";
+    const socialUrl = requestedShareVersion ? `${canonicalUrl}&share=${requestedShareVersion}` : canonicalUrl;
+    const ogImageUrl = `https://minnano-question.com/question-og/${encodeURIComponent(id)}.png?v=${shareVersion}`;
     html = html.replace(
       /<meta id="metaDescription" name="description" content="[^"]*">/,
       `<meta id="metaDescription" name="description" content="${safeDescription}">`
@@ -306,7 +309,7 @@ app.get("/question", async (req, res) => {
     html = html.replace('<link rel="canonical" id="canonical" href="">', `<link rel="canonical" id="canonical" href="${canonicalUrl}">`);
     html = html.replace(/<meta property="og:title" id="ogTitle" content="[^"]*">/, `<meta property="og:title" id="ogTitle" content="${safeTitle} | みんQ">`);
     html = html.replace(/<meta property="og:description" id="ogDescription" content="[^"]*">/, `<meta property="og:description" id="ogDescription" content="${safeDescription}">`);
-    html = html.replace(/<meta property="og:url" id="ogUrl" content="[^"]*">/, `<meta property="og:url" id="ogUrl" content="${canonicalUrl}">`);
+    html = html.replace(/<meta property="og:url" id="ogUrl" content="[^"]*">/, `<meta property="og:url" id="ogUrl" content="${socialUrl}">`);
     html = html.replace("</head>", `
   <meta property="og:image" content="${ogImageUrl}">
   <meta property="og:image:secure_url" content="${ogImageUrl}">
@@ -438,6 +441,23 @@ const wrapOgText = (value, maxChars, maxLines) => {
   return lines;
 };
 
+const OG_FONT_PATH = path.join(__dirname, "assets", "NotoSansJP.ttf");
+const createOgTextLayer = (text, { left, top, width, size, color, weight = 700, align = "left" }) => ({
+  input: {
+    text: {
+      text: `<span foreground="${color}" weight="${weight}" size="${size * 1024}">${escapeSvgText(text)}</span>`,
+      font: "Noto Sans JP",
+      fontfile: OG_FONT_PATH,
+      width,
+      align,
+      rgba: true,
+      wrap: "none"
+    }
+  },
+  left,
+  top
+});
+
 app.get("/question-og/:id.png", async (req, res) => {
   try {
     const id = String(req.params.id || "");
@@ -461,32 +481,37 @@ app.get("/question-og/:id.png", async (req, res) => {
     }
 
     const total = counts.reduce((sum, count) => sum + count, 0);
-    const titleSvg = wrapOgText(question.title, 25, 3).map((line, index) =>
-      `<text x="82" y="${118 + index * 55}" class="title">${escapeSvgText(line)}</text>`
-    ).join("");
-    const compactResults = options.length > 6;
+    const titleLines = wrapOgText(question.title, 25, 3);
+    const compactResults = options.length > 5;
     const resultStep = compactResults ? 27 : 49;
     const resultTop = compactResults ? 290 : 315;
-    const resultRows = options.map((option, index) => {
+    const resultRows = [];
+    const textLayers = [
+      createOgTextLayer("みんQ  回答結果", { left: 82, top: 48, width: 430, size: 28, color: "#12a05a", weight: 900 }),
+      createOgTextLayer(`全 ${total} 回答`, { left: 850, top: 50, width: 265, size: 22, color: "#65746c", weight: 700, align: "right" }),
+      createOgTextLayer(titleLines.join("\n"), { left: 82, top: 96, width: 1035, size: 38, color: "#20352a", weight: 800 }),
+      createOgTextLayer("画像をタップして、詳しい結果を見る", { left: 82, top: 540, width: 520, size: 18, color: "#65746c", weight: 700 }),
+      createOgTextLayer("minnano-question.com", { left: 720, top: 532, width: 395, size: 27, color: "#12a05a", weight: 900, align: "right" })
+    ];
+    options.forEach((option, index) => {
       const label = wrapOgText(typeof option === "string" ? option : option?.text || "", compactResults ? 32 : 24, 1)[0] || `選択肢${index + 1}`;
       const percent = total ? Math.round((counts[index] || 0) / total * 100) : 0;
       const y = resultTop + index * resultStep;
       const barHeight = compactResults ? 12 : 21;
-      return `<text x="82" y="${y}" class="option${compactResults ? " compact" : ""}">${escapeSvgText(label)}</text>
-        <rect x="530" y="${y - barHeight}" width="460" height="${barHeight}" rx="${barHeight / 2}" fill="#e3eee7"/>
+      resultRows.push(`<rect x="530" y="${y - barHeight}" width="460" height="${barHeight}" rx="${barHeight / 2}" fill="#e3eee7"/>
         <rect x="530" y="${y - barHeight}" width="${percent ? Math.max(5, 460 * percent / 100) : 0}" height="${barHeight}" rx="${barHeight / 2}" fill="#12a05a"/>
-        <text x="1020" y="${y}" class="percent${compactResults ? " compact" : ""}">${percent}%</text>`;
-    }).join("");
+      `);
+      textLayers.push(
+        createOgTextLayer(label, { left: 82, top: y - (compactResults ? 20 : 29), width: 420, size: compactResults ? 16 : 22, color: "#20352a", weight: 700 }),
+        createOgTextLayer(`${percent}%`, { left: 995, top: y - (compactResults ? 20 : 29), width: 100, size: compactResults ? 16 : 23, color: "#087b43", weight: 900, align: "right" })
+      );
+    });
 
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
       <rect width="1200" height="630" fill="#f4faf6"/><rect x="38" y="34" width="1124" height="562" rx="34" fill="#fff" stroke="#d8ebdf" stroke-width="3"/>
-      <style>text{font-family:"Noto Sans JP","Yu Gothic","Hiragino Sans",sans-serif;fill:#20352a}.brand{font-size:34px;font-weight:900;fill:#12a05a}.title{font-size:42px;font-weight:800}.option{font-size:23px;font-weight:700}.option.compact{font-size:17px}.percent{font-size:25px;font-weight:900;text-anchor:end;fill:#087b43}.percent.compact{font-size:17px}.total{font-size:22px;font-weight:700;fill:#65746c}</style>
-      <text x="82" y="78" class="brand">みんQ  回答結果</text>${titleSvg}
-      <text x="1115" y="78" class="total" text-anchor="end">全 ${total} 回答</text>${resultRows}
-      <text x="82" y="566" class="total">画像をタップして、詳しい結果を見る</text>
-      <text x="1115" y="566" class="brand" text-anchor="end">minnano-question.com</text>
+      ${resultRows.join("")}
     </svg>`;
-    const png = await sharp(Buffer.from(svg)).png().toBuffer();
+    const png = await sharp(Buffer.from(svg)).composite(textLayers).png().toBuffer();
     res.type("image/png").set("Cache-Control", "public, max-age=300, s-maxage=300").send(png);
   } catch (error) {
     console.error("Question OG image error:", error);

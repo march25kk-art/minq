@@ -748,7 +748,9 @@ function renderResultComments(comments, questionId) {
 function renderResultsScreen(div, q, id) {
   const total = Number(q.totalVotes || 0);
   const options = q.options || [];
-  const shareUrl = window.location.href;
+  const shareUrlObject = new URL(window.location.href);
+  shareUrlObject.searchParams.set("share", String(Math.max(0, Number(q.totalVotes) || 0)));
+  const shareUrl = shareUrlObject.toString();
   const shareText = `「${plain(q.title)}」のアンケート結果をチェック！ #みんQ`;
   const encodedShareUrl = encodeURIComponent(shareUrl);
   const encodedShareText = encodeURIComponent(shareText);
