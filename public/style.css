@@ -1981,13 +1981,13 @@ select:focus {
     white-space: normal;
   }
   .result-share-panel { width: 100%; }
-  .result-share-actions { width: 100%; flex-wrap: wrap; justify-content: flex-start; gap: 6px; }
+  .result-share-actions { width: 100%; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
   .result-share-btn { width: 32px; height: 34px; min-width: 32px; flex: 0 0 32px; }
   .result-share-btn.share-copy { width: auto; min-width: 68px; flex: 0 0 auto; padding: 0 9px; }
   .result-share-btn svg { width: 16px; height: 16px; }
   .line-logo { font-size: 8px; }
   .threads-mark { font-size: 18px; }
-  .share-feedback { right: auto; bottom: -22px; left: 0; }
+  .share-feedback { right: 0; bottom: -22px; left: auto; }
   .result-age-grid { grid-template-columns: 1fr; }
   .comment-compose { grid-template-columns: 1fr; }
   .comment-compose .commentBtn { width: 100%; }
