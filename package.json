@@ -13,6 +13,7 @@
     "express": "^4.22.2",
     "firebase-admin": "^13.10.0",
     "nodemailer": "^9.0.3",
+    "sharp": "^0.35.3",
     "sitemap": "^9.0.1"
   },
   "description": "",

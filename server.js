@@ -7,6 +7,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
+const sharp = require("sharp");
 
 const app = express();
 app.use(express.json({ limit: "900kb" }));
@@ -241,6 +242,7 @@ app.get("/question", async (req, res) => {
 
     // description・canonical・OG情報を書き換える
     const canonicalUrl = `https://minnano-question.com/question?id=${encodeURIComponent(id)}`;
+    const ogImageUrl = `https://minnano-question.com/question-og/${encodeURIComponent(id)}.png`;
     html = html.replace(
       /<meta id="metaDescription" name="description" content="[^"]*">/,
       `<meta id="metaDescription" name="description" content="${safeDescription}">`
@@ -249,6 +251,18 @@ app.get("/question", async (req, res) => {
     html = html.replace(/<meta property="og:title" id="ogTitle" content="[^"]*">/, `<meta property="og:title" id="ogTitle" content="${safeTitle} | みんQ">`);
     html = html.replace(/<meta property="og:description" id="ogDescription" content="[^"]*">/, `<meta property="og:description" id="ogDescription" content="${safeDescription}">`);
     html = html.replace(/<meta property="og:url" id="ogUrl" content="[^"]*">/, `<meta property="og:url" id="ogUrl" content="${canonicalUrl}">`);
+    html = html.replace("</head>", `
+  <meta property="og:image" content="${ogImageUrl}">
+  <meta property="og:image:secure_url" content="${ogImageUrl}">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="${safeTitle}の回答結果">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${safeTitle} | みんQ">
+  <meta name="twitter:description" content="${safeDescription}">
+  <meta name="twitter:image" content="${ogImageUrl}">
+</head>`);
 
     const structuredData = {
       "@context": "https://schema.org",
@@ -339,6 +353,74 @@ const CR_COLL = IS_PRODUCTION ? 'commentReports' : 'commentReports_dev';
 const R_COLL = IS_PRODUCTION ? 'reportsLog' : 'reportsLog_dev';
 const MBTI_COLL = IS_PRODUCTION ? 'mbtiResults' : 'mbtiResults_dev';
 const DIAGNOSIS_COLL = IS_PRODUCTION ? 'diagnosisResults' : 'diagnosisResults_dev';
+
+const escapeSvgText = value => decodeStoredText(value)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+
+const wrapOgText = (value, maxChars, maxLines) => {
+  const chars = Array.from(decodeStoredText(value));
+  const lines = [];
+  while (chars.length && lines.length < maxLines) lines.push(chars.splice(0, maxChars).join(""));
+  if (chars.length && lines.length) lines[lines.length - 1] = `${lines[lines.length - 1].slice(0, -1)}…`;
+  return lines;
+};
+
+app.get("/question-og/:id.png", async (req, res) => {
+  try {
+    const id = String(req.params.id || "");
+    const doc = await firestore.collection(Q_COLL).doc(id).get();
+    if (!doc.exists) return res.sendStatus(404);
+    const question = doc.data();
+    const allOptions = Array.isArray(question.options) ? question.options : [];
+    const options = allOptions.slice(0, 10);
+    let counts = isValidStatsAggregate(question.statsAggregate, allOptions)
+      && Number(question.statsAggregateVotes) === Math.max(0, Number(question.totalVotes) || 0)
+      ? question.statsAggregate.optionCounts.map(value => Math.max(0, Number(value) || 0))
+      : null;
+
+    if (!counts) {
+      const votes = await firestore.collection(V_COLL).where("questionId", "==", id).limit(VOTES_STATS_LIMIT).get();
+      counts = allOptions.map(() => 0);
+      votes.docs.forEach(vote => {
+        const index = Number(vote.data().optionIndex);
+        if (Number.isInteger(index) && index >= 0 && index < counts.length) counts[index] += 1;
+      });
+    }
+
+    const total = counts.reduce((sum, count) => sum + count, 0);
+    const titleSvg = wrapOgText(question.title, 25, 3).map((line, index) =>
+      `<text x="82" y="${118 + index * 55}" class="title">${escapeSvgText(line)}</text>`
+    ).join("");
+    const compactResults = options.length > 6;
+    const resultStep = compactResults ? 27 : 49;
+    const resultTop = compactResults ? 290 : 315;
+    const resultRows = options.map((option, index) => {
+      const label = wrapOgText(typeof option === "string" ? option : option?.text || "", compactResults ? 32 : 24, 1)[0] || `選択肢${index + 1}`;
+      const percent = total ? Math.round((counts[index] || 0) / total * 100) : 0;
+      const y = resultTop + index * resultStep;
+      const barHeight = compactResults ? 12 : 21;
+      return `<text x="82" y="${y}" class="option${compactResults ? " compact" : ""}">${escapeSvgText(label)}</text>
+        <rect x="530" y="${y - barHeight}" width="460" height="${barHeight}" rx="${barHeight / 2}" fill="#e3eee7"/>
+        <rect x="530" y="${y - barHeight}" width="${percent ? Math.max(5, 460 * percent / 100) : 0}" height="${barHeight}" rx="${barHeight / 2}" fill="#12a05a"/>
+        <text x="1020" y="${y}" class="percent${compactResults ? " compact" : ""}">${percent}%</text>`;
+    }).join("");
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
+      <rect width="1200" height="630" fill="#f4faf6"/><rect x="38" y="34" width="1124" height="562" rx="34" fill="#fff" stroke="#d8ebdf" stroke-width="3"/>
+      <style>text{font-family:"Noto Sans JP","Yu Gothic","Hiragino Sans",sans-serif;fill:#20352a}.brand{font-size:34px;font-weight:900;fill:#12a05a}.title{font-size:42px;font-weight:800}.option{font-size:23px;font-weight:700}.option.compact{font-size:17px}.percent{font-size:25px;font-weight:900;text-anchor:end;fill:#087b43}.percent.compact{font-size:17px}.total{font-size:22px;font-weight:700;fill:#65746c}</style>
+      <text x="82" y="78" class="brand">みんQ  回答結果</text>${titleSvg}
+      <text x="1115" y="78" class="total" text-anchor="end">全 ${total} 回答</text>${resultRows}
+      <text x="82" y="566" class="total">画像をタップして、詳しい結果を見る</text>
+      <text x="1115" y="566" class="brand" text-anchor="end">minnano-question.com</text>
+    </svg>`;
+    const png = await sharp(Buffer.from(svg)).png().toBuffer();
+    res.type("image/png").set("Cache-Control", "public, max-age=300, s-maxage=300").send(png);
+  } catch (error) {
+    console.error("Question OG image error:", error);
+    res.sendStatus(500);
+  }
+});
 
 // ===== キャッシュ・メモリ管理 =====
 const CACHE_STATS = new Map();
