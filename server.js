@@ -317,10 +317,10 @@ app.get("/question", async (req, res) => {
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="${safeTitle}の回答結果">
-  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="${safeTitle} | みんQ">
   <meta name="twitter:description" content="${safeDescription}">
-  <meta name="twitter:image" content="${ogImageUrl}">
+  <meta name="twitter:image" content="https://minnano-question.com/apple-touch-icon.png">
 </head>`);
 
     const structuredData = {
