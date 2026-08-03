@@ -442,13 +442,14 @@ const wrapOgText = (value, maxChars, maxLines) => {
 };
 
 const OG_FONT_PATH = path.join(__dirname, "assets", "NotoSansJP.ttf");
-const createOgTextLayer = (text, { left, top, width, size, color, weight = 700, align = "left" }) => ({
+const createOgTextLayer = (text, { left, top, width, height, size, color, weight = 700, align = "left" }) => ({
   input: {
     text: {
       text: `<span foreground="${color}" weight="${weight}" size="${size * 1024}">${escapeSvgText(text)}</span>`,
       font: "Noto Sans JP",
       fontfile: OG_FONT_PATH,
       width,
+      height,
       align,
       rgba: true,
       wrap: "none"
@@ -487,11 +488,11 @@ app.get("/question-og/:id.png", async (req, res) => {
     const resultTop = compactResults ? 290 : 315;
     const resultRows = [];
     const textLayers = [
-      createOgTextLayer("みんQ  回答結果", { left: 82, top: 48, width: 430, size: 28, color: "#12a05a", weight: 900 }),
-      createOgTextLayer(`全 ${total} 回答`, { left: 850, top: 50, width: 265, size: 22, color: "#65746c", weight: 700, align: "right" }),
-      createOgTextLayer(titleLines.join("\n"), { left: 82, top: 96, width: 1035, size: 38, color: "#20352a", weight: 800 }),
-      createOgTextLayer("画像をタップして、詳しい結果を見る", { left: 82, top: 540, width: 520, size: 18, color: "#65746c", weight: 700 }),
-      createOgTextLayer("minnano-question.com", { left: 720, top: 532, width: 395, size: 27, color: "#12a05a", weight: 900, align: "right" })
+      createOgTextLayer("みんQ  回答結果", { left: 82, top: 48, width: 430, height: 38, size: 28, color: "#12a05a", weight: 900 }),
+      createOgTextLayer(`全 ${total} 回答`, { left: 850, top: 50, width: 265, height: 32, size: 22, color: "#65746c", weight: 700, align: "right" }),
+      createOgTextLayer(titleLines.join("\n"), { left: 82, top: 96, width: 1035, height: 135, size: 38, color: "#20352a", weight: 800 }),
+      createOgTextLayer("画像をタップして、詳しい結果を見る", { left: 82, top: 540, width: 520, height: 26, size: 18, color: "#65746c", weight: 700 }),
+      createOgTextLayer("minnano-question.com", { left: 720, top: 532, width: 395, height: 38, size: 27, color: "#12a05a", weight: 900, align: "right" })
     ];
     options.forEach((option, index) => {
       const label = wrapOgText(typeof option === "string" ? option : option?.text || "", compactResults ? 32 : 24, 1)[0] || `選択肢${index + 1}`;
@@ -502,8 +503,8 @@ app.get("/question-og/:id.png", async (req, res) => {
         <rect x="530" y="${y - barHeight}" width="${percent ? Math.max(5, 460 * percent / 100) : 0}" height="${barHeight}" rx="${barHeight / 2}" fill="#12a05a"/>
       `);
       textLayers.push(
-        createOgTextLayer(label, { left: 82, top: y - (compactResults ? 20 : 29), width: 420, size: compactResults ? 16 : 22, color: "#20352a", weight: 700 }),
-        createOgTextLayer(`${percent}%`, { left: 995, top: y - (compactResults ? 20 : 29), width: 100, size: compactResults ? 16 : 23, color: "#087b43", weight: 900, align: "right" })
+        createOgTextLayer(label, { left: 82, top: y - (compactResults ? 20 : 29), width: 420, height: compactResults ? 22 : 32, size: compactResults ? 16 : 22, color: "#20352a", weight: 700 }),
+        createOgTextLayer(`${percent}%`, { left: 995, top: y - (compactResults ? 20 : 29), width: 100, height: compactResults ? 22 : 32, size: compactResults ? 16 : 23, color: "#087b43", weight: 900, align: "right" })
       );
     });
 
