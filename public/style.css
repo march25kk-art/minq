@@ -1977,7 +1977,9 @@ select:focus {
   .result-meta-share-row { align-items: stretch; flex-direction: column; gap: 14px; }
   .result-meta {
     flex-wrap: wrap;
+    justify-content: flex-end;
     gap: 6px 12px;
+    text-align: right;
     white-space: normal;
   }
   .result-share-panel { width: 100%; }
