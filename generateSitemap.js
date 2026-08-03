@@ -14,6 +14,11 @@ async function updateSitemap() {
     [
       { url: '/', priority: 1 },
       { url: '/mbti.html', priority: 0.8 },
+      { url: '/about.html', priority: 0.7 },
+      { url: '/contact.html', priority: 0.6 },
+      { url: '/operator.html', priority: 0.6 },
+      { url: '/privacy.html', priority: 0.5 },
+      { url: '/terms.html', priority: 0.5 },
       { url: '/love-diagnosis', priority: 0.8 },
       { url: '/hsp-diagnosis', priority: 0.8 },
       { url: '/stress-diagnosis', priority: 0.8 },

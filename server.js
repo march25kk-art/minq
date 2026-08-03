@@ -28,6 +28,29 @@ const escapeSeoHTML = (value = "") => decodeStoredText(value)
   .replace(/"/g, "&quot;")
   .replace(/'/g, "&#039;");
 
+const ADSENSE_RESTRICTED_TAGS = new Set(["大人", "アダルト", "ギャンブル", "酒"]);
+const ADSENSE_RESTRICTED_PATTERN = /(セックス|性行為|経験人数|不倫|浮気相手|パパ活|援助交際|風俗|ポルノ|アダルト|賭博|ギャンブル|パチンコ|競馬|競艇|オンラインカジノ|タバコ|たばこ|煙草)/i;
+
+const isAdSenseRestrictedQuestion = question => {
+  const tags = Array.isArray(question?.tags) ? question.tags.map(decodeStoredText) : [];
+  const searchable = [question?.title, question?.description, ...tags].map(decodeStoredText).join(" ");
+  return tags.some(tag => ADSENSE_RESTRICTED_TAGS.has(tag)) || ADSENSE_RESTRICTED_PATTERN.test(searchable);
+};
+
+const removeAdSenseFromHtml = html => html
+  .replace("<!-- ADSENSE_HEAD -->", "")
+  .replace(/\s*<script src="\/?adsense-config\.js"><\/script>/, "")
+  .replace(/\s*<script src="\/?adsense-loader\.js[^\"]*" defer><\/script>/, "");
+
+const questionOptionText = option => decodeStoredText(typeof option === "string" ? option : option?.text || "");
+
+const getQuestionResultCounts = question => {
+  const options = Array.isArray(question?.options) ? question.options : [];
+  if (!isValidStatsAggregate(question?.statsAggregate, options)) return null;
+  if (Number(question.statsAggregateVotes) !== Math.max(0, Number(question.totalVotes) || 0)) return null;
+  return question.statsAggregate.optionCounts.map(value => Math.max(0, Number(value) || 0));
+};
+
 // ==========================================
 // 1. 古い詳細ページ（detail.html）から新ページ（/question）への301リダイレクト
 // ==========================================
@@ -87,9 +110,39 @@ app.get("/ads.txt", (req, res) => {
 });
 
 // トップページのHTMLソースにもGoogle公式の確認用スクリプトを出力する。
-app.get("/", (req, res) => {
-  const html = fs.readFileSync(path.join(__dirname, "public", "index.html"), "utf8");
-  res.send(injectAdSenseHeadScript(html));
+app.get("/", async (_req, res) => {
+  try {
+    let html = fs.readFileSync(path.join(__dirname, "public", "index.html"), "utf8");
+    const snapshot = await firestore.collection(Q_COLL).get();
+    const questions = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(question => Math.max(0, Number(question.reports) || 0) < 5)
+      .sort(compareQuestionUpdatedAt)
+      .slice(0, 20);
+    const questionItems = questions.map(question => {
+      const title = escapeSeoHTML(question.title);
+      const description = escapeSeoHTML(question.description || "");
+      const tags = (Array.isArray(question.tags) ? question.tags : []).slice(0, 2)
+        .map(tag => `<span>${escapeSeoHTML(tag)}</span>`).join("");
+      return `<article class="thread ssr-question-item">
+        <a class="question-main" href="/question?id=${encodeURIComponent(question.id)}">
+          <strong class="title-text">${title}</strong>
+          ${description ? `<p>${description}</p>` : ""}
+          <span class="question-meta"><span>${Math.max(0, Number(question.totalVotes) || 0)}回答</span><span>${Math.max(0, Number(question.commentCount) || 0)}コメント</span></span>
+          ${tags ? `<span class="ssr-question-tags">${tags}</span>` : ""}
+        </a>
+      </article>`;
+    }).join("");
+    html = html.replace(
+      '<div class="loading-state">アンケートを読み込み中...</div>',
+      questionItems || '<p class="empty-state">公開中のアンケートを準備しています。</p>'
+    );
+    res.send(injectAdSenseHeadScript(html));
+  } catch (error) {
+    console.error("Home SSR error:", error);
+    const html = fs.readFileSync(path.join(__dirname, "public", "index.html"), "utf8");
+    res.send(injectAdSenseHeadScript(html));
+  }
 });
 
 app.get("/index.html", (req, res) => res.redirect(301, "/"));
@@ -161,6 +214,11 @@ app.get("/question.html", (req, res) => {
 const SITEMAP_STATIC_PAGES = [
   "/",
   "/mbti.html",
+  "/about.html",
+  "/contact.html",
+  "/operator.html",
+  "/privacy.html",
+  "/terms.html",
   ...Object.keys(DIAGNOSIS_PAGES)
 ];
 
@@ -231,8 +289,6 @@ app.get("/question", async (req, res) => {
       path.join(__dirname, "public", "question.html"),
       "utf8"
     );
-    html = injectAdSenseHeadScript(html);
-
     const title = decodeStoredText(q.title);
     const description = decodeStoredText(q.description || q.title).slice(0, 160);
     const safeTitle = escapeSeoHTML(title);
@@ -293,19 +349,35 @@ app.get("/question", async (req, res) => {
     );
 
     const optionItems = (Array.isArray(q.options) ? q.options : []).map(option => {
-      const optionValue = typeof option === "string" ? option : option?.text || "";
+      const optionValue = questionOptionText(option);
       return `<li>${escapeSeoHTML(optionValue)}</li>`;
+    }).join("");
+    const options = Array.isArray(q.options) ? q.options : [];
+    const aggregateCounts = getQuestionResultCounts(q);
+    const totalVotes = Math.max(0, Number(q.totalVotes) || 0);
+    const resultItems = options.map((option, index) => {
+      const count = aggregateCounts ? aggregateCounts[index] || 0 : null;
+      const rawPercent = Number(q.genderStats?.[index]?.rawPercent);
+      const percent = count !== null && totalVotes
+        ? Math.round(count / totalVotes * 100)
+        : Number.isFinite(rawPercent) ? Math.round(rawPercent) : 0;
+      return `<li><span>${escapeSeoHTML(questionOptionText(option))}</span><strong>${percent}%</strong></li>`;
     }).join("");
     const initialContent = `
       <section class="detailCard seo-question-content">
         <h1 class="createTitle">${safeTitle}</h1>
         ${description && description !== title ? `<p>${safeDescription}</p>` : ""}
         ${optionItems ? `<h2>回答の選択肢</h2><ul>${optionItems}</ul>` : ""}
-      </section>`;
+      </section>
+      ${resultItems ? `<section class="resultCard seo-result-summary"><h2>全体の回答結果</h2><p>全${totalVotes}件の回答を集計しています。</p><ol>${resultItems}</ol></section>` : ""}`;
     html = html.replace(
       /<main class="layout" id="questionArea">[\s\S]*?<\/main>/,
       `<main class="layout" id="questionArea">${initialContent}</main>`
     );
+
+    html = isAdSenseRestrictedQuestion(q)
+      ? removeAdSenseFromHtml(html)
+      : injectAdSenseHeadScript(html);
 
     res.send(html);
 
