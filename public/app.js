@@ -542,6 +542,7 @@ async function loadCombinedQuestion() {
   }
 
   try {
+    const seoContent = div.querySelector(".question-seo-content");
     fetch("/view", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -568,6 +569,7 @@ async function loadCombinedQuestion() {
     if (ogUrl) ogUrl.content = canonicalUrl;
     if (q.voted) renderResultsScreen(div, q, id);
     else renderVotingScreen(div, q, id);
+    if (seoContent) div.appendChild(seoContent);
   } catch (err) {
     console.error(err);
     div.innerHTML = '<div class="detailCard"><p>データの読み込みに失敗しました。</p></div>';

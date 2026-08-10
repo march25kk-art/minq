@@ -1275,6 +1275,36 @@ select:focus {
 .seo-result-summary ol { margin: 16px 0 0; padding: 0; list-style: none; }
 .seo-result-summary li { display: flex; justify-content: space-between; gap: 20px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .seo-result-summary strong { color: var(--green); }
+.question-seo-content { margin-top: 18px; padding: 26px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); line-height: 1.8; }
+.question-seo-content h2 { margin: 0 0 10px; font-size: 20px; line-height: 1.5; }
+.question-seo-content h2:not(:first-child) { margin-top: 28px; }
+.question-seo-content > p { margin: 8px 0; color: #46504a; }
+.question-seo-faq { display: grid; gap: 8px; }
+.question-seo-faq details { border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+.question-seo-faq summary { padding: 13px 15px; cursor: pointer; font-weight: 750; }
+.question-seo-faq p { margin: 0; padding: 0 15px 15px; color: var(--muted); }
+.question-seo-related { margin-top: 24px; padding-top: 18px; display: flex; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--line); }
+.question-seo-related strong { width: 100%; }
+.question-seo-related a { padding: 7px 11px; border-radius: 6px; background: var(--green-soft); color: var(--green-dark); font-weight: 700; }
+.static-seo-section { width: min(920px, calc(100% - 40px)); margin: 42px auto 64px; padding-top: 34px; border-top: 1px solid var(--line); line-height: 1.8; }
+.static-seo-section.compact { width: min(720px, 100%); margin-top: 36px; }
+.static-seo-section h2 { margin: 0 0 12px; font-size: 22px; line-height: 1.5; }
+.static-seo-section h2:not(:first-child) { margin-top: 30px; }
+.static-seo-section > p { color: #46504a; }
+.static-seo-faq { display: grid; gap: 8px; }
+.static-seo-faq details { border-bottom: 1px solid var(--line); }
+.static-seo-faq summary { padding: 13px 4px; cursor: pointer; font-weight: 750; }
+.static-seo-faq p { margin: 0; padding: 0 4px 15px; color: var(--muted); }
+.static-seo-links { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.static-seo-links strong { width: 100%; }
+.static-seo-links a { color: var(--green-dark); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+
+@media (max-width: 640px) {
+  .question-seo-content { padding: 20px 16px; }
+  .question-seo-content h2 { font-size: 18px; }
+  .static-seo-section { width: calc(100% - 28px); margin-top: 30px; }
+  .static-seo-section h2 { font-size: 19px; }
+}
 
 .result-meta-share-row {
   margin-top: 22px;

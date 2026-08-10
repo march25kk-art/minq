@@ -51,6 +51,60 @@ const getQuestionResultCounts = question => {
   return question.statsAggregate.optionCounts.map(value => Math.max(0, Number(value) || 0));
 };
 
+const questionSearchTerms = question => {
+  const title = decodeStoredText(question?.title);
+  const description = decodeStoredText(question?.description);
+  const tags = Array.isArray(question?.tags) ? question.tags.map(decodeStoredText) : [];
+  return new Set(`${title} ${description} ${tags.join(" ")}`
+    .toLowerCase()
+    .split(/[\s、。・！？!?（）()「」『』【】]+/)
+    .filter(term => term.length >= 2));
+};
+
+const relatedQuestionScore = (source, candidate) => {
+  const sourceTags = new Set(Array.isArray(source?.tags) ? source.tags.map(decodeStoredText) : []);
+  const candidateTags = Array.isArray(candidate?.tags) ? candidate.tags.map(decodeStoredText) : [];
+  const sourceTerms = questionSearchTerms(source);
+  const candidateTerms = questionSearchTerms(candidate);
+  const tagScore = candidateTags.reduce((score, tag) => score + (sourceTags.has(tag) ? 8 : 0), 0);
+  let termScore = 0;
+  candidateTerms.forEach(term => { if (sourceTerms.has(term)) termScore += 1; });
+  return tagScore + termScore + Math.min(3, Math.log10(Math.max(1, Number(candidate.totalVotes) || 0) + 1));
+};
+
+const renderQuestionSeoContent = (question, candidates = []) => {
+  const title = decodeStoredText(question.title);
+  const description = decodeStoredText(question.description);
+  const tags = Array.isArray(question.tags) ? question.tags.map(decodeStoredText).filter(Boolean) : [];
+  const options = Array.isArray(question.options) ? question.options.map(questionOptionText).filter(Boolean) : [];
+  const optionSummary = options.slice(0, 4).join("、");
+  const category = tags[0] || "みんなの意見";
+  const relatedItems = candidates
+    .filter(item => String(item.id) !== String(question.id) && Math.max(0, Number(item.reports) || 0) < 5)
+    .map((item, index) => ({ item, index, score: relatedQuestionScore(question, item) }))
+    .sort((a, b) => b.score - a.score || b.item.totalVotes - a.item.totalVotes || a.index - b.index)
+    .slice(0, 4)
+    .map(({ item }) => `<a href="/question?id=${encodeURIComponent(item.id)}">${escapeSeoHTML(item.title)}</a>`)
+    .join("");
+  const categoryLink = tags[0]
+    ? `<a href="/?tag=${encodeURIComponent(tags[0])}">${escapeSeoHTML(tags[0])}のアンケートを見る</a>`
+    : '<a href="/">新着アンケートを見る</a>';
+  const intro = description || `「${title}」について、みんなの回答を集める無料アンケートです。`;
+
+  return `<section class="question-seo-content" aria-labelledby="questionSeoHeading">
+    <h2 id="questionSeoHeading">「${escapeSeoHTML(title)}」について</h2>
+    <p>${escapeSeoHTML(intro)}</p>
+    <p>このアンケートでは${optionSummary ? `「${escapeSeoHTML(optionSummary)}${options.length > 4 ? "など" : ""}」` : "用意された選択肢"}から回答できます。投票後は回答結果を確認し、${escapeSeoHTML(category)}についてほかの人の考えと比較できます。</p>
+    <h2>このアンケートのよくある質問</h2>
+    <div class="question-seo-faq">
+      <details><summary>「${escapeSeoHTML(title)}」へ無料で回答できますか？</summary><p>はい。登録不要・無料で、${options.length}つの選択肢から自分の考えに近い回答を選べます。投票後すぐに現在の集計結果を確認できます。</p></details>
+      <details><summary>「${escapeSeoHTML(title)}」の結果はどのように集計されますか？</summary><p>みんQに寄せられた回答をリアルタイムで集計します。世論全体を代表する統計調査ではなく、${escapeSeoHTML(category)}に関する参加者の意見を比較するための参考情報です。</p></details>
+      <details><summary>${escapeSeoHTML(category)}の関連アンケートも見られますか？</summary><p>はい。このページの関連リンクから、内容やカテゴリが近い質問にも続けて回答できます。</p></details>
+    </div>
+    <nav class="question-seo-related" aria-label="関連アンケート"><strong>関連するアンケート</strong>${relatedItems || categoryLink}</nav>
+  </section>`;
+};
+
 // ==========================================
 // 1. 古い詳細ページ（detail.html）から新ページ（/question）への301リダイレクト
 // ==========================================
@@ -366,13 +420,23 @@ app.get("/question", async (req, res) => {
         : Number.isFinite(rawPercent) ? Math.round(rawPercent) : 0;
       return `<li><span>${escapeSeoHTML(questionOptionText(option))}</span><strong>${percent}%</strong></li>`;
     }).join("");
+    let relatedCandidates = listCache.data || [];
+    if (!relatedCandidates.length) {
+      try {
+        relatedCandidates = await getAllQuestions();
+      } catch (error) {
+        console.error("Question SEO related links load failed:", error.message);
+      }
+    }
+    const questionSeoContent = renderQuestionSeoContent({ id, ...q, title, description }, relatedCandidates);
     const initialContent = `
       <section class="detailCard seo-question-content">
         <h1 class="createTitle">${safeTitle}</h1>
         ${description && description !== title ? `<p>${safeDescription}</p>` : ""}
         ${optionItems ? `<h2>回答の選択肢</h2><ul>${optionItems}</ul>` : ""}
       </section>
-      ${resultItems ? `<section class="resultCard seo-result-summary"><h2>全体の回答結果</h2><p>全${totalVotes}件の回答を集計しています。</p><ol>${resultItems}</ol></section>` : ""}`;
+      ${resultItems ? `<section class="resultCard seo-result-summary"><h2>全体の回答結果</h2><p>全${totalVotes}件の回答を集計しています。</p><ol>${resultItems}</ol></section>` : ""}
+      ${questionSeoContent}`;
     html = html.replace(
       /<main class="layout" id="questionArea">[\s\S]*?<\/main>/,
       `<main class="layout" id="questionArea">${initialContent}</main>`
