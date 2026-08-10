@@ -15,7 +15,11 @@
     { slug: "career-diagnosis", title: "適職診断", description: "仕事で発揮しやすい強みから適職を診断します。", groups: ["work", "personality"] },
     { slug: "manager-aptitude-diagnosis", title: "管理職適性診断", description: "チームを率いるための適性を確認します。", groups: ["work", "social"] },
     { slug: "entrepreneur-aptitude-diagnosis", title: "起業家適性診断", description: "行動力や不確実性への強さを確認します。", groups: ["work", "personality"] },
-    { slug: "job-change-readiness-diagnosis", title: "転職適性診断", description: "転職理由や準備状況から今の適性を確認します。", groups: ["work", "mental"] }
+    { slug: "job-change-readiness-diagnosis", title: "転職適性診断", description: "転職理由や準備状況から今の適性を確認します。", groups: ["work", "mental"] },
+    { slug: "iq-test", title: "IQテスト", description: "数理・言語・論理の問題に挑戦します。", groups: ["brain"] },
+    { slug: "pq-test", title: "PQテスト", description: "現実的に問題を解く力をチェックします。", groups: ["brain", "work"] },
+    { slug: "metacognition-test", title: "メタ認知能力テスト", description: "理解度を見積もり学び方を調整する力をチェックします。", groups: ["brain", "personality"] },
+    { slug: "memory-test", title: "記憶力テスト", description: "短期記憶と作業記憶の問題に挑戦します。", groups: ["brain"] }
   ];
 
   const normalize = value => String(value || "")

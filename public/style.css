@@ -141,10 +141,21 @@ button { cursor: pointer; }
 .diagnosis-hub-head { align-items: center; margin-bottom: 7px; }
 .diagnosis-hub-head h2 { margin: 0; font-size: clamp(20px, 2.4vw, 24px); }
 .diagnosis-hub-head p { margin: 0; color: var(--muted); font-size: 13px; }
-.diagnosis-tabs { display: grid; grid-template-columns: repeat(5, 1fr); margin: 0 0 10px; border-bottom: 1px solid #dfe4e1; }
+.diagnosis-tabs { display: grid; grid-template-columns: repeat(6, 1fr); margin: 0 0 10px; border-bottom: 1px solid #dfe4e1; }
 .diagnosis-tab { position: relative; min-height: 40px; padding: 5px 6px 9px; border: 0; background: transparent; color: #2b2b2b; font: inherit; font-size: 15px; font-weight: 800; white-space: nowrap; cursor: pointer; }
 .diagnosis-tab::after { content: ""; position: absolute; right: 0; bottom: -1px; left: 0; height: 4px; border-radius: 4px 4px 0 0; background: transparent; }
 .diagnosis-tab:hover, .diagnosis-tab:focus-visible, .diagnosis-tab.active { color: #159855; }
+.diagnosis-score-box { margin: 0 0 20px; padding: 18px; border: 1px solid #dce5e1; border-radius: 16px; background: #f7faf9; }
+.diagnosis-score-total { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 7px; margin: 0 0 15px; font-weight: 800; }
+.diagnosis-score-total strong { color: var(--diagnosis-accent, #4f46c8); font-size: 42px; line-height: 1; }
+.diagnosis-score-total small { color: var(--muted); }
+.diagnosis-score-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.diagnosis-score-grid div { display: grid; gap: 3px; padding: 10px 5px; border-radius: 10px; background: #fff; text-align: center; }
+.diagnosis-score-grid span { font-weight: 700; }
+.diagnosis-score-grid strong { color: var(--diagnosis-accent, #4f46c8); font-size: 24px; }
+.diagnosis-score-grid small, .diagnosis-score-note { color: var(--muted); font-size: 11px; }
+.diagnosis-score-note { margin: 12px 0 0; text-align: center; }
+@media (max-width: 560px) { .diagnosis-score-grid { grid-template-columns: repeat(2, 1fr); } }
 .diagnosis-tab.active::after { background: #18a15b; }
 .diagnosis-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px; }
 .diagnosis-link-card[hidden] { display: none; }

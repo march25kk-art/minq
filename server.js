@@ -249,7 +249,11 @@ const DIAGNOSIS_PAGES = {
   "/career-diagnosis": { kind: "career", slug: "career-diagnosis", title: "適職診断", description: "仕事で発揮しやすい強みから、向いている仕事の方向性を20の質問で診断します。", theme: "#238a68" },
   "/manager-aptitude-diagnosis": { kind: "manager", slug: "manager-aptitude-diagnosis", title: "管理職適性診断", description: "チームを率いるための対話力・判断力・育成力の傾向を20の質問でチェックします。", theme: "#3569a8" },
   "/entrepreneur-aptitude-diagnosis": { kind: "entrepreneur", slug: "entrepreneur-aptitude-diagnosis", title: "起業家適性診断", description: "起業家に向いている人の傾向を無料診断。行動力・不確実性への強さ・事業を形にする力を20の質問でチェックします。", theme: "#d27822" },
-  "/job-change-readiness-diagnosis": { kind: "jobChange", slug: "job-change-readiness-diagnosis", title: "転職適性診断", description: "転職理由やキャリアの準備状況から、今の転職適性を20の質問でチェックします。", theme: "#67727d" }
+  "/job-change-readiness-diagnosis": { kind: "jobChange", slug: "job-change-readiness-diagnosis", title: "転職適性診断", description: "転職理由やキャリアの準備状況から、今の転職適性を20の質問でチェックします。", theme: "#67727d" },
+  "/iq-test": { kind: "iq", slug: "iq-test", title: "IQテスト", description: "論理・数列・図形・言語の各10問、全40問から思考力を数値でチェックする無料テストです。", theme: "#4f46c8" },
+  "/pq-test": { kind: "pq", slug: "pq-test", title: "PQテスト", description: "日常の状況問題から現実的に問題を解く力をチェックします。", theme: "#167d8d" },
+  "/metacognition-test": { kind: "metacognition", slug: "metacognition-test", title: "メタ認知能力テスト", description: "自分の理解度を見積もり、学び方を調整する力を10問でチェックします。", theme: "#7b52a8" },
+  "/memory-test": { kind: "memory", slug: "memory-test", title: "記憶力テスト", description: "短期記憶・作業記憶・情報の結び付けを10問でチェックします。", theme: "#b76425" }
 };
 
 app.use((req, res, next) => {
@@ -718,7 +722,11 @@ const DIAGNOSIS_TYPES = {
   career: ["creator", "supporter", "analyst", "leader"],
   manager: ["low", "mild", "high", "veryHigh"],
   entrepreneur: ["low", "mild", "high", "veryHigh"],
-  jobChange: ["low", "mild", "high", "veryHigh"]
+  jobChange: ["low", "mild", "high", "veryHigh"],
+  iq: ["low", "mild", "high", "veryHigh"],
+  pq: ["low", "mild", "high", "veryHigh"],
+  metacognition: ["low", "mild", "high", "veryHigh"],
+  memory: ["low", "mild", "high", "veryHigh"]
 };
 
 const questionCooldown = {};

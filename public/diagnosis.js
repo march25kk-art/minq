@@ -111,7 +111,7 @@ function startQuiz() {
 }
 
 function questionData() {
-  if (config.mode === "category") {
+  if (config.mode === "category" || config.mode === "quiz") {
     const [text, labels, values] = config.questions[current];
     return { text, answers: labels.map((label, index) => ({ label, value: values[index] })) };
   }
@@ -183,6 +183,30 @@ async function renderResult() {
   }));
   const descriptionBox = $("diagnosisDescription");
   descriptionBox.replaceChildren();
+  if (config.scoreGroups) {
+    const correct = answers.reduce((sum, value) => sum + Number(value), 0);
+    const overallScore = Math.round(70 + correct * 1.5);
+    const scoreBox = document.createElement("section");
+    scoreBox.className = "diagnosis-score-box";
+    const scoreHeading = document.createElement("p");
+    scoreHeading.className = "diagnosis-score-total";
+    scoreHeading.innerHTML = `総合点数 <strong>${overallScore}</strong><small>（平均100・${correct} / 40問正解）</small>`;
+    const scoreGrid = document.createElement("div");
+    scoreGrid.className = "diagnosis-score-grid";
+    Object.entries(config.scoreGroups).forEach(([label, indexes]) => {
+      const groupCorrect = indexes.reduce((sum, index) => sum + Number(answers[index] || 0), 0);
+      const correctRate = Math.round(groupCorrect / indexes.length * 100);
+      const item = document.createElement("div");
+      item.innerHTML = `<span>${label}</span><strong>${correctRate}%</strong><small>${groupCorrect} / ${indexes.length}問正解</small>`;
+      scoreGrid.append(item);
+    });
+    const note = document.createElement("p");
+    note.className = "diagnosis-score-note";
+    note.textContent = "平均100となる独自換算スコアです。標準化された知能検査によるIQ値ではありません。";
+    scoreBox.append(scoreHeading, scoreGrid, note);
+    descriptionBox.append(scoreBox);
+    latestResult.score = overallScore;
+  }
   const p = document.createElement("p"); p.textContent = description;
   const strong = document.createElement("strong"); strong.textContent = "あなたへのヒント";
   const hint = document.createElement("p"); hint.textContent = advice;
