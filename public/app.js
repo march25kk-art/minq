@@ -543,6 +543,7 @@ async function loadCombinedQuestion() {
 
   try {
     const seoContent = div.querySelector(".question-seo-content");
+    const breadcrumb = div.querySelector(".seo-breadcrumb");
     fetch("/view", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -569,6 +570,7 @@ async function loadCombinedQuestion() {
     if (ogUrl) ogUrl.content = canonicalUrl;
     if (q.voted) renderResultsScreen(div, q, id);
     else renderVotingScreen(div, q, id);
+    if (breadcrumb) div.prepend(breadcrumb);
     if (seoContent) div.appendChild(seoContent);
   } catch (err) {
     console.error(err);

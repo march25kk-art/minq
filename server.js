@@ -86,9 +86,10 @@ const renderQuestionSeoContent = (question, candidates = []) => {
     .slice(0, 4)
     .map(({ item }) => `<a href="/question?id=${encodeURIComponent(item.id)}">${escapeSeoHTML(item.title)}</a>`)
     .join("");
-  const categoryLink = tags[0]
-    ? `<a href="/?tag=${encodeURIComponent(tags[0])}">${escapeSeoHTML(tags[0])}のアンケートを見る</a>`
-    : '<a href="/">新着アンケートを見る</a>';
+  const archiveCategory = getPollCategoryForQuestion(question);
+  const categoryLink = archiveCategory
+    ? `<a href="/polls/${archiveCategory[0]}">${escapeSeoHTML(archiveCategory[1].name)}のアンケートを見る</a>`
+    : '<a href="/polls">新着アンケートを見る</a>';
   const intro = description || `「${title}」について、みんなの回答を集める無料アンケートです。`;
 
   return `<section class="question-seo-content" aria-labelledby="questionSeoHeading">
@@ -103,6 +104,38 @@ const renderQuestionSeoContent = (question, candidates = []) => {
     </div>
     <nav class="question-seo-related" aria-label="関連アンケート"><strong>関連するアンケート</strong>${relatedItems || categoryLink}</nav>
   </section>`;
+};
+
+const POLL_CATEGORIES = {
+  news: { name: "ニュース・社会", description: "ニュースや社会の出来事について、みんなの意見を比較できる無料アンケートです。", tags: ["ニュース", "社会", "政治", "法律", "環境"] },
+  money: { name: "お金・投資", description: "貯金、家計、投資など、お金に関する考え方を比較できる無料アンケートです。", tags: ["お金", "投資"] },
+  work: { name: "仕事・ビジネス", description: "働き方、職場、キャリア、ビジネスについて意見を集めたアンケートです。", tags: ["仕事", "ビジネス"] },
+  love: { name: "恋愛", description: "恋愛観、パートナー、結婚や男女の本音について回答できる無料アンケートです。", tags: ["恋愛"] },
+  relationships: { name: "人間関係・悩み", description: "友人、家族、職場などの人間関係や悩みについて、ほかの人の考えを確認できます。", tags: ["人間関係", "悩み", "相談", "ストレス", "心理"] },
+  life: { name: "生活・暮らし", description: "日常生活、住まい、子育てなど、暮らしに関するみんなの選択を集めています。", tags: ["生活", "日常", "住まい・不動産", "子育て・育児", "介護"] },
+  food: { name: "食べ物・料理", description: "好きな食べ物、料理、外食について気軽に答えられるアンケートです。", tags: ["食べ物", "料理", "飲食店"] },
+  health: { name: "健康・美容", description: "健康、運動、ダイエット、美容について、日常の習慣や考え方を比較できます。", tags: ["健康", "医療", "ダイエット", "美容・コスメ", "ファッション"] },
+  study: { name: "勉強・教育", description: "勉強方法、学校、教育について、学生や社会人の意見を集めたアンケートです。", tags: ["勉強", "教育", "本・読書", "歴史"] },
+  technology: { name: "AI・テクノロジー", description: "AI、科学、新しい技術について、期待や使い方を聞くアンケートです。", tags: ["AI", "テクノロジー", "科学"] },
+  entertainment: { name: "エンタメ", description: "映画、ドラマ、アニメ、漫画、音楽について好みや評価を比較できます。", tags: ["エンタメ", "映画", "ドラマ", "アニメ", "漫画", "音楽"] },
+  games: { name: "ゲーム・遊び", description: "ゲームやおもちゃ、暇つぶしについて気軽に投票できるアンケートです。", tags: ["ゲーム", "おもちゃ", "暇つぶし"] },
+  hobbies: { name: "趣味・スポーツ", description: "趣味、旅行、スポーツ、乗り物、アートなど余暇の過ごし方を比較できます。", tags: ["趣味", "旅行", "スポーツ", "自転車・バイク", "アート", "デザイン"] },
+  pets: { name: "動物・ペット", description: "動物やペットとの暮らしについて、飼い方や好みを聞くアンケートです。", tags: ["動物", "ペット"] }
+};
+
+const isIndexableQuestion = question => {
+  const title = decodeStoredText(question?.title);
+  const description = decodeStoredText(question?.description);
+  const options = Array.isArray(question?.options) ? question.options.map(questionOptionText).filter(Boolean) : [];
+  if (!title || options.length < 2 || Math.max(0, Number(question?.reports) || 0) >= 5) return false;
+  return description.length >= 18
+    || Math.max(0, Number(question?.totalVotes) || 0) >= 5
+    || Math.max(0, Number(question?.commentCount) || 0) >= 1;
+};
+
+const getPollCategoryForQuestion = question => {
+  const tags = Array.isArray(question?.tags) ? question.tags.map(decodeStoredText) : [];
+  return Object.entries(POLL_CATEGORIES).find(([, category]) => tags.some(tag => category.tags.includes(tag))) || null;
 };
 
 // ==========================================
@@ -243,6 +276,63 @@ Object.entries(DIAGNOSIS_PAGES).forEach(([route, page]) => {
 });
 app.get("/diagnosis.html", (_req, res) => res.redirect(301, "/"));
 
+const renderPollArchivePage = ({ questions, page, totalPages, category, slug = "", activeCategorySlugs = [] }) => {
+  const title = category ? `${category.name}のアンケート・投票` : "アンケート一覧";
+  const description = category?.description || "登録不要・無料で回答できるアンケートを一覧から探せます。新着の質問やみんなの回答結果をチェックできます。";
+  const basePath = category ? `/polls/${slug}` : "/polls";
+  const canonicalPath = page > 1 ? `${basePath}?page=${page}` : basePath;
+  const cards = questions.map(question => `<article class="poll-archive-item">
+    <h2><a href="/question?id=${encodeURIComponent(question.id)}">${escapeSeoHTML(question.title)}</a></h2>
+    ${question.description ? `<p>${escapeSeoHTML(question.description)}</p>` : ""}
+    <div><span>${Math.max(0, Number(question.totalVotes) || 0)}回答</span><span>${Math.max(0, Number(question.commentCount) || 0)}コメント</span></div>
+  </article>`).join("") || "<p>このカテゴリのアンケートは準備中です。</p>";
+  const categoryLinks = Object.entries(POLL_CATEGORIES).filter(([key]) => activeCategorySlugs.includes(key)).map(([key, item]) =>
+    `<a href="/polls/${key}">${escapeSeoHTML(item.name)}</a>`).join("");
+  const prev = page > 1 ? `<a rel="prev" href="${basePath}${page === 2 ? "" : `?page=${page - 1}`}">前のページ</a>` : "<span></span>";
+  const next = page < totalPages ? `<a rel="next" href="${basePath}?page=${page + 1}">次のページ</a>` : "<span></span>";
+  const breadcrumbItems = [
+    { "@type": "ListItem", position: 1, name: "ホーム", item: "https://minnano-question.com/" },
+    { "@type": "ListItem", position: 2, name: "アンケート一覧", item: "https://minnano-question.com/polls" }
+  ];
+  if (category) breadcrumbItems.push({ "@type": "ListItem", position: 3, name: category.name, item: `https://minnano-question.com${basePath}` });
+  const structuredData = JSON.stringify({ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: breadcrumbItems }).replace(/</g, "\\u003c");
+  return `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>${escapeSeoHTML(title)}${page > 1 ? ` ${page}ページ目` : ""} | みんQ</title><meta name="description" content="${escapeSeoHTML(description)}">${questions.length ? "" : '<meta name="robots" content="noindex,follow">'}
+  <link rel="canonical" href="https://minnano-question.com${canonicalPath}"><link rel="stylesheet" href="/style.css?v=29">
+  <script type="application/ld+json">${structuredData}</script></head><body>
+  <header><div class="logo-container"><a class="site-logo" href="/"><span>みん</span><b>Q</b></a><a class="home-link" href="/">ホーム</a></div></header>
+  <main class="poll-archive"><nav class="seo-breadcrumb" aria-label="パンくず"><a href="/">ホーム</a><span>›</span>${category ? '<a href="/polls">アンケート一覧</a><span>›</span>' : ""}<span>${escapeSeoHTML(category?.name || "アンケート一覧")}</span></nav>
+  <header class="poll-archive-head"><h1>${escapeSeoHTML(title)}</h1><p>${escapeSeoHTML(description)}</p></header>
+  <nav class="poll-category-links" aria-label="アンケートカテゴリ"><a href="/polls">すべて</a>${categoryLinks}</nav>
+  <section class="poll-archive-list">${cards}</section><nav class="poll-archive-pager" aria-label="ページ移動">${prev}<span>${page} / ${totalPages}</span>${next}</nav>
+  <section class="static-seo-section compact"><h2>${escapeSeoHTML(title)}のよくある質問</h2><div class="static-seo-faq"><details><summary>無料で投票できますか？</summary><p>はい。登録不要・無料で回答でき、投票後に現在の集計結果を確認できます。</p></details><details><summary>どのようなアンケートがありますか？</summary><p>${escapeSeoHTML(category ? category.name : "恋愛、仕事、生活、趣味など幅広いテーマ")}について、参加者の意見を比較できる質問を掲載しています。</p></details><details><summary>自分でも質問を作れますか？</summary><p>はい。質問と選択肢を入力して無料で公開できます。</p></details></div><nav class="static-seo-links"><a href="/create.html">無料アンケートを作成する</a><a href="/mbti.html">無料性格診断を見る</a></nav></section>
+  </main><footer class="site-footer"><nav><a href="/about.html">みんQについて</a><a href="/terms.html">利用規約</a><a href="/privacy.html">プライバシーポリシー</a></nav><span>© 2026 みんQ</span></footer></body></html>`;
+};
+
+app.get(["/polls", "/polls/:category"], async (req, res) => {
+  try {
+    const slug = String(req.params.category || "");
+    const category = slug ? POLL_CATEGORIES[slug] : null;
+    if (slug && !category) return res.status(404).send("カテゴリが見つかりません。");
+    if (String(req.query.page || "") === "1") return res.redirect(301, category ? `/polls/${slug}` : "/polls");
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+    let questions = (await getAllQuestions()).filter(question => Math.max(0, Number(question.reports) || 0) < 5);
+    const activeCategorySlugs = Object.entries(POLL_CATEGORIES)
+      .filter(([, item]) => questions.some(question => (question.tags || []).some(tag => item.tags.includes(decodeStoredText(tag)))))
+      .map(([key]) => key);
+    if (category) questions = questions.filter(question => (question.tags || []).some(tag => category.tags.includes(decodeStoredText(tag))));
+    questions.sort(compareQuestionUpdatedAt);
+    const pageSize = 20;
+    const totalPages = Math.max(1, Math.ceil(questions.length / pageSize));
+    if (page > totalPages) return res.status(404).send("ページが見つかりません。");
+    const paginated = questions.slice((page - 1) * pageSize, page * pageSize);
+    res.set("Cache-Control", "public, max-age=300").send(renderPollArchivePage({ questions: paginated, page, totalPages, category, slug, activeCategorySlugs }));
+  } catch (error) {
+    console.error("Poll archive load failed:", error);
+    res.status(500).send("アンケート一覧を読み込めませんでした。");
+  }
+});
+
 // express.static の extensions オプションにより、拡張子なしURLでも同じHTMLが
 // 200で配信されるため、サイト内で採用している正規URLへ301で統一する。
 const STATIC_HTML_CANONICAL_PATHS = [
@@ -267,6 +357,7 @@ app.get("/question.html", (req, res) => {
 
 const SITEMAP_STATIC_PAGES = [
   "/",
+  "/polls",
   "/mbti.html",
   "/about.html",
   "/contact.html",
@@ -292,11 +383,14 @@ const sitemapDate = value => {
 app.get("/sitemap.xml", async (_req, res) => {
   try {
     const snapshot = await firestore.collection(Q_COLL).get();
-    const staticEntries = SITEMAP_STATIC_PAGES.map(page =>
+    const questionDocs = snapshot.docs.map(doc => ({ doc, data: doc.data() }));
+    const activeCategoryPages = Object.entries(POLL_CATEGORIES)
+      .filter(([, category]) => questionDocs.some(({ data }) => (data.tags || []).some(tag => category.tags.includes(decodeStoredText(tag)))))
+      .map(([slug]) => `/polls/${slug}`);
+    const staticEntries = [...SITEMAP_STATIC_PAGES, ...activeCategoryPages].map(page =>
       `<url><loc>${escapeXml(`https://minnano-question.com${page}`)}</loc><changefreq>weekly</changefreq><priority>${page === "/" ? "1.0" : "0.8"}</priority></url>`
     ).join("");
-    const questionEntries = snapshot.docs.map(doc => {
-      const data = doc.data();
+    const questionEntries = questionDocs.filter(({ data }) => isIndexableQuestion(data)).map(({ doc, data }) => {
       const lastmod = sitemapDate(data.updatedAt || data.createdAt);
       const loc = `https://minnano-question.com/question?id=${encodeURIComponent(doc.id)}`;
       return `<url><loc>${escapeXml(loc)}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ""}<changefreq>daily</changefreq><priority>0.7</priority></url>`;
@@ -333,7 +427,7 @@ app.get("/question", async (req, res) => {
     if (!q) {
       const doc = await firestore.collection(Q_COLL).doc(id).get();
       if (!doc.exists) {
-        return res.status(404).sendFile(path.join(__dirname, "public", "question.html"));
+        return res.status(404).send(`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,follow"><title>アンケートが見つかりません | みんQ</title><link rel="stylesheet" href="/style.css?v=29"></head><body><main class="staticPage"><article class="staticCard"><h1>アンケートが見つかりません</h1><p>削除されたか、URLが変更された可能性があります。</p><p><a href="/polls">公開中のアンケートを見る</a></p></article></main></body></html>`);
       }
       q = doc.data();
     }
@@ -365,6 +459,7 @@ app.get("/question", async (req, res) => {
     html = html.replace(/<meta property="og:description" id="ogDescription" content="[^"]*">/, `<meta property="og:description" id="ogDescription" content="${safeDescription}">`);
     html = html.replace(/<meta property="og:url" id="ogUrl" content="[^"]*">/, `<meta property="og:url" id="ogUrl" content="${socialUrl}">`);
     html = html.replace("</head>", `
+  ${isIndexableQuestion(q) ? "" : '<meta name="robots" content="noindex,follow">'}
   <meta property="og:image" content="${ogImageUrl}">
   <meta property="og:image:secure_url" content="${ogImageUrl}">
   <meta property="og:image:type" content="image/png">
@@ -377,27 +472,37 @@ app.get("/question", async (req, res) => {
   <meta name="twitter:image" content="https://minnano-question.com/apple-touch-icon.png">
 </head>`);
 
+    const pollCategoryEntry = getPollCategoryForQuestion(q);
+    const breadcrumbItems = [
+      { "@type": "ListItem", position: 1, name: "ホーム", item: "https://minnano-question.com/" },
+      { "@type": "ListItem", position: 2, name: "アンケート一覧", item: "https://minnano-question.com/polls" }
+    ];
+    if (pollCategoryEntry) breadcrumbItems.push({
+      "@type": "ListItem",
+      position: 3,
+      name: pollCategoryEntry[1].name,
+      item: `https://minnano-question.com/polls/${pollCategoryEntry[0]}`
+    });
+    breadcrumbItems.push({ "@type": "ListItem", position: breadcrumbItems.length + 1, name: title, item: canonicalUrl });
     const structuredData = {
       "@context": "https://schema.org",
-      "@type": "WebPage",
-      name: title,
-      description,
-      url: canonicalUrl,
-      inLanguage: "ja",
-      isPartOf: {
-        "@type": "WebSite",
-        name: "みんQ",
-        url: "https://minnano-question.com/"
-      },
-      mainEntity: {
-        "@type": "Question",
+      "@graph": [{
+        "@type": "WebPage",
         name: title,
-        text: description,
-        suggestedAnswer: (Array.isArray(q.options) ? q.options : []).map(option => ({
-          "@type": "Answer",
-          text: decodeStoredText(typeof option === "string" ? option : option?.text || "")
-        })).filter(answer => answer.text)
-      }
+        description,
+        url: canonicalUrl,
+        inLanguage: "ja",
+        isPartOf: { "@type": "WebSite", name: "みんQ", url: "https://minnano-question.com/" },
+        mainEntity: {
+          "@type": "Question",
+          name: title,
+          text: description,
+          suggestedAnswer: (Array.isArray(q.options) ? q.options : []).map(option => ({
+            "@type": "Answer",
+            text: decodeStoredText(typeof option === "string" ? option : option?.text || "")
+          })).filter(answer => answer.text)
+        }
+      }, { "@type": "BreadcrumbList", itemListElement: breadcrumbItems }]
     };
     const structuredDataJson = JSON.stringify(structuredData).replace(/</g, "\\u003c");
     html = html.replace(
@@ -429,7 +534,9 @@ app.get("/question", async (req, res) => {
       }
     }
     const questionSeoContent = renderQuestionSeoContent({ id, ...q, title, description }, relatedCandidates);
+    const breadcrumb = `<nav class="seo-breadcrumb" aria-label="パンくず"><a href="/">ホーム</a><span>›</span><a href="/polls">アンケート一覧</a>${pollCategoryEntry ? `<span>›</span><a href="/polls/${pollCategoryEntry[0]}">${escapeSeoHTML(pollCategoryEntry[1].name)}</a>` : ""}<span>›</span><span>${safeTitle}</span></nav>`;
     const initialContent = `
+      ${breadcrumb}
       <section class="detailCard seo-question-content">
         <h1 class="createTitle">${safeTitle}</h1>
         ${description && description !== title ? `<p>${safeDescription}</p>` : ""}

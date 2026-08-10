@@ -11,8 +11,21 @@ async function updateSitemap() {
     
     const sitemap = new SitemapStream({ hostname: 'https://minnano-question.com' });
 
+    const categoryTags = {
+      news: ["ニュース", "社会", "政治", "法律", "環境"], money: ["お金", "投資"], work: ["仕事", "ビジネス"], love: ["恋愛"],
+      relationships: ["人間関係", "悩み", "相談", "ストレス", "心理"], life: ["生活", "日常", "住まい・不動産", "子育て・育児", "介護"],
+      food: ["食べ物", "料理", "飲食店"], health: ["健康", "医療", "ダイエット", "美容・コスメ", "ファッション"],
+      study: ["勉強", "教育", "本・読書", "歴史"], technology: ["AI", "テクノロジー", "科学"],
+      entertainment: ["エンタメ", "映画", "ドラマ", "アニメ", "漫画", "音楽"], games: ["ゲーム", "おもちゃ", "暇つぶし"],
+      hobbies: ["趣味", "旅行", "スポーツ", "自転車・バイク", "アート", "デザイン"], pets: ["動物", "ペット"]
+    };
+    const questionData = snapshot.docs.map(doc => doc.data());
+    const categories = Object.entries(categoryTags)
+      .filter(([, tags]) => questionData.some(question => (question.tags || []).some(tag => tags.includes(String(tag)))))
+      .map(([slug]) => slug);
     [
       { url: '/', priority: 1 },
+      { url: '/polls', priority: 0.9 },
       { url: '/mbti.html', priority: 0.8 },
       { url: '/about.html', priority: 0.7 },
       { url: '/contact.html', priority: 0.6 },
@@ -33,15 +46,26 @@ async function updateSitemap() {
       { url: '/career-diagnosis', priority: 0.8 },
       { url: '/manager-aptitude-diagnosis', priority: 0.8 },
       { url: '/entrepreneur-aptitude-diagnosis', priority: 0.8 },
-      { url: '/job-change-readiness-diagnosis', priority: 0.8 }
+      { url: '/job-change-readiness-diagnosis', priority: 0.8 },
+      ...categories.map(slug => ({ url: `/polls/${slug}`, priority: 0.8 }))
     ].forEach(page => sitemap.write({ ...page, changefreq: 'weekly' }));
 
     snapshot.forEach(doc => {
+      const question = doc.data();
+      const options = Array.isArray(question.options) ? question.options.filter(Boolean) : [];
+      const indexable = String(question.title || "").trim()
+        && options.length >= 2
+        && Number(question.reports || 0) < 5
+        && (String(question.description || "").trim().length >= 18
+          || Number(question.totalVotes || 0) >= 5
+          || Number(question.commentCount || 0) >= 1);
+      if (!indexable) return;
       // doc.id（Firestoreの文字列ID）を使ってURLを生成
       sitemap.write({
         url: `/question?id=${encodeURIComponent(doc.id)}`,
         changefreq: 'daily',
-        priority: 0.7
+        priority: 0.7,
+        lastmod: question.updatedAt || question.createdAt || undefined
       });
     });
     sitemap.end();
