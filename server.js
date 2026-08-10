@@ -153,7 +153,7 @@ const DIAGNOSIS_PAGES = {
   "/stress-diagnosis": { kind: "stress", slug: "stress-diagnosis", title: "ストレス耐性診断", description: "ストレスへの向き合い方と回復力の傾向を20の質問からチェックします。", theme: "#168f75" },
   "/self-esteem-diagnosis": { kind: "selfEsteem", slug: "self-esteem-diagnosis", title: "自己肯定感診断", description: "自分を受け入れ、尊重できている度合いを20の質問からチェックします。", theme: "#d48b16" },
   "/communication-diagnosis": { kind: "communication", slug: "communication-diagnosis", title: "コミュ力診断", description: "会話・傾聴・伝え方の傾向を20の質問からチェックします。", theme: "#147fa1" },
-  "/approval-seeking-diagnosis": { kind: "approval", slug: "approval-seeking-diagnosis", title: "承認欲求診断", description: "周囲からの評価をどのくらい気にする傾向があるか、20の質問でチェックします。", theme: "#8a5ac2" },
+  "/approval-seeking-diagnosis": { kind: "approval", slug: "approval-seeking-diagnosis", title: "承認欲求診断", description: "承認欲求の強さを無料チェック。周囲の反応や評価をどのくらい気にする傾向があるか、20の質問で確認します。", theme: "#8a5ac2" },
   "/adhd-diagnosis": { kind: "adhd", slug: "adhd-diagnosis", title: "ADHD傾向診断", description: "注意・衝動性・落ち着きに関する日常の傾向を確認する簡易セルフチェックです。", theme: "#e06a3b" },
   "/asd-diagnosis": { kind: "asd", slug: "asd-diagnosis", title: "ASD傾向診断", description: "対人コミュニケーションやこだわり、感覚に関する傾向を確認する簡易セルフチェックです。", theme: "#4778bf" },
   "/cheating-risk-diagnosis": { kind: "cheatingRisk", slug: "cheating-risk-diagnosis", title: "浮気されやすさ診断", description: "恋愛での境界線やコミュニケーションの傾向を20の質問からチェックします。", theme: "#d94f71" },
@@ -161,7 +161,7 @@ const DIAGNOSIS_PAGES = {
   "/love-dependency-diagnosis": { kind: "loveDependency", slug: "love-dependency-diagnosis", title: "恋愛依存診断", description: "恋愛と自分の生活のバランスを20の質問からチェックします。", theme: "#c94e91" },
   "/career-diagnosis": { kind: "career", slug: "career-diagnosis", title: "適職診断", description: "仕事で発揮しやすい強みから、向いている仕事の方向性を20の質問で診断します。", theme: "#238a68" },
   "/manager-aptitude-diagnosis": { kind: "manager", slug: "manager-aptitude-diagnosis", title: "管理職適性診断", description: "チームを率いるための対話力・判断力・育成力の傾向を20の質問でチェックします。", theme: "#3569a8" },
-  "/entrepreneur-aptitude-diagnosis": { kind: "entrepreneur", slug: "entrepreneur-aptitude-diagnosis", title: "起業家適性診断", description: "行動力・不確実性への強さ・事業を形にする力を20の質問でチェックします。", theme: "#d27822" },
+  "/entrepreneur-aptitude-diagnosis": { kind: "entrepreneur", slug: "entrepreneur-aptitude-diagnosis", title: "起業家適性診断", description: "起業家に向いている人の傾向を無料診断。行動力・不確実性への強さ・事業を形にする力を20の質問でチェックします。", theme: "#d27822" },
   "/job-change-readiness-diagnosis": { kind: "jobChange", slug: "job-change-readiness-diagnosis", title: "転職適性診断", description: "転職理由やキャリアの準備状況から、今の転職適性を20の質問でチェックします。", theme: "#67727d" }
 };
 
