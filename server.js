@@ -250,7 +250,7 @@ const DIAGNOSIS_PAGES = {
   "/manager-aptitude-diagnosis": { kind: "manager", slug: "manager-aptitude-diagnosis", title: "管理職適性診断", description: "チームを率いるための対話力・判断力・育成力の傾向を20の質問でチェックします。", theme: "#3569a8" },
   "/entrepreneur-aptitude-diagnosis": { kind: "entrepreneur", slug: "entrepreneur-aptitude-diagnosis", title: "起業家適性診断", description: "起業家に向いている人の傾向を無料診断。行動力・不確実性への強さ・事業を形にする力を20の質問でチェックします。", theme: "#d27822" },
   "/job-change-readiness-diagnosis": { kind: "jobChange", slug: "job-change-readiness-diagnosis", title: "転職適性診断", description: "転職理由やキャリアの準備状況から、今の転職適性を20の質問でチェックします。", theme: "#67727d" },
-  "/iq-test": { kind: "iq", slug: "iq-test", title: "IQテスト", description: "論理・数列・図形・言語の各10問、全40問から思考力を数値でチェックする無料テストです。", theme: "#4f46c8" },
+  "/iq-test": { kind: "iq", slug: "iq-test", title: "IQテスト", description: "論理・数列・図形・言語の40問の問題プールから毎回ランダムに出題される20問に、10分の制限時間で挑戦する無料テストです。", theme: "#4f46c8" },
   "/pq-test": { kind: "pq", slug: "pq-test", title: "PQテスト", description: "日常の状況問題から現実的に問題を解く力をチェックします。", theme: "#167d8d" },
   "/metacognition-test": { kind: "metacognition", slug: "metacognition-test", title: "メタ認知能力テスト", description: "自分の理解度を見積もり、学び方を調整する力を10問でチェックします。", theme: "#7b52a8" },
   "/memory-test": { kind: "memory", slug: "memory-test", title: "記憶力テスト", description: "短期記憶・作業記憶・情報の結び付けを10問でチェックします。", theme: "#b76425" }

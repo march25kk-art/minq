@@ -86,6 +86,34 @@ let current = 0;
 let answers = [];
 let profile = { gender: "回答しない", age: "回答しない" };
 let latestResult = null;
+let timerId = null;
+let timerDeadline = 0;
+let isFinishing = false;
+
+function shuffled(items) {
+  const result = items.slice();
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+  }
+  return result;
+}
+
+function prepareRandomQuestions() {
+  if (!config.randomQuestionCount || !config.scoreGroups) return;
+  config.questionPool ||= config.questions.slice();
+  config.scoreGroupPool ||= Object.fromEntries(
+    Object.entries(config.scoreGroups).map(([label, indexes]) => [label, indexes.slice()])
+  );
+  const groups = Object.entries(config.scoreGroupPool);
+  const perGroup = Math.floor(config.randomQuestionCount / groups.length);
+  const selectedIndexes = shuffled(groups.flatMap(([, indexes]) => shuffled(indexes).slice(0, perGroup)));
+  config.questions = selectedIndexes.map(index => config.questionPool[index]);
+  config.scoreGroups = Object.fromEntries(groups.map(([label, indexes]) => [
+    label,
+    selectedIndexes.map((sourceIndex, index) => indexes.includes(sourceIndex) ? index : -1).filter(index => index >= 0)
+  ]));
+}
 
 function setupPage() {
   $("diagnosisTitle").textContent = config.title;
@@ -93,6 +121,30 @@ function setupPage() {
   $("diagnosisLead").textContent = config.lead;
   $("diagnosisDisclaimer").textContent = config.disclaimer;
   document.body.classList.add(`diagnosis-${kind}`);
+  $("diagnosisTimer").hidden = !config.timeLimitSeconds;
+}
+
+function stopTimer() {
+  if (timerId !== null) window.clearInterval(timerId);
+  timerId = null;
+}
+
+function updateTimer() {
+  const remaining = Math.max(0, Math.ceil((timerDeadline - Date.now()) / 1000));
+  const minutes = Math.floor(remaining / 60);
+  const seconds = String(remaining % 60).padStart(2, "0");
+  const timer = $("diagnosisTimer");
+  timer.textContent = `残り ${minutes}:${seconds}`;
+  timer.classList.toggle("is-urgent", remaining <= 60);
+  if (remaining === 0) renderResult();
+}
+
+function startTimer() {
+  stopTimer();
+  if (!config.timeLimitSeconds) return;
+  timerDeadline = Date.now() + config.timeLimitSeconds * 1000;
+  updateTimer();
+  timerId = window.setInterval(updateTimer, 250);
 }
 
 function show(view) {
@@ -105,9 +157,12 @@ function show(view) {
 function startQuiz() {
   current = 0;
   answers = [];
+  isFinishing = false;
+  prepareRandomQuestions();
   profile = { gender: $("diagnosisGender").value, age: $("diagnosisAge").value };
   show("diagnosisQuiz");
   renderQuestion();
+  startTimer();
 }
 
 function questionData() {
@@ -172,6 +227,9 @@ function getResultKey() {
 }
 
 async function renderResult() {
+  if (isFinishing) return;
+  isFinishing = true;
+  stopTimer();
   const type = getResultKey();
   const [name, catchText, traits, description, advice] = config.results[type];
   latestResult = { type, name };
@@ -185,12 +243,12 @@ async function renderResult() {
   descriptionBox.replaceChildren();
   if (config.scoreGroups) {
     const correct = answers.reduce((sum, value) => sum + Number(value), 0);
-    const overallScore = Math.round(70 + correct * 1.5);
+    const overallScore = Math.round(70 + correct * (60 / config.questions.length));
     const scoreBox = document.createElement("section");
     scoreBox.className = "diagnosis-score-box";
     const scoreHeading = document.createElement("p");
     scoreHeading.className = "diagnosis-score-total";
-    scoreHeading.innerHTML = `総合点数 <strong>${overallScore}</strong><small>（平均100・${correct} / 40問正解）</small>`;
+    scoreHeading.innerHTML = `総合点数 <strong>${overallScore}</strong><small>（平均100・${correct} / ${config.questions.length}問正解）</small>`;
     const scoreGrid = document.createElement("div");
     scoreGrid.className = "diagnosis-score-grid";
     Object.entries(config.scoreGroups).forEach(([label, indexes]) => {

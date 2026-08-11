@@ -40,9 +40,9 @@
   <script src="/adsense-loader.js?v=1" defer></script>
   <script src="/recommendations.js?v=1" defer></script>
   <script src="/diagnosis-extra.js?v=1" defer></script>
-  <script src="/diagnosis-brain.js?v=2" defer></script>
+  <script src="/diagnosis-brain.js?v=4" defer></script>
   <script src="/result-share.js?v=4" defer></script>
-  <script src="/diagnosis.js?v=8" defer></script>
+  <script src="/diagnosis.js?v=10" defer></script>
 </head>
 <body class="mbti-page diagnosis-page" data-diagnosis="{{KIND}}">
   <header class="site-header"><div class="header-inner">
@@ -71,7 +71,7 @@
     <!-- DIAGNOSIS_SEO_CONTENT -->
 
     <section id="diagnosisQuiz" class="mbti-card mbti-quiz" hidden aria-live="polite">
-      <div class="mbti-progress-head"><span id="diagnosisCount">1 / 20</span><span id="diagnosisPercent">5%</span></div>
+      <div class="mbti-progress-head"><span id="diagnosisCount">1 / 20</span><span id="diagnosisTimer" class="diagnosis-timer" hidden>残り 10:00</span><span id="diagnosisPercent">5%</span></div>
       <div class="mbti-progress" aria-hidden="true"><span id="diagnosisProgressBar"></span></div>
       <h1 id="diagnosisQuestion"></h1>
       <div id="diagnosisAnswers" class="mbti-answers"></div>

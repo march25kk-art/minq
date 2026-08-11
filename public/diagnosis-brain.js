@@ -22,7 +22,9 @@ const q = (text, labels, correct) => [text, labels, labels.map((_, index) => ind
 Object.assign(window.EXTRA_DIAGNOSIS_CONFIGS ||= {}, {
   iq: quiz({
     slug: "iq-test", title: "IQテスト", symbol: "IQ", lead: "数理・言語・論理・規則性の問題から、考える力をチェックします。",
-    ranges: [[0, 13, "low"], [14, 25, "mild"], [26, 33, "high"], [34, 40, "veryHigh"]],
+    randomQuestionCount: 20,
+    timeLimitSeconds: 600,
+    ranges: [[0, 6, "low"], [7, 12, "mild"], [13, 16, "high"], [17, 20, "veryHigh"]],
     scoreGroups: {
       "論理": [2, 3, 4, 8, 11, 12, 14, 19, 20, 21],
       "数列": [0, 7, 10, 13, 18, 22, 23, 24, 25, 26],

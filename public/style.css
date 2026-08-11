@@ -72,10 +72,12 @@ button { cursor: pointer; }
 .mbti-note { margin: 18px 0 0; }
 .mbti-disclaimer { margin: 24px 8px; text-align: center; }
 .mbti-progress-head { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; font-weight: 800; }
+.diagnosis-timer { color: var(--diagnosis-accent, #4f46c8); font-variant-numeric: tabular-nums; }
+.diagnosis-timer.is-urgent { color: #c73535; }
 .mbti-progress { height: 8px; margin: 9px 0 42px; overflow: hidden; border-radius: 8px; background: #edf0ee; }
 .mbti-progress span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--green), #68c982); transition: width .25s ease; }
 .mbti-axis { margin: 0 0 10px; color: #7056c7; font-size: 13px; font-weight: 800; }
-.mbti-quiz h1 { min-height: 38px; margin: 0 0 24px; font-size: clamp(16px, 2.6vw, 26px); line-height: 1.35; letter-spacing: -.02em; white-space: nowrap; }
+.mbti-quiz h1 { min-height: 38px; margin: 0 0 24px; font-size: clamp(16px, 2.6vw, 26px); line-height: 1.35; letter-spacing: -.02em; white-space: normal; overflow-wrap: anywhere; }
 .mbti-answers { display: grid; gap: 14px; }
 .mbti-answers.four-options { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .mbti-answers.four-options .mbti-answer { min-height: 64px; padding: 10px 14px; gap: 11px; }
