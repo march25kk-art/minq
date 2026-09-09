@@ -107,20 +107,20 @@ const renderQuestionSeoContent = (question, candidates = []) => {
 };
 
 const POLL_CATEGORIES = {
-  news: { name: "ニュース・社会", description: "ニュースや社会の出来事について、みんなの意見を比較できる無料アンケートです。", tags: ["ニュース", "社会", "政治", "法律", "環境"] },
-  money: { name: "お金・投資", description: "貯金、家計、投資など、お金に関する考え方を比較できる無料アンケートです。", tags: ["お金", "投資"] },
-  work: { name: "仕事・ビジネス", description: "働き方、職場、キャリア、ビジネスについて意見を集めたアンケートです。", tags: ["仕事", "ビジネス"] },
-  love: { name: "恋愛", description: "恋愛観、パートナー、結婚や男女の本音について回答できる無料アンケートです。", tags: ["恋愛"] },
-  relationships: { name: "人間関係・悩み", description: "友人、家族、職場などの人間関係や悩みについて、ほかの人の考えを確認できます。", tags: ["人間関係", "悩み", "相談", "ストレス", "心理"] },
-  life: { name: "生活・暮らし", description: "日常生活、住まい、子育てなど、暮らしに関するみんなの選択を集めています。", tags: ["生活", "日常", "住まい・不動産", "子育て・育児", "介護"] },
-  food: { name: "食べ物・料理", description: "好きな食べ物、料理、外食について気軽に答えられるアンケートです。", tags: ["食べ物", "料理", "飲食店"] },
-  health: { name: "健康・美容", description: "健康、運動、ダイエット、美容について、日常の習慣や考え方を比較できます。", tags: ["健康", "医療", "ダイエット", "美容・コスメ", "ファッション"] },
-  study: { name: "勉強・教育", description: "勉強方法、学校、教育について、学生や社会人の意見を集めたアンケートです。", tags: ["勉強", "教育", "本・読書", "歴史"] },
-  technology: { name: "AI・テクノロジー", description: "AI、科学、新しい技術について、期待や使い方を聞くアンケートです。", tags: ["AI", "テクノロジー", "科学"] },
-  entertainment: { name: "エンタメ", description: "映画、ドラマ、アニメ、漫画、音楽について好みや評価を比較できます。", tags: ["エンタメ", "映画", "ドラマ", "アニメ", "漫画", "音楽"] },
-  games: { name: "ゲーム・遊び", description: "ゲームやおもちゃ、暇つぶしについて気軽に投票できるアンケートです。", tags: ["ゲーム", "おもちゃ", "暇つぶし"] },
-  hobbies: { name: "趣味・スポーツ", description: "趣味、旅行、スポーツ、乗り物、アートなど余暇の過ごし方を比較できます。", tags: ["趣味", "旅行", "スポーツ", "自転車・バイク", "アート", "デザイン"] },
-  pets: { name: "動物・ペット", description: "動物やペットとの暮らしについて、飼い方や好みを聞くアンケートです。", tags: ["動物", "ペット"] }
+  news: { name: "ニュース・社会", description: "話題のニュースや社会問題について投票し、みんなの賛否や本音を比較できます。", tags: ["ニュース", "社会", "政治", "法律", "環境"] },
+  money: { name: "お金・投資", description: "貯金、家計、投資など、お金にまつわるリアルな考え方や選択を比較できます。", tags: ["お金", "投資"] },
+  work: { name: "仕事・ビジネス", description: "働き方、職場、キャリアの悩みについて投票し、ほかの人の仕事観を確認できます。", tags: ["仕事", "ビジネス"] },
+  love: { name: "恋愛", description: "恋愛観、パートナー、結婚について投票し、みんなの本音や価値観を比較できます。", tags: ["恋愛"] },
+  relationships: { name: "人間関係・悩み", description: "友人、家族、職場の人間関係や悩みについて、ほかの人ならどう考えるかを確認できます。", tags: ["人間関係", "悩み", "相談", "ストレス", "心理"] },
+  life: { name: "生活・暮らし", description: "日常生活、住まい、子育てなど、暮らしにまつわるみんなの選択を比較できます。", tags: ["生活", "日常", "住まい・不動産", "子育て・育児", "介護"] },
+  food: { name: "食べ物・料理", description: "好きな食べ物、料理、外食について気軽に投票し、人気や好みを比べられます。", tags: ["食べ物", "料理", "飲食店"] },
+  health: { name: "健康・美容", description: "健康、運動、ダイエット、美容について、みんなの習慣や考え方を比較できます。", tags: ["健康", "医療", "ダイエット", "美容・コスメ", "ファッション"] },
+  study: { name: "勉強・教育", description: "勉強方法、学校、教育について投票し、学生や社会人のリアルな意見を確認できます。", tags: ["勉強", "教育", "本・読書", "歴史"] },
+  technology: { name: "AI・テクノロジー", description: "AI、科学、新しい技術への期待や使い方について、みんなの考えを比較できます。", tags: ["AI", "テクノロジー", "科学"] },
+  entertainment: { name: "エンタメ", description: "映画、ドラマ、アニメ、漫画、音楽について投票し、作品の人気や評価を比較できます。", tags: ["エンタメ", "映画", "ドラマ", "アニメ", "漫画", "音楽"] },
+  games: { name: "ゲーム・遊び", description: "ゲーム、おもちゃ、暇つぶしについて気軽に投票し、みんなの好みを確認できます。", tags: ["ゲーム", "おもちゃ", "暇つぶし"] },
+  hobbies: { name: "趣味・スポーツ", description: "趣味、旅行、スポーツ、乗り物、アートについて、余暇の楽しみ方を比較できます。", tags: ["趣味", "旅行", "スポーツ", "自転車・バイク", "アート", "デザイン"] },
+  pets: { name: "動物・ペット", description: "動物やペットとの暮らしについて投票し、飼い方や好みを比べられます。", tags: ["動物", "ペット"] }
 };
 
 const isIndexableQuestion = question => {
@@ -235,25 +235,25 @@ app.get("/", async (_req, res) => {
 app.get("/index.html", (req, res) => res.redirect(301, "/"));
 
 const DIAGNOSIS_PAGES = {
-  "/love-diagnosis": { kind: "love", slug: "love-diagnosis", title: "恋愛価値観診断", description: "20の質問から、恋愛で大切にしている価値観や関係の築き方を診断します。", theme: "#e85b8b" },
-  "/hsp-diagnosis": { kind: "hsp", slug: "hsp-diagnosis", title: "HSP傾向診断", description: "刺激への敏感さや考え方の傾向を20の質問からチェックする簡易診断です。", theme: "#765ac8" },
-  "/stress-diagnosis": { kind: "stress", slug: "stress-diagnosis", title: "ストレス耐性診断", description: "ストレスへの向き合い方と回復力の傾向を20の質問からチェックします。", theme: "#168f75" },
-  "/self-esteem-diagnosis": { kind: "selfEsteem", slug: "self-esteem-diagnosis", title: "自己肯定感診断", description: "自分を受け入れ、尊重できている度合いを20の質問からチェックします。", theme: "#d48b16" },
-  "/communication-diagnosis": { kind: "communication", slug: "communication-diagnosis", title: "コミュ力診断", description: "会話・傾聴・伝え方の傾向を20の質問からチェックします。", theme: "#147fa1" },
-  "/approval-seeking-diagnosis": { kind: "approval", slug: "approval-seeking-diagnosis", title: "承認欲求診断", description: "承認欲求の強さを無料チェック。周囲の反応や評価をどのくらい気にする傾向があるか、20の質問で確認します。", theme: "#8a5ac2" },
-  "/adhd-diagnosis": { kind: "adhd", slug: "adhd-diagnosis", title: "ADHD傾向診断", description: "注意・衝動性・落ち着きに関する日常の傾向を確認する簡易セルフチェックです。", theme: "#e06a3b" },
-  "/asd-diagnosis": { kind: "asd", slug: "asd-diagnosis", title: "ASD傾向診断", description: "対人コミュニケーションやこだわり、感覚に関する傾向を確認する簡易セルフチェックです。", theme: "#4778bf" },
-  "/cheating-risk-diagnosis": { kind: "cheatingRisk", slug: "cheating-risk-diagnosis", title: "浮気されやすさ診断", description: "恋愛での境界線やコミュニケーションの傾向を20の質問からチェックします。", theme: "#d94f71" },
-  "/possessiveness-diagnosis": { kind: "possessiveness", slug: "possessiveness-diagnosis", title: "束縛度診断", description: "恋愛で相手の行動を把握したい気持ちや不安の傾向を20の質問からチェックします。", theme: "#6a5db5" },
-  "/love-dependency-diagnosis": { kind: "loveDependency", slug: "love-dependency-diagnosis", title: "恋愛依存診断", description: "恋愛と自分の生活のバランスを20の質問からチェックします。", theme: "#c94e91" },
-  "/career-diagnosis": { kind: "career", slug: "career-diagnosis", title: "適職診断", description: "仕事で発揮しやすい強みから、向いている仕事の方向性を20の質問で診断します。", theme: "#238a68" },
-  "/manager-aptitude-diagnosis": { kind: "manager", slug: "manager-aptitude-diagnosis", title: "管理職適性診断", description: "チームを率いるための対話力・判断力・育成力の傾向を20の質問でチェックします。", theme: "#3569a8" },
-  "/entrepreneur-aptitude-diagnosis": { kind: "entrepreneur", slug: "entrepreneur-aptitude-diagnosis", title: "起業家適性診断", description: "起業家に向いている人の傾向を無料診断。行動力・不確実性への強さ・事業を形にする力を20の質問でチェックします。", theme: "#d27822" },
-  "/job-change-readiness-diagnosis": { kind: "jobChange", slug: "job-change-readiness-diagnosis", title: "転職適性診断", description: "転職理由やキャリアの準備状況から、今の転職適性を20の質問でチェックします。", theme: "#67727d" },
-  "/iq-test": { kind: "iq", slug: "iq-test", title: "IQテスト", description: "論理・数列・図形・言語の40問の問題プールから毎回ランダムに出題される20問に、10分の制限時間で挑戦する無料テストです。", theme: "#4f46c8" },
-  "/pq-test": { kind: "pq", slug: "pq-test", title: "PQテスト", description: "日常の状況問題から現実的に問題を解く力をチェックします。", theme: "#167d8d" },
-  "/metacognition-test": { kind: "metacognition", slug: "metacognition-test", title: "メタ認知能力テスト", description: "自分の理解度を見積もり、学び方を調整する力を10問でチェックします。", theme: "#7b52a8" },
-  "/memory-test": { kind: "memory", slug: "memory-test", title: "記憶力テスト", description: "短期記憶・作業記憶・情報の結び付けを10問でチェックします。", theme: "#b76425" }
+  "/love-diagnosis": { kind: "love", slug: "love-diagnosis", title: "恋愛価値観診断", description: "恋愛で大切にしたい価値観と心地よい関係の築き方を20問で診断。登録不要・無料ですぐに結果を確認できます。", theme: "#e85b8b" },
+  "/hsp-diagnosis": { kind: "hsp", slug: "hsp-diagnosis", title: "HSP傾向診断", description: "音や光、人の感情などへの敏感さを20問でセルフチェック。登録不要・無料で、刺激との付き合い方を振り返れます。", theme: "#765ac8" },
+  "/stress-diagnosis": { kind: "stress", slug: "stress-diagnosis", title: "ストレス耐性診断", description: "プレッシャーへの反応や気持ちを立て直す力を20問で診断。登録不要・無料で、あなたの回復力の傾向が分かります。", theme: "#168f75" },
+  "/self-esteem-diagnosis": { kind: "selfEsteem", slug: "self-esteem-diagnosis", title: "自己肯定感診断", description: "失敗や他人との比較で自己評価がどう揺れるかを20問でチェック。登録不要・無料で、今の自己肯定感の傾向が分かります。", theme: "#d48b16" },
+  "/communication-diagnosis": { kind: "communication", slug: "communication-diagnosis", title: "コミュ力診断", description: "話す・聴く・伝える力のバランスを20問で診断。登録不要・無料で、あなたの得意な会話スタイルが分かります。", theme: "#147fa1" },
+  "/approval-seeking-diagnosis": { kind: "approval", slug: "approval-seeking-diagnosis", title: "承認欲求診断", description: "周囲の反応や評価をどのくらい気にするかを20問でチェック。登録不要・無料で、承認欲求との付き合い方が分かります。", theme: "#8a5ac2" },
+  "/adhd-diagnosis": { kind: "adhd", slug: "adhd-diagnosis", title: "ADHD傾向診断", description: "集中・忘れ物・衝動性など日常に表れる傾向を20問で確認。登録不要・無料でできる簡易セルフチェックです。", theme: "#e06a3b" },
+  "/asd-diagnosis": { kind: "asd", slug: "asd-diagnosis", title: "ASD傾向診断", description: "対人コミュニケーション、こだわり、感覚の傾向を20問で確認。登録不要・無料でできる簡易セルフチェックです。", theme: "#4778bf" },
+  "/cheating-risk-diagnosis": { kind: "cheatingRisk", slug: "cheating-risk-diagnosis", title: "浮気されやすさ診断", description: "恋愛の境界線や違和感の伝え方を20問で振り返る無料診断。登録不要で、信頼関係を整えるヒントが分かります。", theme: "#d94f71" },
+  "/possessiveness-diagnosis": { kind: "possessiveness", slug: "possessiveness-diagnosis", title: "束縛度診断", description: "返信や予定、交友関係が気になる度合いを20問で診断。登録不要・無料で、恋愛の不安と束縛傾向を確認できます。", theme: "#6a5db5" },
+  "/love-dependency-diagnosis": { kind: "loveDependency", slug: "love-dependency-diagnosis", title: "恋愛依存診断", description: "恋愛が気分や生活に与える影響を20問でセルフチェック。登録不要・無料で、自分らしさとのバランスを確認できます。", theme: "#c94e91" },
+  "/career-diagnosis": { kind: "career", slug: "career-diagnosis", title: "適職診断", description: "仕事で自然に発揮しやすい強みを20問・4タイプで診断。登録不要・無料で、向いている仕事の方向性が分かります。", theme: "#238a68" },
+  "/manager-aptitude-diagnosis": { kind: "manager", slug: "manager-aptitude-diagnosis", title: "管理職適性診断", description: "対話力・判断力・育成力から管理職への適性を20問で診断。登録不要・無料で、マネジメントの強みが分かります。", theme: "#3569a8" },
+  "/entrepreneur-aptitude-diagnosis": { kind: "entrepreneur", slug: "entrepreneur-aptitude-diagnosis", title: "起業家適性診断", description: "行動力、判断力、継続力、人を巻き込む力を20問で診断。登録不要・無料で、起業家としての強みを確認できます。", theme: "#d27822" },
+  "/job-change-readiness-diagnosis": { kind: "jobChange", slug: "job-change-readiness-diagnosis", title: "転職適性診断", description: "転職理由の明確さと現在の準備度を20問で診断。登録不要・無料で、今取るべき次の一歩を整理できます。", theme: "#67727d" },
+  "/iq-test": { kind: "iq", slug: "iq-test", title: "IQテスト", description: "論理・数列・図形・言語からランダムに出る20問へ10分で挑戦。登録不要・無料で、分野別の得意度まですぐ分かります。", theme: "#4f46c8" },
+  "/pq-test": { kind: "pq", slug: "pq-test", title: "PQテスト", description: "仕事や暮らしの状況問題20問で、現実的に問題を解く力を測定。登録不要・無料で、実践的な判断力をチェックできます。", theme: "#167d8d" },
+  "/metacognition-test": { kind: "metacognition", slug: "metacognition-test", title: "メタ認知能力テスト", description: "自分の理解度を見抜き、考え方や学び方を修正する力を20問で測定。登録不要・無料で、あなたのメタ認知力を今すぐチェックできます。", theme: "#7b52a8" },
+  "/memory-test": { kind: "memory", slug: "memory-test", title: "記憶力テスト", description: "数字や言葉を覚えて扱う20問に挑戦。登録不要・無料で、短期記憶と作業記憶の力を今すぐチェックできます。", theme: "#b76425" }
 };
 
 app.use((req, res, next) => {
@@ -272,6 +272,7 @@ Object.entries(DIAGNOSIS_PAGES).forEach(([route, page]) => {
       .replaceAll("{{KIND}}", page.kind)
       .replaceAll("{{SLUG}}", page.slug)
       .replaceAll("{{TITLE}}", page.title)
+      .replaceAll("{{SEO_TITLE}}", `${page.title}｜登録不要・無料で今すぐチェック`)
       .replaceAll("{{DESCRIPTION}}", page.description)
       .replaceAll("{{THEME}}", page.theme)
       .replace("<!-- DIAGNOSIS_SEO_CONTENT -->", renderDiagnosisSeoContent(page));
@@ -282,7 +283,9 @@ app.get("/diagnosis.html", (_req, res) => res.redirect(301, "/"));
 
 const renderPollArchivePage = ({ questions, page, totalPages, category, slug = "", activeCategorySlugs = [] }) => {
   const title = category ? `${category.name}のアンケート・投票` : "アンケート一覧";
-  const description = category?.description || "登録不要・無料で回答できるアンケートを一覧から探せます。新着の質問やみんなの回答結果をチェックできます。";
+  const description = category
+    ? `${category.description} 登録不要・無料で投票でき、回答後すぐにみんなの集計結果を確認できます。`
+    : "登録不要・無料で気になるアンケートへ投票。恋愛、仕事、暮らし、趣味などの新着質問を探し、みんなの本音や集計結果をすぐ確認できます。";
   const basePath = category ? `/polls/${slug}` : "/polls";
   const canonicalPath = page > 1 ? `${basePath}?page=${page}` : basePath;
   const cards = questions.map(question => `<article class="poll-archive-item">
@@ -301,7 +304,8 @@ const renderPollArchivePage = ({ questions, page, totalPages, category, slug = "
   if (category) breadcrumbItems.push({ "@type": "ListItem", position: 3, name: category.name, item: `https://minnano-question.com${basePath}` });
   const structuredData = JSON.stringify({ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: breadcrumbItems }).replace(/</g, "\\u003c");
   return `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>${escapeSeoHTML(title)}${page > 1 ? ` ${page}ページ目` : ""} | みんQ</title><meta name="description" content="${escapeSeoHTML(description)}">${questions.length ? "" : '<meta name="robots" content="noindex,follow">'}
+  <title>${escapeSeoHTML(title)}${page > 1 ? ` ${page}ページ目` : ""}｜登録不要・無料 | みんQ</title><meta name="description" content="${escapeSeoHTML(description)}">${questions.length ? "" : '<meta name="robots" content="noindex,follow">'}
+  <meta property="og:site_name" content="みんQ">
   <link rel="canonical" href="https://minnano-question.com${canonicalPath}"><link rel="stylesheet" href="/style.css?v=29">
   <script type="application/ld+json">${structuredData}</script></head><body>
   <header><div class="logo-container"><a class="site-logo" href="/"><span>みん</span><b>Q</b></a><a class="home-link" href="/">ホーム</a></div></header>
@@ -442,11 +446,13 @@ app.get("/question", async (req, res) => {
       "utf8"
     );
     const title = decodeStoredText(q.title);
-    const description = decodeStoredText(q.description || q.title).slice(0, 160);
+    const sourceDescription = decodeStoredText(q.description || `「${q.title}」について、みんなの意見を聞くアンケートです。`);
+    const description = `${sourceDescription} 登録不要・無料で投票でき、回答後すぐにみんなの集計結果を確認できます。`.slice(0, 160);
     const safeTitle = escapeSeoHTML(title);
     const safeDescription = escapeSeoHTML(description);
+    const safeSearchTitle = escapeSeoHTML(`${title}｜無料アンケート・投票`);
 
-    html = html.replace(/<title>[^<]*<\/title>/, `<title>${safeTitle} | みんQ</title>`);
+    html = html.replace(/<title>[^<]*<\/title>/, `<title>${safeSearchTitle} | みんQ</title>`);
 
     // description・canonical・OG情報を書き換える
     const canonicalUrl = `https://minnano-question.com/question?id=${encodeURIComponent(id)}`;
@@ -459,7 +465,7 @@ app.get("/question", async (req, res) => {
       `<meta id="metaDescription" name="description" content="${safeDescription}">`
     );
     html = html.replace('<link rel="canonical" id="canonical" href="">', `<link rel="canonical" id="canonical" href="${canonicalUrl}">`);
-    html = html.replace(/<meta property="og:title" id="ogTitle" content="[^"]*">/, `<meta property="og:title" id="ogTitle" content="${safeTitle} | みんQ">`);
+    html = html.replace(/<meta property="og:title" id="ogTitle" content="[^"]*">/, `<meta property="og:title" id="ogTitle" content="${safeSearchTitle} | みんQ">`);
     html = html.replace(/<meta property="og:description" id="ogDescription" content="[^"]*">/, `<meta property="og:description" id="ogDescription" content="${safeDescription}">`);
     html = html.replace(/<meta property="og:url" id="ogUrl" content="[^"]*">/, `<meta property="og:url" id="ogUrl" content="${socialUrl}">`);
     html = html.replace("</head>", `
@@ -471,7 +477,7 @@ app.get("/question", async (req, res) => {
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="${safeTitle}の回答結果">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="${safeTitle} | みんQ">
+  <meta name="twitter:title" content="${safeSearchTitle} | みんQ">
   <meta name="twitter:description" content="${safeDescription}">
   <meta name="twitter:image" content="https://minnano-question.com/apple-touch-icon.png">
 </head>`);
@@ -496,7 +502,7 @@ app.get("/question", async (req, res) => {
         description,
         url: canonicalUrl,
         inLanguage: "ja",
-        isPartOf: { "@type": "WebSite", name: "みんQ", url: "https://minnano-question.com/" },
+        isPartOf: { "@type": "WebSite", "@id": "https://minnano-question.com/#website", name: "みんQ", alternateName: "みんなのQ", url: "https://minnano-question.com/" },
         mainEntity: {
           "@type": "Question",
           name: title,
