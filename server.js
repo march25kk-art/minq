@@ -770,6 +770,24 @@ const hasVoted = async (questionId, voterId) => {
   return voteDoc.exists;
 };
 
+const addVotingStatus = async (questions, req, res) => {
+  const voterId = getVoterId(req, res);
+  try {
+    const voteSnapshot = await firestore.collection(V_COLL)
+      .where("voterId", "==", voterId)
+      .select("questionId")
+      .get();
+    const votedIds = new Set(voteSnapshot.docs.map(doc => String(doc.data().questionId || "")));
+    return questions.map(question => ({
+      ...question,
+      voted: votedIds.has(String(question.id))
+    }));
+  } catch (error) {
+    console.error("Question list vote status error:", error);
+    return questions.map(question => ({ ...question, voted: false }));
+  }
+};
+
 const getVoterId = (req, res) => {
   const cookieHeader = String(req.headers.cookie || "");
   const cookie = cookieHeader.split(";").map(value => value.trim()).find(value => value.startsWith("minq_voter="));
@@ -1120,9 +1138,8 @@ app.get("/questions", async (req, res) => {
     const isFiltered = keyword || tag;
 
     // 💡 変更：Firestore側での orderBy("updatedAt") を撤廃し、過去データ（updatedAtなし）の除外を防ぐ
-    if (!isFiltered && sort !== "update") {
+    if (!isFiltered && sort !== "update" && sort !== "new") {
       const sortFields = { 
-        new: "createdAt", 
         view: "views", 
         vote: "totalVotes" 
       };
@@ -1135,7 +1152,7 @@ app.get("/questions", async (req, res) => {
     }
 
     let questions;
-    if (sort === "update" || isFiltered) {
+    if (sort === "update" || sort === "new" || isFiltered) {
       questions = (await getAllQuestions({ fresh: sort === "update" })).slice();
     } else {
       const snapshot = await query.get();
@@ -1163,14 +1180,17 @@ app.get("/questions", async (req, res) => {
       questions = questions.filter(q => q.title.includes(keyword));
     }
 
-    // 💡 「更新順（update）」の並び替え、またはキーワード・タグ絞り込みがある場合はサーバー側でソート
-    if (sort === "update" || isFiltered) {
+    // 更新順・新着順、または絞り込み時は型の異なる日時も正規化してサーバー側でソートする
+    if (sort === "update" || sort === "new" || isFiltered) {
       if (sort === "view") {
         questions.sort((a, b) => (b.views || 0) - (a.views || 0));
       } else if (sort === "vote") {
         questions.sort((a, b) => (b.totalVotes || 0) - (a.totalVotes || 0));
       } else if (sort === "new") {
-        questions.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+        questions.sort((a, b) =>
+          toSortableTime(b.createdAt) - toSortableTime(a.createdAt)
+          || String(b.id || "").localeCompare(String(a.id || ""))
+        );
       } else {
         // 💡 更新順ソート（updatedAtがない過去データもcreatedAtで安全に比較される）
         questions.sort(compareQuestionUpdatedAt);
@@ -1181,7 +1201,7 @@ app.get("/questions", async (req, res) => {
       const paginatedQuestions = questions.slice((page - 1) * limit, page * limit);
 
       return res.json({
-        questions: paginatedQuestions,
+        questions: await addVotingStatus(paginatedQuestions, req, res),
         totalPages,
         currentPage: page
       });
@@ -1191,7 +1211,7 @@ app.get("/questions", async (req, res) => {
     const countSnapshot = await firestore.collection(Q_COLL).count().get();
     const totalCount = Number(countSnapshot.data().count || 0);
     res.json({
-      questions,
+      questions: await addVotingStatus(questions, req, res),
       totalPages: Math.ceil(totalCount / limit) || 1,
       currentPage: page
     });

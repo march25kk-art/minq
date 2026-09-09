@@ -677,7 +677,35 @@ main {
 }
 
 .question-main { min-width: 0; }
+.thread-title-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+}
+
+.answer-status {
+  flex: 0 0 auto;
+  min-width: 48px;
+  padding: 3px 7px;
+  border: 1px solid #d8dde1;
+  border-radius: 999px;
+  color: #717880;
+  background: #f5f7f6;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.answer-status.is-answered {
+  border-color: #a9ddc3;
+  color: #087b43;
+  background: #eaf8f1;
+}
+
 .title-text {
+  min-width: 0;
   display: block;
   overflow: hidden;
   color: #24272c;

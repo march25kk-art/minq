@@ -293,16 +293,22 @@ function createQuestionCard(q) {
   const comments = Number(q.commentCount || (Array.isArray(q.comments) ? q.comments.length : 0));
   const views = Number(q.views || 0);
   const card = document.createElement("a");
+  const displayedAt = state.currentSort === "new"
+    ? q.createdAt
+    : q.updatedAt || q.createdAt;
   card.className = "thread";
   card.href = `/question?id=${encodeURIComponent(q.id)}`;
   card.innerHTML = `
-    <span class="title-text">${sanitize(plain(q.title))}</span>
+    <span class="thread-title-row">
+      <span class="answer-status ${q.voted ? "is-answered" : "is-unanswered"}">${q.voted ? "回答済" : "未回答"}</span>
+      <span class="title-text">${sanitize(plain(q.title))}</span>
+    </span>
     <div class="thread-meta-line">
       <span>${compactCount(total)}回答</span>
       <span>${compactCount(comments)}コメント</span>
       <span class="view-date-group">
         <span class="view-count">${compactCount(views)}閲覧</span>
-        <time class="postDate">${sanitize(q.updatedAt || q.createdAt || "")}</time>
+        <time class="postDate">${sanitize(displayedAt || "")}</time>
       </span>
     </div>
   `;
