@@ -153,6 +153,10 @@ async function renderResult() {
   $("mbtiShareButton").dataset.name = name;
   show("mbtiResult");
   window.renderDiagnosisRecommendations?.("mbtiRecommendations", "mbti.html");
+  window.renderQuestionRecommendations?.("mbtiQuestionRecommendations", {
+    title: "16タイプ性格診断",
+    description: "性格や考え方、行動、人間関係、仕事の価値観"
+  });
   if (typeof gtag === "function") gtag("event", "mbti_complete", { mbti_type: type });
   await saveResultAndLoadStats(type);
 }

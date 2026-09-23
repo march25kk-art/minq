@@ -271,6 +271,10 @@ async function renderResult() {
   descriptionBox.append(p, strong, hint);
   show("diagnosisResult");
   window.renderDiagnosisRecommendations?.("diagnosisRecommendations", config.slug);
+  window.renderQuestionRecommendations?.("diagnosisQuestionRecommendations", {
+    title: config.title,
+    description: config.lead
+  });
   if (typeof gtag === "function") gtag("event", "diagnosis_complete", { diagnosis_kind: kind, diagnosis_type: type });
   await saveAndLoadStats(type);
 }

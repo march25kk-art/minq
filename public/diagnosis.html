@@ -38,14 +38,14 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png">
-  <link rel="stylesheet" href="/style.css?v=24">
+  <link rel="stylesheet" href="/style.css?v=30">
   <script src="/adsense-config.js"></script>
   <script src="/adsense-loader.js?v=1" defer></script>
   <script src="/recommendations.js?v=1" defer></script>
   <script src="/diagnosis-extra.js?v=1" defer></script>
   <script src="/diagnosis-brain.js?v=4" defer></script>
   <script src="/result-share.js?v=4" defer></script>
-  <script src="/diagnosis.js?v=10" defer></script>
+  <script src="/diagnosis.js?v=11" defer></script>
 </head>
 <body class="mbti-page diagnosis-page" data-diagnosis="{{KIND}}">
   <header class="site-header"><div class="header-inner">
@@ -91,11 +91,16 @@
       <div class="mbti-result-actions">
         <button id="diagnosisShareButton" class="primary-btn" type="button">結果をシェア</button>
         <button id="diagnosisRetryButton" class="mbti-secondary-button" type="button">もう一度診断する</button>
+        <a class="mbti-secondary-button" href="/">トップページへ戻る</a>
       </div>
       <section class="mbti-statistics" aria-labelledby="diagnosisStatsTitle">
         <h2 id="diagnosisStatsTitle">みんなの診断結果</h2>
         <p id="diagnosisStatsStatus" class="mbti-stats-status">統計を読み込んでいます...</p>
         <div id="diagnosisStats"></div>
+      </section>
+      <section id="diagnosisQuestionRecommendations" class="result-recommendations" hidden>
+        <h2>あなたにおすすめのアンケート</h2>
+        <div class="recommendation-grid"></div>
       </section>
       <section id="diagnosisRecommendations" class="result-recommendations" hidden>
         <h2>あなたにおすすめの診断</h2>

@@ -115,6 +115,7 @@ button { cursor: pointer; }
 .mbti-stat-bar span { display: block; height: 100%; border-radius: inherit; background: var(--green); }
 .mbti-stats-demographics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
 .mbti-secondary-button { min-height: 50px; padding: 0 24px; border: 1px solid var(--line); border-radius: 25px; color: var(--ink); background: #fff; font-weight: 800; }
+.mbti-result-actions a.mbti-secondary-button { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
 .diagnosis-page { --diagnosis-accent: #765ac8; --diagnosis-soft: #f2effc; }
 .diagnosis-love { --diagnosis-accent: #df527f; --diagnosis-soft: #fff0f5; }
 .diagnosis-hsp { --diagnosis-accent: #765ac8; --diagnosis-soft: #f3f0ff; }

@@ -43,12 +43,12 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png">
-  <link rel="stylesheet" href="style.css?v=29">
+  <link rel="stylesheet" href="style.css?v=30">
   <script src="/adsense-config.js"></script>
   <script src="adsense-loader.js?v=1" defer></script>
   <script src="recommendations.js?v=1" defer></script>
   <script src="result-share.js?v=4" defer></script>
-  <script src="mbti.js?v=7" defer></script>
+  <script src="mbti.js?v=8" defer></script>
 </head>
 <body class="mbti-page">
   <header class="site-header">
@@ -98,11 +98,16 @@
       <div class="mbti-result-actions">
         <button id="mbtiShareButton" class="primary-btn" type="button">結果をシェア</button>
         <button id="mbtiRetryButton" class="mbti-secondary-button" type="button">もう一度診断する</button>
+        <a class="mbti-secondary-button" href="/">トップページへ戻る</a>
       </div>
       <section class="mbti-statistics" aria-labelledby="mbtiStatsTitle">
         <h2 id="mbtiStatsTitle">みんなの性格診断結果</h2>
         <p id="mbtiStatsStatus" class="mbti-stats-status">統計を読み込んでいます...</p>
         <div id="mbtiStats"></div>
+      </section>
+      <section id="mbtiQuestionRecommendations" class="result-recommendations" hidden>
+        <h2>あなたにおすすめのアンケート</h2>
+        <div class="recommendation-grid"></div>
       </section>
       <section id="mbtiRecommendations" class="result-recommendations" hidden>
         <h2>あなたにおすすめの診断</h2>
