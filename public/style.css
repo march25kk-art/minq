@@ -357,6 +357,43 @@ header:not(.site-header) {
 
 .site-logo:hover { opacity: 0.88; }
 
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.header-top-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #cfe7d9;
+  border-radius: 999px;
+  background: linear-gradient(145deg, #f5fcf7, #e5f5eb);
+  color: var(--green-dark);
+  box-shadow: 0 2px 6px rgba(9, 110, 60, .06), inset 0 1px 0 #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: .08em;
+  white-space: nowrap;
+  transition: background .18s ease, box-shadow .18s ease;
+}
+
+.header-top-button svg { width: 16px; height: 16px; flex: 0 0 auto; }
+.header-top-button:hover { background: #d9f0e2; box-shadow: 0 3px 10px rgba(9, 110, 60, .13); }
+.header-top-button:focus-visible { outline: 2px solid var(--green-dark); outline-offset: 3px; }
+
+@media (max-width: 760px) {
+  .header-brand { gap: 8px; }
+  .header-top-button { gap: 4px; padding-inline: 10px; }
+}
+
 .home-link {
   display: inline-flex;
   align-items: center;
