@@ -741,7 +741,7 @@ function renderResultComments(comments, questionId) {
           </div>
           <div class="comment-reply-form" hidden>
             <input class="comment-reply-name" type="text" maxlength="30" placeholder="名前（任意）">
-            <textarea class="comment-reply-text" maxlength="1000" placeholder="返信を入力してください"></textarea>
+            <textarea class="comment-reply-text" maxlength="1000" placeholder="返信を入力してください（URLは投稿できません）"></textarea>
             <div><button class="comment-action-btn" type="button" onclick="toggleCommentReply(this)">キャンセル</button><button class="commentBtn" type="button" onclick="submitCommentReply(this, '${sanitize(commentId)}', '${sanitize(questionId)}')">返信する</button></div>
           </div>
           ${replies.map((reply, replyIndex) => renderComment(reply, replyIndex, true)).join("")}
@@ -835,7 +835,7 @@ function renderResultsScreen(div, q, id) {
       <div class="comment-compose">
         <div class="comment-inputs">
           <input id="commentName" type="text" maxlength="30" placeholder="名前（任意）">
-          <textarea id="commentText" placeholder="あなたの意見を入力してください"></textarea>
+          <textarea id="commentText" placeholder="あなたの意見を入力してください（URLは投稿できません）"></textarea>
         </div>
         <button class="commentBtn" type="button" onclick="addCommentAndReload('${sanitize(id)}')">投稿する</button>
       </div>

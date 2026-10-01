@@ -1,4 +1,5 @@
 const express = require("express");
+const { containsUrl, URL_ERROR_MESSAGE } = require("./urlPolicy");
 const { firestore } = require("./firebase");
 const { FieldValue } = require("firebase-admin/firestore");
 const { updateSitemap } = require('./generateSitemap');
@@ -1239,6 +1240,10 @@ app.post("/questions", async (req, res) => {
       return sendError(res, "選択肢は10件以内・各200文字以内で入力してください");
     }
 
+    if ([title, description, ...options, ...(Array.isArray(tags) ? tags : [])].some(containsUrl)) {
+      return sendError(res, URL_ERROR_MESSAGE, 400);
+    }
+
     const hasNgWord = NG_WORDS.some(word => 
       title.includes(word) || description.includes(word) || options.some(o => String(o).includes(word))
     );
@@ -1529,6 +1534,7 @@ const saveComment = async (req, res) => {
     if (!text) return sendError(res, "コメントを入力してください");
     if (text.length > 1000) return sendError(res, "コメントは1000文字以内で入力してください");
     if (name.length > 30) return sendError(res, "名前は30文字以内で入力してください");
+    if ([text, name, age, gender].some(containsUrl)) return sendError(res, URL_ERROR_MESSAGE, 400);
     if (NG_WORDS.some(word => text.includes(word))) return sendError(res, "使用できない言葉が含まれています");
     if (name && NG_WORDS.some(word => name.includes(word))) return sendError(res, "名前に使用できない言葉が含まれています");
 
